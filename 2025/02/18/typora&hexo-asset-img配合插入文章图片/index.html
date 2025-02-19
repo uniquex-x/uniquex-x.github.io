@@ -14,10 +14,12 @@
 
 
 <link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-mac-osx.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
 
 <script id="hexo-configurations">
     var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"default"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
   <meta name="description" content="概述在使用hexo部署博客文章时，发现hexo默认的上传文件方式不太方便(如下) 1&#123;% asset_img image.png name %&#125;  于是上网搜索方案，再试过hexo-asset-image和hexo-renderer-marked之后，发现都不行。 以下是遇到的主要问题即解决方法 问题1：_post目录下如果在生成的.md目录插入图片就会生成两个同名的文件夹(实">
@@ -27,12 +29,10 @@
 <meta property="og:site_name" content="liujiahua&#39;s personalBlog">
 <meta property="og:description" content="概述在使用hexo部署博客文章时，发现hexo默认的上传文件方式不太方便(如下) 1&#123;% asset_img image.png name %&#125;  于是上网搜索方案，再试过hexo-asset-image和hexo-renderer-marked之后，发现都不行。 以下是遇到的主要问题即解决方法 问题1：_post目录下如果在生成的.md目录插入图片就会生成两个同名的文件夹(实">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://example.com/2025/02/18/typora&hexo-asset-img%E9%85%8D%E5%90%88%E6%8F%92%E5%85%A5%E6%96%87%E7%AB%A0%E5%9B%BE%E7%89%87/image-20250218221232758.png">
 <meta property="article:published_time" content="2025-02-18T13:57:08.000Z">
 <meta property="article:modified_time" content="2025-02-18T14:36:17.766Z">
 <meta property="article:author" content="刘嘉华">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://example.com/2025/02/18/typora&hexo-asset-img%E9%85%8D%E5%90%88%E6%8F%92%E5%85%A5%E6%96%87%E7%AB%A0%E5%9B%BE%E7%89%87/image-20250218221232758.png">
 
 <link rel="canonical" href="http://example.com/2025/02/18/typora&hexo-asset-img%E9%85%8D%E5%90%88%E6%8F%92%E5%85%A5%E6%96%87%E7%AB%A0%E5%9B%BE%E7%89%87/">
 
@@ -105,6 +105,7 @@
 
   <div class="site-nav-right">
     <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
     </div>
   </div>
 </div>
@@ -119,16 +120,53 @@
     <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
 
   </li>
-        <li class="menu-item menu-item-archives">
+        <li class="menu-item menu-item-tags">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+    <a href="/tags/" rel="section"><i class="tags fa-fw"></i>标签</a>
 
   </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
   </ul>
 </nav>
 
 
 
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
 
 </div>
     </header>
@@ -155,9 +193,9 @@
     <link itemprop="mainEntityOfPage" href="http://example.com/2025/02/18/typora&hexo-asset-img%E9%85%8D%E5%90%88%E6%8F%92%E5%85%A5%E6%96%87%E7%AB%A0%E5%9B%BE%E7%89%87/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="image" content="/images/avatar.png">
       <meta itemprop="name" content="刘嘉华">
-      <meta itemprop="description" content="分享知识">
+      <meta itemprop="description" content="无限进步">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
@@ -189,6 +227,13 @@
             </span>
 
           
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
 
         </div>
       </header>
@@ -208,7 +253,7 @@
 <p><strong>原因及解决方案</strong>：在修改_config.yml文件中的post_asset_folder为true之后，如果使用<code>hexo new xxx</code>的方式生成.md文件和同名文件夹，且同时还将typora的偏好设置为<code>./$&#123;filename&#125;</code>，那么就会出现这样的问题，解决办法就是直接手动创建一个.md文件就好，只要插入图片，typora就自动会生成一个同名文件夹，并加图片放入。</p>
 <h2 id="问题2："><a href="#问题2：" class="headerlink" title="问题2："></a>问题2：</h2><p><strong>按照网上许多方法仍然无法直接使用<code>![](xx.png)</code>这种markdown可是直接插入图片</strong></p>
 <p><strong>原因分析</strong>：<font color='red'>该问题的主要原因在于插件版本和hexo版本不一致</font>。在本地生成的静态网页中我么可以按”F12”查看图片路径是否转换成功。</p>
-<img src="/2025/02/18/typora&hexo-asset-img%E9%85%8D%E5%90%88%E6%8F%92%E5%85%A5%E6%96%87%E7%AB%A0%E5%9B%BE%E7%89%87/image-20250218221232758.png" class="" title="F12查看图片路径">
+
 
 <p>如图所示，&#x2F;2025&#x2F;02&#x2F;18&#x2F;player&#x2F;xx这个目录就是<code>hexo g</code>执行后生成到public目录下的。</p>
 <ul>
@@ -307,8 +352,10 @@
 
       <div class="site-overview-wrap sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="刘嘉华"
+      src="/images/avatar.png">
   <p class="site-author-name" itemprop="name">刘嘉华</p>
-  <div class="site-description" itemprop="description">分享知识</div>
+  <div class="site-description" itemprop="description">无限进步</div>
 </div>
 <div class="site-state-wrap motion-element">
   <nav class="site-state">
@@ -320,12 +367,16 @@
         </a>
       </div>
       <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
         <span class="site-state-item-count">3</span>
-        <span class="site-state-item-name">分类</span>
+        <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
         <span class="site-state-item-count">3</span>
-        <span class="site-state-item-name">标签</span>
+        <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
 </div>
@@ -357,10 +408,30 @@
   </span>
   <span class="author" itemprop="copyrightHolder">刘嘉华</span>
 </div>
-  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
   </div>
 
         
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
 
 
 
@@ -383,7 +454,7 @@
 <script src="/js/motion.js"></script>
 
 
-<script src="/js/schemes/muse.js"></script>
+<script src="/js/schemes/pisces.js"></script>
 
 
 <script src="/js/next-boot.js"></script>
@@ -394,6 +465,10 @@
   
 
 
+
+
+  
+<script src="/js/local-search.js"></script>
 
 
 

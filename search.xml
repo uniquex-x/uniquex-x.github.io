@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>播放器总结</title>
+    <url>/2025/02/18/player/</url>
+    <content><![CDATA[<h2 id="1-播放器实现概述"><a href="#1-播放器实现概述" class="headerlink" title="1. 播放器实现概述"></a>1. 播放器实现概述</h2><p>一个播放器实现大致可以分为两块，即ui主界面，播放器功能模块。这两个模块之间还可以添加其它的模块进行解耦等，例如bilibili的开源项目ijkplayer的框架就是: UI主界面—ijkplayer核心—ffplayer。其中ijkplayer作为ui主界面和ffplayer之间的中转站(<strong>实际ijkplayer核心中也可以处理部分回调的消息，并不需要所有的消息都回到主界面的消息循环函数中处理</strong>)。下文主要以ijkplayer框架讲解。</p>
+
+
+<h3 id="1-1-按下播放按钮到视频播放的过程"><a href="#1-1-按下播放按钮到视频播放的过程" class="headerlink" title="1.1 按下播放按钮到视频播放的过程"></a>1.1 按下播放按钮到视频播放的过程</h3><p>播放按钮到视频播放这一个功能实现大概分为以下过程</p>
+<ul>
+<li><p>按钮按下，发送信号给对应的响应函数(这其中包含了qt的信号槽机制，即信号的传递过程为：按钮点击 -&gt; QPushButton::clicked信号触发 -&gt; 自定义信号SigxxxBtnClicked触发 )</p>
+</li>
+<li><p>对应的(PlayOrPause)响应函数执行，完成创建播放器，设置播放源，准备播放(调用ijkmp_prepare_async函数)</p>
+</li>
+<li><p>在准备播放函数中(prepare_async())启用消息队列并创建消息循环线程(<strong>消息循环队列有解耦的作用</strong>)，接着调用真正的播放器ffplay的播放函数 </p>
+</li>
+<li><p>在ffplay的播放函数中调用stream_open,接下来就是ffplay框架的一系列执行动作了，即完成解复用，解码，音频输出，视频图像显示，音视频同步等等（注意ffplay播放器read_thread还完成了将相关消息放到消息队列的过程，这样消息循环线程就可以取相应消息并让播放器完成相应的动作。）</p>
+</li>
+</ul>
+<p>整个ffplay的执行过程一图流如下：(参考八小时码字员)</p>
+
+
+
+<h2 id="2-解复用"><a href="#2-解复用" class="headerlink" title="2.解复用"></a>2.解复用</h2><h3 id="2-1-视频编码"><a href="#2-1-视频编码" class="headerlink" title="2.1 视频编码"></a>2.1 视频编码</h3><p>常见的视频编码格式：</p>
+<ul>
+<li>H.264&#x2F;AVC：最广泛使用的视频编码标准</li>
+<li>H.265&#x2F;HEVC：H.264的继任者，更高压缩率</li>
+<li>VP8&#x2F;VP9：Google开发的开源编码格式</li>
+<li>AV1：开放媒体联盟开发的新一代编码格式</li>
+</ul>
+<p>编码原理：</p>
+<ol>
+<li>帧内预测：利用当前帧的空间相关性</li>
+<li>帧间预测：利用相邻帧的时间相关性</li>
+<li>变换编码：DCT变换等</li>
+<li>熵编码：哈夫曼编码等</li>
+</ol>
+<h3 id="2-2-音频编码"><a href="#2-2-音频编码" class="headerlink" title="2.2 音频编码"></a>2.2 音频编码</h3><p>常见的音频编码格式：</p>
+<ul>
+<li>AAC：最常用的音频压缩格式</li>
+<li>MP3：广泛使用的有损压缩格式</li>
+<li>Opus：适用于实时通信的编码格式</li>
+<li>PCM：无损音频原始格式</li>
+</ul>
+<h2 id="3-解码"><a href="#3-解码" class="headerlink" title="3. 解码"></a>3. 解码</h2><h3 id="3-1-FFmpeg"><a href="#3-1-FFmpeg" class="headerlink" title="3.1 FFmpeg"></a>3.1 FFmpeg</h3><h2 id="4-音视频输出"><a href="#4-音视频输出" class="headerlink" title="4. 音视频输出"></a>4. 音视频输出</h2><h3 id="4-1-音频输出"><a href="#4-1-音频输出" class="headerlink" title="4.1 音频输出"></a>4.1 音频输出</h3><p>在ffplay中，音频输出的函数调用结构为</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//在read_thread()函数中</span></span><br><span class="line">--&gt;audio_open   <span class="comment">//打开音频输出设备</span></span><br><span class="line">    --&gt;sdl_audio_callback <span class="comment">//音频回调函数</span></span><br><span class="line">       --&gt;audio_decode_frame <span class="comment">//该函数从解码后的帧队列中取一帧并放到audio_buf中，以供sdl回调函数取数据</span></span><br></pre></td></tr></table></figure>
+
+<p>而在ijkplayer中，ffplay.c这部分是将“音频输出”这个消息放到消息队列，并由主界面的message_loop读取消息，该消息循环线程再做对应的处理</p>
+<h3 id="4-2-视频输出"><a href="#4-2-视频输出" class="headerlink" title="4.2 视频输出"></a>4.2 视频输出</h3><p>在ffplay中，视频输出的函数调用结构为</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//主函数中</span></span><br><span class="line">--&gt;<span class="built_in">event_loop</span>() <span class="comment">//</span></span><br><span class="line">	--&gt;<span class="built_in">refresh_loop_wait_event</span>() <span class="comment">//视频在这里显示</span></span><br><span class="line">		 --&gt;<span class="built_in">video_refresh</span>() </span><br><span class="line">			 --&gt;<span class="built_in">video_display</span>() </span><br><span class="line">				 --&gt;<span class="built_in">video_image_display</span>() </span><br><span class="line">					 --&gt;<span class="built_in">upload_texture</span>()    </span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="5-音视频同步"><a href="#5-音视频同步" class="headerlink" title="5. 音视频同步"></a>5. 音视频同步</h2><p>同步方式主要分为：</p>
+<ul>
+<li>以视频为主导</li>
+<li>以音频为主导</li>
+<li>以外部时钟为主导</li>
+</ul>
+<h3 id="以音频为主导"><a href="#以音频为主导" class="headerlink" title="以音频为主导"></a>以音频为主导</h3><p>在ffplay中，视频同步的逻辑主要在video_refresh()中完成。假如当前系统事件time是介于vp帧起始时间戳和nextvp帧起始事件戳之间，当视频播放慢了(即time&gt; timer + lastvp的duration)，就丢掉当前vp帧，取nextvp帧(<strong>丢帧的前提就是存在nextvp帧</strong>)；如果视频播放快了，就重复播放上一帧,即lastvp</p>
+]]></content>
+      <categories>
+        <category>技术开发</category>
+        <category>音视频</category>
+      </categories>
+      <tags>
+        <tag>音视频</tag>
+        <tag>ijkplayer</tag>
+        <tag>ffplay</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>typora+hexo-asset-img插入文章图片</title>
+    <url>/2025/02/18/typora&amp;hexo-asset-img%E9%85%8D%E5%90%88%E6%8F%92%E5%85%A5%E6%96%87%E7%AB%A0%E5%9B%BE%E7%89%87/</url>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>在使用hexo部署博客文章时，发现hexo默认的上传文件方式不太方便(如下)</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;% asset_img image.png name %&#125;</span><br></pre></td></tr></table></figure>
+
+<p>于是上网搜索方案，再试过<code>hexo-asset-image</code>和<code>hexo-renderer-marked</code>之后，发现都不行。</p>
+<p>以下是遇到的主要问题即解决方法</p>
+<h2 id="问题1："><a href="#问题1：" class="headerlink" title="问题1："></a>问题1：</h2><p><strong>_post目录下如果在生成的.md目录插入图片就会生成两个同名的文件夹(实际上有一个后面多了一个空格)，导致默认的图片上传方式都出问题</strong></p>
+<p><strong>原因及解决方案</strong>：在修改_config.yml文件中的post_asset_folder为true之后，如果使用<code>hexo new xxx</code>的方式生成.md文件和同名文件夹，且同时还将typora的偏好设置为<code>./$&#123;filename&#125;</code>，那么就会出现这样的问题，解决办法就是直接手动创建一个.md文件就好，只要插入图片，typora就自动会生成一个同名文件夹，并加图片放入。</p>
+<h2 id="问题2："><a href="#问题2：" class="headerlink" title="问题2："></a>问题2：</h2><p><strong>按照网上许多方法仍然无法直接使用<code>![](xx.png)</code>这种markdown可是直接插入图片</strong></p>
+<p><strong>原因分析</strong>：<font color='red'>该问题的主要原因在于插件版本和hexo版本不一致</font>。在本地生成的静态网页中我么可以按”F12”查看图片路径是否转换成功。</p>
+
+
+<p>如图所示，&#x2F;2025&#x2F;02&#x2F;18&#x2F;player&#x2F;xx这个目录就是<code>hexo g</code>执行后生成到public目录下的。</p>
+<ul>
+<li>从文件中查看，如果该目录下没有我们文章中出现的图片，则说明图片上传失败；</li>
+<li>而从网页端查看则如图所示，即图片源路径指向了对应的目录。</li>
+</ul>
+<p>上面两种方式都可以用来判断图片是否上传成功</p>
+<p><strong>解决办法:</strong></p>
+<p>由于我们使用的是hexo6.3.0版本，<code>hexo-asset-image</code>插件已经无法适配，所以这里直接下载另外一个<code>hexo-asset-img</code>插件即可。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">npm install hexo-asset-img --save</span><br></pre></td></tr></table></figure>
+
+<p>随后，按照问题1的方式创建.md文件，直接插入文件即可实现图片和文章一起上传至博客网站.</p>
+<p>在typora中图片插入的具体的格式如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">![命名](与.md同名文件夹/logo.png)</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>疑难杂症</category>
+      </categories>
+  </entry>
+</search>
