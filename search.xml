@@ -1,87 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>播放器总结</title>
-    <url>/2025/02/18/player/</url>
-    <content><![CDATA[<h2 id="1-播放器实现概述"><a href="#1-播放器实现概述" class="headerlink" title="1. 播放器实现概述"></a>1. 播放器实现概述</h2><p>一个播放器实现大致可以分为两块，即ui主界面，播放器功能模块。这两个模块之间还可以添加其它的模块进行解耦等，例如bilibili的开源项目ijkplayer的框架就是: UI主界面—ijkplayer核心—ffplayer。其中ijkplayer作为ui主界面和ffplayer之间的中转站(<strong>实际ijkplayer核心中也可以处理部分回调的消息，并不需要所有的消息都回到主界面的消息循环函数中处理</strong>)。下文主要以ijkplayer框架讲解。</p>
-
-
-<h3 id="1-1-按下播放按钮到视频播放的过程"><a href="#1-1-按下播放按钮到视频播放的过程" class="headerlink" title="1.1 按下播放按钮到视频播放的过程"></a>1.1 按下播放按钮到视频播放的过程</h3><p>播放按钮到视频播放这一个功能实现大概分为以下过程</p>
-<ul>
-<li><p>按钮按下，发送信号给对应的响应函数(这其中包含了qt的信号槽机制，即信号的传递过程为：按钮点击 -&gt; QPushButton::clicked信号触发 -&gt; 自定义信号SigxxxBtnClicked触发 )</p>
-</li>
-<li><p>对应的(PlayOrPause)响应函数执行，完成创建播放器，设置播放源，准备播放(调用ijkmp_prepare_async函数)</p>
-</li>
-<li><p>在准备播放函数中(prepare_async())启用消息队列并创建消息循环线程(<strong>消息循环队列有解耦的作用</strong>)，接着调用真正的播放器ffplay的播放函数 </p>
-</li>
-<li><p>在ffplay的播放函数中调用stream_open,接下来就是ffplay框架的一系列执行动作了，即完成解复用，解码，音频输出，视频图像显示，音视频同步等等（注意ffplay播放器read_thread还完成了将相关消息放到消息队列的过程，这样消息循环线程就可以取相应消息并让播放器完成相应的动作。）</p>
-</li>
-</ul>
-<p>整个ffplay的执行过程一图流如下：(参考八小时码字员)</p>
-
-
-
-<h2 id="2-解复用"><a href="#2-解复用" class="headerlink" title="2.解复用"></a>2.解复用</h2><h3 id="2-1-视频编码"><a href="#2-1-视频编码" class="headerlink" title="2.1 视频编码"></a>2.1 视频编码</h3><p>常见的视频编码格式：</p>
-<ul>
-<li>H.264&#x2F;AVC：最广泛使用的视频编码标准</li>
-<li>H.265&#x2F;HEVC：H.264的继任者，更高压缩率</li>
-<li>VP8&#x2F;VP9：Google开发的开源编码格式</li>
-<li>AV1：开放媒体联盟开发的新一代编码格式</li>
-</ul>
-<p>编码原理：</p>
-<ol>
-<li>帧内预测：利用当前帧的空间相关性</li>
-<li>帧间预测：利用相邻帧的时间相关性</li>
-<li>变换编码：DCT变换等</li>
-<li>熵编码：哈夫曼编码等</li>
-</ol>
-<h3 id="2-2-音频编码"><a href="#2-2-音频编码" class="headerlink" title="2.2 音频编码"></a>2.2 音频编码</h3><p>常见的音频编码格式：</p>
-<ul>
-<li>AAC：最常用的音频压缩格式</li>
-<li>MP3：广泛使用的有损压缩格式</li>
-<li>Opus：适用于实时通信的编码格式</li>
-<li>PCM：无损音频原始格式</li>
-</ul>
-<h2 id="3-解码"><a href="#3-解码" class="headerlink" title="3. 解码"></a>3. 解码</h2><h3 id="3-1-FFmpeg"><a href="#3-1-FFmpeg" class="headerlink" title="3.1 FFmpeg"></a>3.1 FFmpeg</h3><h2 id="4-音视频输出"><a href="#4-音视频输出" class="headerlink" title="4. 音视频输出"></a>4. 音视频输出</h2><h3 id="4-1-音频输出"><a href="#4-1-音频输出" class="headerlink" title="4.1 音频输出"></a>4.1 音频输出</h3><p>在ffplay中，音频输出的函数调用结构为</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//在read_thread()函数中</span></span><br><span class="line">--&gt;audio_open   <span class="comment">//打开音频输出设备</span></span><br><span class="line">    --&gt;sdl_audio_callback <span class="comment">//音频回调函数</span></span><br><span class="line">       --&gt;audio_decode_frame <span class="comment">//该函数从解码后的帧队列中取一帧并放到audio_buf中，以供sdl回调函数取数据</span></span><br></pre></td></tr></table></figure>
-
-<p>而在ijkplayer中，ffplay.c这部分是将“音频输出”这个消息放到消息队列，并由主界面的message_loop读取消息，该消息循环线程再做对应的处理</p>
-<h3 id="4-2-视频输出"><a href="#4-2-视频输出" class="headerlink" title="4.2 视频输出"></a>4.2 视频输出</h3><p>在ffplay中，视频输出的函数调用结构为</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//主函数中</span></span><br><span class="line">--&gt;<span class="built_in">event_loop</span>() <span class="comment">//</span></span><br><span class="line">	--&gt;<span class="built_in">refresh_loop_wait_event</span>() <span class="comment">//视频在这里显示</span></span><br><span class="line">		 --&gt;<span class="built_in">video_refresh</span>() </span><br><span class="line">			 --&gt;<span class="built_in">video_display</span>() </span><br><span class="line">				 --&gt;<span class="built_in">video_image_display</span>() </span><br><span class="line">					 --&gt;<span class="built_in">upload_texture</span>()    </span><br></pre></td></tr></table></figure>
-
-
-
-<h2 id="5-音视频同步"><a href="#5-音视频同步" class="headerlink" title="5. 音视频同步"></a>5. 音视频同步</h2><p>同步方式主要分为：</p>
-<ul>
-<li>以视频为主导</li>
-<li>以音频为主导</li>
-<li>以外部时钟为主导</li>
-</ul>
-<h3 id="以音频为主导"><a href="#以音频为主导" class="headerlink" title="以音频为主导"></a>以音频为主导</h3><p>在ffplay中，视频同步的逻辑主要在video_refresh()中完成。假如当前系统事件time是介于vp帧起始时间戳和nextvp帧起始事件戳之间，当视频播放慢了(即time&gt; timer + lastvp的duration)，就丢掉当前vp帧，取nextvp帧(<strong>丢帧的前提就是存在nextvp帧</strong>)；如果视频播放快了，就重复播放上一帧,即lastvp</p>
-]]></content>
-      <categories>
-        <category>技术开发</category>
-        <category>音视频</category>
-      </categories>
-      <tags>
-        <tag>音视频</tag>
-        <tag>ijkplayer</tag>
-        <tag>ffplay</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>typora+hexo-asset-img插入文章图片</title>
     <url>/2025/02/18/typora&amp;hexo-asset-img%E9%85%8D%E5%90%88%E6%8F%92%E5%85%A5%E6%96%87%E7%AB%A0%E5%9B%BE%E7%89%87/</url>
     <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>在使用hexo部署博客文章时，发现hexo默认的上传文件方式不太方便(如下)</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;% asset_img image.png name %&#125;</span><br></pre></td></tr></table></figure>
 
-<p>于是上网搜索方案，再试过<code>hexo-asset-image</code>和<code>hexo-renderer-marked</code>之后，发现都不行。</p>
-<p>以下是遇到的主要问题即解决方法</p>
-<h2 id="问题1："><a href="#问题1：" class="headerlink" title="问题1："></a>问题1：</h2><p><strong>_post目录下如果在生成的.md目录插入图片就会生成两个同名的文件夹(实际上有一个后面多了一个空格)，导致默认的图片上传方式都出问题</strong></p>
-<p><strong>原因及解决方案</strong>：在修改_config.yml文件中的post_asset_folder为true之后，如果使用<code>hexo new xxx</code>的方式生成.md文件和同名文件夹，且同时还将typora的偏好设置为<code>./$&#123;filename&#125;</code>，那么就会出现这样的问题，解决办法就是直接手动创建一个.md文件就好，只要插入图片，typora就自动会生成一个同名文件夹，并加图片放入。</p>
-<h2 id="问题2："><a href="#问题2：" class="headerlink" title="问题2："></a>问题2：</h2><p><strong>按照网上许多方法仍然无法直接使用<code>![](xx.png)</code>这种markdown可是直接插入图片</strong></p>
-<p><strong>原因分析</strong>：<font color='red'>该问题的主要原因在于插件版本和hexo版本不一致</font>。在本地生成的静态网页中我么可以按”F12”查看图片路径是否转换成功。</p>
+<p>于是上网搜索方案，在试过<code>hexo-asset-image</code>和<code>hexo-renderer-marked</code>之后，发现都不行。</p>
+<p>以下是遇到的主要问题及解决方法</p>
+<span id="more"></span>
 
+<h2 id="问题1："><a href="#问题1：" class="headerlink" title="问题1："></a>问题1：</h2><p><strong>_post目录下如果在生成的.md目录插入图片就会生成两个同名的文件夹(实际上有一个后面多了一个空格)，导致默认的图片上传方式都出问题</strong></p>
+<p><strong>原因及解决方案</strong>：在修改_config.yml文件中的<strong>post_asset_folder为true</strong>之后，如果使用<code>hexo new xxx</code>的方式生成.md文件和同名文件夹，且同时还将typora的偏好设置为<code>./$&#123;filename&#125;</code>，那么就会出现这样的问题，解决办法就是直接手动创建一个.md文件，只要插入图片，typora就自动会生成一个同名文件夹，并加图片放入。（<font color='red'>注意不要将post_asset_folder又设回false了</font>）</p>
+<h2 id="问题2："><a href="#问题2：" class="headerlink" title="问题2："></a>问题2：</h2><p><strong>按照网上许多方法仍然无法直接使用<code>![](xx.png)</code>这种markdown格式插入图片</strong></p>
+<p><strong>原因分析</strong>：<font color='red'>该问题的主要原因在于插件版本和hexo版本不一致</font>。在本地生成的静态网页中我们可以按”F12”查看图片路径是否转换成功。</p>
+<img src="/2025/02/18/typora&hexo-asset-img%E9%85%8D%E5%90%88%E6%8F%92%E5%85%A5%E6%96%87%E7%AB%A0%E5%9B%BE%E7%89%87/image-20250218221232758.png" class="" title="F12查看图片路径">
 
 <p>如图所示，&#x2F;2025&#x2F;02&#x2F;18&#x2F;player&#x2F;xx这个目录就是<code>hexo g</code>执行后生成到public目录下的。</p>
 <ul>
@@ -101,5 +34,377 @@
       <categories>
         <category>疑难杂症</category>
       </categories>
+      <tags>
+        <tag>博客</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>播放器总结</title>
+    <url>/2025/02/18/player/</url>
+    <content><![CDATA[<h2 id="1-播放器实现概述"><a href="#1-播放器实现概述" class="headerlink" title="1. 播放器实现概述"></a>1. 播放器实现概述</h2><p>[<strong>搬运请标注出处</strong>⚠]一个播放器实现大致可以分为两块，即ui主界面，播放器功能模块。这两个模块之间还可以添加其它的模块进行解耦等，例如bilibili的开源项目ijkplayer的框架就是: UI主界面—ijkplayer核心—ffplayer。其中ijkplayer作为ui主界面和ffplayer之间的中转站(<strong>实际ijkplayer核心中也可以处理部分回调的消息，并不需要所有的消息都回到主界面的消息循环函数中处理</strong>)。下文将提炼ijkplayer和ffplay的源码，并主要谈谈qt环境下ijkplayer与ffplay两者不同之处以及相同之处 。(后续对音视频理解更深了会继续更新)</p>
+<span id="more"></span>
+
+<img src="/2025/02/18/player/image-20250218222315603.png" class="" title="image-20250218222315603">
+
+<h3 id="1-1-按下播放按钮到视频播放的过程"><a href="#1-1-按下播放按钮到视频播放的过程" class="headerlink" title="1.1 按下播放按钮到视频播放的过程"></a>1.1 按下播放按钮到视频播放的过程</h3><p>播放按钮到视频播放这一个功能实现大概分为以下过程</p>
+<blockquote>
+<ul>
+<li><p>按钮按下，发送信号给对应的响应函数(这其中包含了qt的信号槽机制，即信号的传递过程为：按钮点击 -&gt; QPushButton::clicked信号触发 -&gt; 控件对应响应函数执行，emit自定义信号SigPlayOrPauseBtnClicked-&gt; 主界面对应响应函数执行)</p>
+<p>注意：connect在响应函数对应文件中完成.</p>
+</li>
+<li><p>主界面对应的(PlayOrPause)响应函数执行，完成创建播放器，设置播放源，准备播放(调用ijkmp_prepare_async函数)</p>
+</li>
+<li><p>在准备播放函数中(prepare_async())启用消息队列并创建消息循环线程(<strong>消息循环队列有解耦的作用</strong>)，接着调用真正的播放器ffplay的众多接口</p>
+</li>
+<li><p>在ffplay.cpp中调用stream_open(该函数主要完成初始化工作),接下来就是ffplay框架的一系列执行动作了，即完成解复用，解码，音频输出，视频图像显示，音视频同步等等（注意ffplay播放器read_thread还完成了将相关消息放到消息队列的过程，这样消息循环线程就可以取相应消息并让播放器完成相应的动作。）</p>
+</li>
+</ul>
+</blockquote>
+<p>整个ffplay的执行过程一图流如下：(参考八小时码字员)</p>
+<img src="/2025/02/18/player/image-20250218222358324.png" class="" title="image-20250218222358324">
+
+<h3 id="1-2-ijkplayer主要的改进之处–消息循环机制"><a href="#1-2-ijkplayer主要的改进之处–消息循环机制" class="headerlink" title="1.2 ijkplayer主要的改进之处–消息循环机制"></a>1.2 ijkplayer主要的改进之处–消息循环机制</h3><p>相比于ffplay播放器，ijkplayer主要增加了一个独立的消息队列，在播放按键被按下后便会有一个消息循环线程一直执行。这里也给出一个qt环境下该机制的总结图解。</p>
+<img src="/2025/02/18/player/image-20250220210418225.png" class="" title="image-20250220210418225">
+
+<p>上面循环机制中牵涉到了状态的转换，而播放器状态的检查主要在ijkplayer的<code>ijkmp_prepare_async_l</code>和<code>ikjmp_chkst_start_l</code>函数中，即如果状态为错误状态，那么就会释放内存并结束，下面这张状态机图，描述了播放器状态转换的流程。</p>
+<style>.ljlavmyljcfu{zoom: 50%;}</style><img src="/2025/02/18/player/image-20250220210507008.png" class="ljlavmyljcfu" alt="image-20250220210507008">
+
+<p>qt环境中，消息队列中的消息在message中被取出来，并通知上层ui主界面 ，而ijkplayer也需要通知上层的app处理消息，因此这里也给出添加注释后ijkplayer中的消息循环函数，以便读者区分。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//相当于主界面的消息循环函数</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">media_player_msg_loop</span><span class="params">(<span class="type">void</span>* arg)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    @autoreleasepool &#123;<span class="comment">// 创建自动释放池以管理内存</span></span><br><span class="line">        IjkMediaPlayer *mp = (IjkMediaPlayer*)arg; </span><br><span class="line">        <span class="comment">// 创建一个弱引用的播放器控制器，避免循环引用</span></span><br><span class="line">        __weak IJKFFMoviePlayerController *ffpController = <span class="built_in">ffplayerRetain</span>(<span class="built_in">ijkmp_set_weak_thiz</span>(mp, <span class="literal">NULL</span>));</span><br><span class="line">        <span class="comment">// 消息循环主体，当控制器存在时持续运行</span></span><br><span class="line">        <span class="keyword">while</span> (ffpController) &#123;</span><br><span class="line">            @autoreleasepool &#123;<span class="comment">// 为每次循环创建独立的自动释放池</span></span><br><span class="line">                <span class="comment">// 获取一个新的消息对象</span></span><br><span class="line">                IJKFFMoviePlayerMessage *msg = [ffpController obtainMessage];</span><br><span class="line">                <span class="keyword">if</span> (!msg)</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                </span><br><span class="line">			   <span class="comment">// 从消息队列中获取消息，timeout为1</span></span><br><span class="line">                <span class="type">int</span> retval = <span class="built_in">ijkmp_get_msg</span>(mp, &amp;msg-&gt;_msg, <span class="number">1</span>);</span><br><span class="line">                <span class="keyword">if</span> (retval &lt; <span class="number">0</span>)</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">                <span class="comment">// block-get should never return 0</span></span><br><span class="line">                <span class="built_in">assert</span>(retval &gt; <span class="number">0</span>);	<span class="comment">// 确保消息获取成功</span></span><br><span class="line">                <span class="comment">// 通知app上层处理消息. 在主线程上异步处理消息事件</span></span><br><span class="line">                [ffpController performSelectorOnMainThread:@<span class="built_in">selector</span>(postEvent:) withObject:msg waitUntilDone:NO];</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">		<span class="comment">// 减少播放器引用计数并释放资源</span></span><br><span class="line">        <span class="comment">// retained in prepare_async, before SDL_CreateThreadEx</span></span><br><span class="line">        <span class="built_in">ijkmp_dec_ref_p</span>(&amp;mp);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-解复用"><a href="#2-解复用" class="headerlink" title="2.解复用"></a>2.解复用</h2><blockquote>
+<p>因为从read_thread开始，ijkplayer主要是按照ffplay的流程写的，所以下面也基本按照ffplay的总结了。</p>
+</blockquote>
+<p>在stream_open函数中创建读数据线程read_thread();解复用在该线程中完成</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">is-&gt;read_tid = <span class="built_in">SDL_CreateThreadEx</span>(&amp;is-&gt;_read_tid, read_thread, ffp, <span class="string">&quot;ff_read&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<p>—-&gt;来到read_thread()中</p>
+<blockquote>
+<p>引用<a href="https://www.jianshu.com/p/daf0a61cc1e0">ijkplayer框架深入剖析 - 简书</a></p>
+<p><strong>read_thread主要完成解复用，并得到解码前音视频流分开后各自的包队列。</strong></p>
+<ol>
+<li><p>创建上下文结构体，这个结构体是最上层的结构体，表示输入上下文</p>
+   <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">ic = <span class="built_in">avformat_alloc_context</span>();</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>设置中断函数，如果出错或者退出，就可以立刻退出</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">ic-&gt;interrupt_callback.callback = decode_interrupt_cb;</span><br><span class="line">  ic-&gt;interrupt_callback.opaque = is;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>打开文件，主要是探测协议类型，如果是网络文件则创建网络链接等</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">err = <span class="built_in">avformat_open_input</span>(&amp;ic, is-&gt;filename, is-&gt;iformat, &amp;ffp-&gt;format_opts);</span><br></pre></td></tr></table></figure>
+
+<ol start="4">
+<li>探测媒体类型，可得到当前文件的封装格式，音视频编码参数等信息</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">err = <span class="built_in">avformat_find_stream_info</span>(ic, opts);</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>打开视频、音频解码器。在此会打开相应解码器，并创建相应的解码线程。</p>
+   <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">stream_component_open</span>(ffp, st_index[AVMEDIA_TYPE_AUDIO]);</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>读取媒体数据，<strong>得到的是音视频分离的解码前数据</strong></p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">ret = <span class="built_in">av_read_frame</span>(ic, pkt);</span><br><span class="line">  <span class="comment">//被读取出来的数据如果不入包队列PacketQueue就要释放,而且必须要手动释放packet的数据</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>将音视频数据分别送入相应的queue中</p>
+</li>
+</ol>
+  <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (pkt-&gt;stream_index == is-&gt;audio_stream &amp;&amp; pkt_in_play_range) &#123;</span><br><span class="line">   <span class="built_in">packet_queue_put</span>(&amp;is-&gt;audioq, pkt);</span><br><span class="line">   &#125; <span class="keyword">else</span> <span class="keyword">if</span> (pkt-&gt;stream_index == is-&gt;video_stream &amp;&amp; pkt_in_play_range &amp;&amp; !(is-&gt;video_st &amp;&amp; (is-&gt;video_st-&gt;disposition &amp; AV_DISPOSITION_ATTACHED_PIC))) &#123;</span><br><span class="line">   <span class="built_in">packet_queue_put</span>(&amp;is-&gt;videoq, pkt);</span><br><span class="line">    ......</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="built_in">av_packet_unref</span>(pkt);<span class="comment">//释放pkt的数据</span></span><br><span class="line">&#125;   </span><br></pre></td></tr></table></figure>
+
+<p>重复6、7步，即可不断获取待播放的数据。</p>
+</blockquote>
+<h2 id="3-解码"><a href="#3-解码" class="headerlink" title="3. 解码"></a>3. 解码</h2><style>.yihyqhelmnzn{zoom: 67%;}</style><img src="/2025/02/18/player/image-20250220224325219.png" class="yihyqhelmnzn" alt="image-20250220224325219">
+
+<ul>
+<li>解码定义：<strong>将压缩的视频&#x2F;音频数据转换回原始的未压缩格式</strong></li>
+</ul>
+<p>在stream_component_open()中启动了几个解码线程,分别为音频解码线程audio_thread, 视频解码线程video_thread，字母解码线程subtitle_thread</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//实际线程创建是在decoder_start中</span></span><br><span class="line"><span class="comment">//static int decoder_start(Decoder *d, int (*fn)(void *), const char *thread_name, void* arg)</span></span><br><span class="line">d-&gt;decoder_tid = <span class="built_in">SDL_CreateThread</span>(fn, thread_name, arg);    <span class="comment">// 创建解码线程</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>stream_component_open函数作用：</strong></p>
+<ul>
+<li><p>包含decode_init和decoder_start</p>
+</li>
+<li><p><strong>打开对应的解码器</strong>并作初始化</p>
+</li>
+<li><p><strong>创建和启动解码线程(audio_thread, video_thread)</strong></p>
+</li>
+<li><p><strong>初始化音频或视频输出设备(audio_open)</strong></p>
+</li>
+</ul>
+<h3 id="3-1视频解码线程video-thread"><a href="#3-1视频解码线程video-thread" class="headerlink" title="3.1视频解码线程video_thread"></a>3.1视频解码线程video_thread</h3><p>该线程的总体流程为：</p>
+<blockquote>
+<ol>
+<li>获取stream timebase，以便将frame的pts转成秒为单位(注意这里frame定义为<code>AVFrame *frame = av_frame_alloc();</code>，即解码后的帧数据)</li>
+<li>获取帧率，以便计算每帧picture的duration</li>
+<li>获取解码后的视频帧，具体调⽤**get_video_frame()**实现</li>
+<li>计算帧持续时间和换算pts值为秒</li>
+<li>将解码后的视频帧插⼊队列，具体调⽤queue_picture()实现</li>
+<li><strong>释放frame对应的数据</strong>(<code>av_frame_free(&amp;frame);</code>)</li>
+</ol>
+</blockquote>
+<ul>
+<li><p>get_video_frame()函数</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">static</span> <span class="type">int</span> <span class="title">get_video_frame</span><span class="params">(VideoState *is, AVFrame *frame)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="type">int</span> got_picture;</span><br><span class="line">	<span class="comment">// 1. 获取解码后的视频帧</span></span><br><span class="line">	<span class="keyword">if</span> ((got_picture = <span class="built_in">decoder_decode_frame</span>(&amp;is-&gt;viddec, frame, <span class="literal">NULL</span></span><br><span class="line">)) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="number">-1</span>; <span class="comment">// 返回-1意味着要退出解码线程, 所以要分析decoder_decode_frame什么情况下返回-1</span></span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">if</span> (got_picture) &#123;</span><br><span class="line">	<span class="comment">//分析获取到的该帧是否要drop掉, 该机制的⽬的是在放⼊帧队列前先drop掉过时的视频帧</span></span><br><span class="line">		.....</span><br><span class="line"> 	&#125;</span><br><span class="line">	<span class="keyword">return</span> got_picture;    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<p>​	其中<code>decoder_decode_frame</code>是ffplay封装好的函数,其中就有了<code>avcodec_send_packet</code>往解码器发送解复用后的包队列数据，和<code>avcodec_receive_frame</code>接收解码后的帧</p>
+<ul>
+<li>get_video_frame()函数的流程为：</li>
+</ul>
+<blockquote>
+<p>1.调⽤decoder_decode_frame 解码并获取解码后的视频帧；(要拿到⼀帧解码数据，或解码出错、⽂件结束，才会返回。)</p>
+<p>2.分析如果获取到帧是否需要drop掉（逻辑就是如果刚解出来就落后主时钟，那就没有必要放⼊Frame队<br>列，再拿去播放，但是丢帧也是有⼀定的条件的.</p>
+<p><strong>即需要以下因素都成立才丢帧</strong></p>
+<ul>
+<li><p>!isnan(diff)：当前pts和主时钟的差值是有效值</p>
+</li>
+<li><p>fabs(diff) &lt; AV_NOSYNC_THRESHOLD：差值在可同步范围内，这⾥设置的是10秒，意思是如果差<br>值太⼤这⾥就不管了了，可能流本身录制的时候就有问题，这⾥不能随便把帧都drop掉；</p>
+</li>
+<li><p>diff - is-&gt;frame_last_filter_delay &lt; 0：和过滤器有关系，不设置过滤器时简化为 diff &lt; 0;</p>
+</li>
+<li><p>is-&gt;viddec.pkt_serial &#x3D;&#x3D; is-&gt;vidclk.serial：解码器的serial和时钟的serial相同，即是⾄少显示了<br>⼀帧图像，因为只有显示的时候才调⽤update_video_pts()设置到video clk的serial；</p>
+</li>
+<li><p>is-&gt;videoq.nb_packets：⾄少packetqueue有1个包。</p>
+</li>
+</ul>
+</blockquote>
+<ul>
+<li>decoder_decode_frame函数</li>
+</ul>
+<p>​	该函数内部有一个循环，循环主要分成以下3个步骤</p>
+<blockquote>
+<ol>
+<li><p>同⼀播放序列流连续的情况下(即d-&gt;queue-&gt;serial &#x3D;&#x3D; d-&gt;pkt_serial)，不断调⽤avcodec_receive_frame获取解码后的frame。取到帧就直接返回1，错误返回0</p>
+</li>
+<li><p>获取⼀个packet，如果播放序列不⼀致(数据不连续，即d-&gt;queue-&gt;serial !&#x3D; d-&gt;pkt_serial)则过滤掉“过时”的packet。这个过滤操作具体为</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">    <span class="comment">// 2.1 如果没有数据可读则唤醒read_thread, 实际是continue_read_thread SDL_cond</span></span><br><span class="line">    <span class="keyword">if</span> (d-&gt;queue-&gt;nb_packets == <span class="number">0</span>)  <span class="comment">// 没有数据可读</span></span><br><span class="line">        <span class="built_in">SDL_CondSignal</span>(d-&gt;empty_queue_cond);<span class="comment">// 通知read_thread(生产者线程)放入packet</span></span><br><span class="line">    <span class="comment">// 阻塞式读取packet,这里就对应“过滤”操作</span></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">    packet_queue_get内部有一个等待线程，即SDL_CondWait(q-&gt;cond, q-&gt;mutex);（设置block=1了，所以是阻塞模式，需要等待数据）。</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">packet_queue_get</span>(d-&gt;queue, &amp;pkt, <span class="number">1</span>, &amp;d-&gt;pkt_serial) &lt; <span class="number">0</span>) <span class="comment">// block=1 表示使用阻塞模式</span></span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>; <span class="comment">//返回-1表示队列被标记为中止了</span></span><br><span class="line">&#125; <span class="keyword">while</span> (d-&gt;queue-&gt;serial != d-&gt;pkt_serial);<span class="comment">// 如果不是同一播放序列(流不连续)则继续读取</span></span><br></pre></td></tr></table></figure>
+
+<p>补充：packet_queue_get函数</p>
+<p>​	packet_queue_get 返回小于0的情况：</p>
+<ul>
+<li>队列被标记为中止（abort_request &#x3D; 1）</li>
+<li>队列被销毁或无效</li>
+<li>发生了系统错误</li>
+<li>播放器请求停止</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">static</span> <span class="type">int</span> <span class="title">packet_queue_get</span><span class="params">(PacketQueue *q, AVPacket *pkt, <span class="type">int</span> block, <span class="type">int</span> *serial)</span> </span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> ret;</span><br><span class="line">    <span class="built_in">SDL_LockMutex</span>(q-&gt;mutex);  <span class="comment">// 加锁</span></span><br><span class="line">    <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">        <span class="comment">// 检查队列状态</span></span><br><span class="line">        <span class="keyword">if</span> (q-&gt;abort_request) &#123;</span><br><span class="line">            ret = <span class="number">-1</span>;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 尝试获取数据包</span></span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">av_fifo_size</span>(q-&gt;pkt_list) &gt;= <span class="built_in">sizeof</span>(MyAVPacketList)) &#123;</span><br><span class="line">            <span class="comment">// 有数据可读，读取数据包</span></span><br><span class="line">            ret = <span class="number">1</span>;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 没有数据可读</span></span><br><span class="line">        <span class="keyword">if</span> (!block) &#123;  <span class="comment">// 非阻塞模式</span></span><br><span class="line">            ret = <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 阻塞模式：等待数据</span></span><br><span class="line">        <span class="built_in">SDL_CondWait</span>(q-&gt;cond, q-&gt;mutex);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">SDL_UnlockMutex</span>(q-&gt;mutex);  <span class="comment">// 解锁</span></span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>将packet送⼊解码器</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">avcodec_send_packet</span>(d-&gt;avctx, &amp;pkt);</span><br></pre></td></tr></table></figure></li>
+</ol>
+</blockquote>
+<h3 id="3-2-音频解码线程audio-thread"><a href="#3-2-音频解码线程audio-thread" class="headerlink" title="3.2 音频解码线程audio_thread"></a>3.2 音频解码线程audio_thread</h3><p>解码后的音频帧frame放入音频帧队列sampq。音频解码流程和视频相差不大</p>
+<p>注意几个frame结构体的区别：</p>
+<ul>
+<li><p>AVFrame(结构体): 可以看作解码后数据的最基本单位</p>
+</li>
+<li><p>Frame(结构体)：还包含了视频控制信息，其中包含了AVFrame</p>
+</li>
+<li><p>FrameQueue(结构体):其中包含了一个数据队列，用于存放Frame类型数据</p>
+</li>
+</ul>
+<p>下面为audio_thread中代码</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> ((got_frame = <span class="built_in">decoder_decode_frame</span>(&amp;is-&gt;auddec, frame, <span class="literal">NULL</span>)) &lt; <span class="number">0</span>)</span><br><span class="line">        <span class="keyword">goto</span> the_end;</span><br><span class="line">    <span class="keyword">if</span> (got_frame) &#123;</span><br><span class="line">        tb = &#123; <span class="number">1</span>, frame-&gt;sample_rate &#125;; <span class="comment">//采样率一般是44.1khz</span></span><br><span class="line">        <span class="comment">//af是队列中的一个槽slot）作为队列中的一个容器，用于存储解码后的帧信息（如 pts、duration</span></span><br><span class="line">        <span class="keyword">if</span> (!(af = <span class="built_in">frame_queue_peek_writable</span>(&amp;is-&gt;sampq)))</span><br><span class="line">            <span class="keyword">goto</span> the_end;</span><br><span class="line">        <span class="comment">// 计算 PTS（显示时间戳</span></span><br><span class="line">        <span class="comment">// 将解码后的PTS 从采样点数转换为秒，即af-&gt;pts = 当前对应采样点* 1/采样率</span></span><br><span class="line">        af-&gt;pts = (frame-&gt;pts == AV_NOPTS_VALUE) ? NAN : frame-&gt;pts * <span class="built_in">av_q2d</span>(tb);<span class="comment">//av_q2d(tb)前一个除以后一个数</span></span><br><span class="line">        <span class="comment">// 设置帧位置和序列号</span></span><br><span class="line">        af-&gt;pos = <span class="built_in">av_frame_get_pkt_pos</span>(frame);<span class="comment">//获取帧对应的数据包在文件中的字节位置</span></span><br><span class="line">        af-&gt;serial = is-&gt;auddec.pkt_serial;</span><br><span class="line">        <span class="comment">// 计算帧持续时间（样本数/采样率）</span></span><br><span class="line">        af-&gt;duration = <span class="built_in">av_q2d</span>(&#123; frame-&gt;nb_samples, frame-&gt;sample_rate &#125;);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//AVframe和AVpacket都是结构体，一般定义一个指向其的指针。引用计数主要就是为了避免不同的指针指向同一空间(浅拷贝问题)时</span></span><br><span class="line">        <span class="comment">// 会导致的内存重复释放问题。</span></span><br><span class="line">        <span class="built_in">av_frame_move_ref</span>(af-&gt;frame, frame); <span class="comment">//frame是解码后得到的帧(数据类型为指向AVFrame的指针)，af-&gt;frame是Frame结构体中的指向AVFrame的指针，这里将解码后的帧数据全都转移到Frame中去</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">//解码后的帧传递给播放线程</span></span><br><span class="line">        <span class="built_in">frame_queue_push</span>(&amp;is-&gt;sampq); <span class="comment">//进入该函数唤醒msg_queue_get()取消息</span></span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125; <span class="keyword">while</span> (ret &gt;= <span class="number">0</span> || ret == <span class="built_in">AVERROR</span>(EAGAIN) || ret == AVERROR_EOF);<span class="comment">//AVERROR(EAGAIN)需要更多数据</span></span><br></pre></td></tr></table></figure>
+
+<p>注意音频解码中，设置时间基<code>tb = (AVRational)&#123;1, frame-&gt;sample_rate&#125;;</code> ，而视频解码中设置时间基为<code>stream-&gt;base_base</code>。实际上在decoder_decode_frame()函数中</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//decoder_decode_frame()函数中	</span></span><br><span class="line"><span class="keyword">case</span> AVMEDIA_TYPE_AUDIO:</span><br><span class="line">    ret = <span class="built_in">avcodec_receive_frame</span>(d-&gt;avctx, frame);</span><br><span class="line">    <span class="keyword">if</span> (ret &gt;= <span class="number">0</span>) &#123;</span><br><span class="line">        AVRational tb = &#123;<span class="number">1</span>, frame-&gt;sample_rate&#125;;    <span class="comment">//</span></span><br><span class="line">        <span class="keyword">if</span> (frame-&gt;pts != AV_NOPTS_VALUE) &#123;</span><br><span class="line">            <span class="comment">// 如果frame-&gt;pts正常则先将其从pkt_timebase转成&#123;1, frame-&gt;sample_rate&#125;</span></span><br><span class="line">            <span class="comment">// pkt_timebase实质就是stream-&gt;time_base</span></span><br><span class="line">            frame-&gt;pts = <span class="built_in">av_rescale_q</span>(frame-&gt;pts, d-&gt;avctx-&gt;pkt_timebase, tb);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (d-&gt;next_pts != AV_NOPTS_VALUE) &#123;</span><br><span class="line">            <span class="comment">// 如果frame-&gt;pts不正常则使用上一帧更新的next_pts和next_pts_tb</span></span><br><span class="line">            <span class="comment">// 转成&#123;1, frame-&gt;sample_rate&#125;</span></span><br><span class="line">            frame-&gt;pts = <span class="built_in">av_rescale_q</span>(d-&gt;next_pts, d-&gt;next_pts_tb, tb);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (frame-&gt;pts != AV_NOPTS_VALUE) &#123;</span><br><span class="line">            <span class="comment">// 根据当前帧的pts和nb_samples预估下一帧的pts</span></span><br><span class="line">            d-&gt;next_pts = frame-&gt;pts + frame-&gt;nb_samples;</span><br><span class="line">            d-&gt;next_pts_tb = tb; <span class="comment">// 设置timebase</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">	<span class="keyword">break</span>;</span><br></pre></td></tr></table></figure>
+
+<p>从上可以看出来，将audio frame从decoder_decode_frame取出来后，已由stream-&gt;time_base转成了{1, frame-&gt;sample_rate}作为time_base。</p>
+<h2 id="4-音视频输出"><a href="#4-音视频输出" class="headerlink" title="4. 音视频输出"></a>4. 音视频输出</h2><h3 id="4-1-音频输出"><a href="#4-1-音频输出" class="headerlink" title="4.1 音频输出"></a>4.1 音频输出</h3><p>播放流程总结：</p>
+<blockquote>
+<p>[SDL音频设备] -&gt; [需要数据] -&gt; [调用sdl_audio_callback] -&gt; [从音频队列获取数据] -&gt; [填充到设备缓冲区] -&gt; [播放]</p>
+</blockquote>
+<p>在ffplay中，音频输出的函数调用结构为</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//在read_thread()函数中</span></span><br><span class="line">--&gt;stream_componet_open</span><br><span class="line">	--&gt;audio_open   <span class="comment">//SDL_OpenAudio,打开音频输出设备</span></span><br><span class="line">    	--&gt;sdl_audio_callback <span class="comment">//音频pcm数据回调函数</span></span><br><span class="line">       		--&gt;audio_decode_frame <span class="comment">//该函数从解码后的帧队列中取一帧并放到audio_buf中，以供sdl回调函数取数据</span></span><br></pre></td></tr></table></figure>
+
+<p>而在ijkplayer中，ffplay.c这部分是将“音频输出”这个消息放到消息队列，并由主界面的message_loop读取消息。</p>
+<p>下面一步步分析这几个函数的流程</p>
+<ul>
+<li><p>stream_component_open中</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">/* prepare audio output */</span></span><br><span class="line"><span class="comment">//打开音频流</span></span><br><span class="line"><span class="keyword">if</span> ((ret = <span class="built_in">audio_open</span>(is, channel_layout, nb_channels, sample_rate, &amp;is-&gt;audio_tgt)) &lt; <span class="number">0</span>)<span class="comment">//调用audio_open,其中有sdl回调函数</span></span><br><span class="line">    <span class="keyword">goto</span> fail;</span><br><span class="line">is-&gt;audio_hw_buf_size = ret;<span class="comment">//音频硬件设备的缓冲区大小.</span></span><br><span class="line">is-&gt;audio_src = is-&gt;audio_tgt; <span class="comment">////暂且将数据源参数等同于⽬标输出参数</span></span><br><span class="line"><span class="comment">//初始化audio_buf相关参数</span></span><br><span class="line">is-&gt;audio_buf_size = <span class="number">0</span>;</span><br><span class="line">is-&gt;audio_buf_index = <span class="number">0</span>;</span><br></pre></td></tr></table></figure>
+
+<p>在这里牵涉了几个缓存区</p>
+<blockquote>
+<ul>
+<li>audio_buf</li>
+</ul>
+<p>​    audio_decode_frame从解码后的音频帧队列sampq取pcm数据，并存入audio_buf指向的内存空间</p>
+<ul>
+<li>audio_buf1</li>
+</ul>
+<p>​    audio_decode_frame函数重采样机制定义的指针，audio_buf1指向重采样后的数据</p>
+<ul>
+<li>audio_hw_buf</li>
+</ul>
+<p>​    SDL_audio_callback取数据就存入该音频设备缓存区(在该函数中audio_decode_frame取的pcm是数据后面都会拷贝到stream指向的内存空间，这个内存空间就是音频设备缓存区)</p>
+<hr>
+<p>对应的几个size</p>
+<ul>
+<li>audio_buf_size: audio_buf的总⼤⼩，有效的PCMsize</li>
+<li>audio_buf_index: 下⼀次可读的audio_buf的index位置。</li>
+<li>audio_write_buf_size：audio_buf剩余的buffer⻓度，即audio_buf_size - audio_buf_index</li>
+<li>audio_buf1_size:  在audio_decode_frame中申请的缓冲区大小(所以该大小代表最初buf的上限大小)，经过重采样后得到缓存区大小就是audio_buf_size</li>
+</ul>
+</blockquote>
+</li>
+<li><p>audio_open()函数中</p>
+</li>
+</ul>
+<p>​	设置期望的输出参数：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">wanted_spec.format = AUDIO_S16SYS; <span class="comment">//sdl支持的音频采样点格式</span></span><br><span class="line">wanted_spec.silence = <span class="number">0</span>;</span><br><span class="line"><span class="comment">//sample是一次回调处理的采样点数</span></span><br><span class="line"><span class="comment">//例如1024表示一次回调处理1024个采样点</span></span><br><span class="line">wanted_spec.samples = <span class="built_in">FFMAX</span>(SDL_AUDIO_MIN_BUFFER_SIZE, <span class="number">2</span> &lt;&lt; <span class="built_in">av_log2</span>(wanted_spec.freq / <span class="built_in">SDL_AoutGetAudioPerSecondCallBacks</span>(ffp-&gt;aout)));</span><br><span class="line">wanted_spec.callback = sdl_audio_callback; <span class="comment">//回调</span></span><br><span class="line">wanted_spec.userdata = opaque; <span class="comment">//用户数据</span></span><br></pre></td></tr></table></figure>
+
+<p>​	打开音频设备</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// SDL_OpenAudio 是 SDL 1.2 的接口，较为简单;</span></span><br><span class="line"><span class="comment">//SDL_AoutOpenAudio 是 SDL 2.0 中更先进的音频设备管理接口</span></span><br><span class="line"><span class="keyword">while</span> (<span class="built_in">SDL_AoutOpenAudio</span>(ffp-&gt;aout, &amp;wanted_spec, &amp;spec) &lt; <span class="number">0</span>) &#123;<span class="comment">//打开音频设备</span></span><br><span class="line">    ....</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​	设置重采样要输出的格式</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//audio_hw_params就是做重采样要输出的参数格式</span></span><br><span class="line">audio_hw_params-&gt;fmt = AV_SAMPLE_FMT_S16;</span><br><span class="line">audio_hw_params-&gt;freq = spec.freq;</span><br><span class="line">audio_hw_params-&gt;channel_layout = wanted_channel_layout;</span><br><span class="line">audio_hw_params-&gt;channels =  spec.channels;</span><br><span class="line"><span class="comment">//frame_size为一个音频样本点的大小(单位为字节)</span></span><br><span class="line">audio_hw_params-&gt;frame_size = <span class="built_in">av_samples_get_buffer_size</span>(<span class="literal">NULL</span>, audio_hw_params-&gt;channels, <span class="number">1</span>, audio_hw_params-&gt;fmt, <span class="number">1</span>);</span><br><span class="line"><span class="comment">//计算每秒的字节数</span></span><br><span class="line">audio_hw_params-&gt;bytes_per_sec = <span class="built_in">av_samples_get_buffer_size</span>(<span class="literal">NULL</span>, audio_hw_params-&gt;channels, audio_hw_params-&gt;freq, audio_hw_params-&gt;fmt, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
+
+<p>​	返回输出设备缓存区的大小（这个缓冲区在音频需要变速的场景下很有用，因为回调函数每次获取的数据量是固定的，但是变速后音频帧队列每帧的采样点数量会改变，从而导致输出设备变速的数据大小和SDL回调取的数据大小不一致）</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">return</span> spec.size; <span class="comment">//单位为字节</span></span><br></pre></td></tr></table></figure>
+
+<p><code>spec.size = wanted_sepc.sample * channels * frame_size</code></p>
+<p>例如一帧采样点为1024，双通道，音频格式为是s16，则<code>spec.size = 1024*2*2</code></p>
+<ul>
+<li>回调函数sdl_audio_callback</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//stream 拷贝pcm数据的指针</span></span><br><span class="line"><span class="comment">//len    需要拷贝的长度</span></span><br><span class="line"><span class="comment">//static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//主要逻辑</span></span><br><span class="line"><span class="comment">//len初始长度就是spec.size</span></span><br><span class="line"><span class="keyword">while</span> (len &gt; <span class="number">0</span>) &#123;<span class="comment">//循环取数据，直接达到要求的大小</span></span><br><span class="line">    <span class="comment">//音频缓冲区已经被读取完，需要重新从队列（sampq）中获取新的音频数据来继续播放。</span></span><br><span class="line">    <span class="keyword">if</span> (is-&gt;audio_buf_index &gt;= is-&gt;audio_buf_size) &#123;</span><br><span class="line">        <span class="comment">//从音频帧队列sampq中取pcm数据，大小为audio_size，注意单位是字节，输出不是采样点个数</span></span><br><span class="line">        audio_size = <span class="built_in">audio_decode_frame</span>(ffp); <span class="comment">//真正有效的pcm数据大小</span></span><br><span class="line">        <span class="keyword">if</span> (audio_size &lt; <span class="number">0</span>) &#123;<span class="comment">//没有数据了</span></span><br><span class="line">            <span class="comment">/* if error, just output silence */</span></span><br><span class="line">            <span class="comment">//静音</span></span><br><span class="line">            is-&gt;audio_buf = <span class="literal">NULL</span>;</span><br><span class="line">            is-&gt;audio_buf_size = SDL_AUDIO_MIN_BUFFER_SIZE / is-&gt;audio_tgt.frame_size * is-&gt;audio_tgt.frame_size;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (is-&gt;show_mode != SHOW_MODE_VIDEO)</span><br><span class="line">                <span class="built_in">update_sample_display</span>(is, (<span class="type">int16_t</span> *)is-&gt;audio_buf, audio_size);</span><br><span class="line">            <span class="comment">//audio_size即为audio_decode_frame返回的(重采样)实际输出数据大小(单位为字节)</span></span><br><span class="line">            is-&gt;audio_buf_size = audio_size; <span class="comment">//audio_buf的大小</span></span><br><span class="line">        &#125;</span><br><span class="line">        is-&gt;audio_buf_index = <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (is-&gt;auddec.pkt_serial != is-&gt;audioq.serial) &#123;</span><br><span class="line">        is-&gt;audio_buf_index = is-&gt;audio_buf_size;</span><br><span class="line">        <span class="built_in">memset</span>(stream, <span class="number">0</span>, len);</span><br><span class="line">        <span class="comment">// stream += len;</span></span><br><span class="line">        <span class="comment">// len = 0;</span></span><br><span class="line">        <span class="built_in">SDL_AoutFlushAudio</span>(ffp-&gt;aout);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// len1就是目前audio_buf还剩下的长度</span></span><br><span class="line">    len1 = is-&gt;audio_buf_size - is-&gt;audio_buf_index; </span><br><span class="line">    <span class="keyword">if</span> (len1 &gt; len) <span class="comment">//如果还剩下的长度比还要取的数据长度大</span></span><br><span class="line">        len1 = len; <span class="comment">//需要多少给多少</span></span><br><span class="line">    <span class="comment">//如果不需要静音且audio_buf不为空且音量最大则直接拷贝数据</span></span><br><span class="line">    <span class="keyword">if</span> (!is-&gt;muted &amp;&amp; is-&gt;audio_buf &amp;&amp; is-&gt;audio_volume == SDL_MIX_MAXVOLUME)</span><br><span class="line">        <span class="built_in">memcpy</span>(stream, (<span class="type">uint8_t</span> *)is-&gt;audio_buf + is-&gt;audio_buf_index, len1);<span class="comment">//数据拷贝</span></span><br><span class="line">    <span class="keyword">else</span> &#123;<span class="comment">//调整音频</span></span><br><span class="line">        <span class="built_in">memset</span>(stream, <span class="number">0</span>, len1);</span><br><span class="line">        <span class="keyword">if</span> (!is-&gt;muted &amp;&amp; is-&gt;audio_buf)</span><br><span class="line">            <span class="built_in">SDL_MixAudio</span>(stream, (<span class="type">uint8_t</span> *)is-&gt;audio_buf + is-&gt;audio_buf_index, len1, is-&gt;audio_volume);</span><br><span class="line">    &#125;</span><br><span class="line">    len -= len1;  <span class="comment">//减去每次读取的数据</span></span><br><span class="line">    stream += len1; <span class="comment">//stream拷贝数据的位置也做相应的位移</span></span><br><span class="line">    is-&gt;audio_buf_index += len1; <span class="comment">//audio_buf_index位置也更新</span></span><br><span class="line">&#125;</span><br><span class="line">is-&gt;audio_write_buf_size = is-&gt;audio_buf_size - is-&gt;audio_buf_index;</span><br><span class="line"> <span class="comment">/* Let&#x27;s assume the audio driver that is used by SDL has two periods. */</span></span><br><span class="line"><span class="comment">//设置音频同步的时钟  </span></span><br><span class="line"><span class="comment">//set_clock_at</span></span><br><span class="line">    <span class="keyword">if</span> (!std::<span class="built_in">isnan</span>(is-&gt;audio_clock)) &#123;</span><br><span class="line">        <span class="type">double</span> audio_clock = is-&gt;audio_clock / pVideoCtl-&gt;<span class="built_in">ffp_get_playback_rate</span>();</span><br><span class="line">        pVideoCtl-&gt;<span class="built_in">set_clock_at</span>(&amp;is-&gt;audclk, audio_clock  - (<span class="type">double</span>)(<span class="number">2</span> * is-&gt;audio_hw_buf_size + is-&gt;audio_write_buf_size) / is-&gt;audio_tgt.bytes_per_sec, is-&gt;audio_clock_serial, audio_callback_time / <span class="number">1000000.0</span>);</span><br><span class="line">        pVideoCtl-&gt;<span class="built_in">sync_clock_to_slave</span>(&amp;is-&gt;extclk, &amp;is-&gt;audclk);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>audio_decode_frame</li>
+</ul>
+<p>​	该函数主要完成的功能为：</p>
+<p>1.从sampq取⼀帧，必要时丢帧。如发⽣了seek，此时serial会不连续，就需要丢帧处理</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (!(af = <span class="built_in">frame_queue_peek_readable</span>(&amp;is-&gt;sampq)))</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    <span class="built_in">frame_queue_next</span>(&amp;is-&gt;sampq); <span class="comment">//获取下一帧，丢帧的前提就是下一帧存在</span></span><br><span class="line">&#125; <span class="keyword">while</span> (af-&gt;serial != is-&gt;audioq.serial); <span class="comment">//数据不连续</span></span><br></pre></td></tr></table></figure>
+
+<p>2.计算这⼀帧的字节数</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">data_size = <span class="built_in">av_samples_get_buffer_size</span>(<span class="literal">NULL</span>, af-&gt;frame-&gt;channels,</span><br><span class="line">                                       af-&gt;frame-&gt;nb_samples,   <span class="comment">//af指向Frame类型结构体</span></span><br><span class="line">                                       af-&gt;frame-&gt;format, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
+
+<p>3.获取这⼀帧的数据。对于frame格式和输出设备不同的，需要重采样；如果格式相同，则直接拷⻉指针输出即可</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//，重采样是否需要初始化在前面有进行判断，如果sdl支持的格式和采的解码音频帧格式不同就重采样</span></span><br><span class="line"><span class="keyword">if</span> (is-&gt;swr_ctx) &#123;</span><br><span class="line"> ....<span class="comment">//省略前面的   </span></span><br><span class="line">	is-&gt;audio_buf = is-&gt;audio_buf1;</span><br><span class="line">        <span class="type">int</span> bytes_per_sample = <span class="built_in">av_get_bytes_per_sample</span>(is-&gt;audio_tgt.fmt);</span><br><span class="line">    <span class="comment">//重采样后返回的实际数据大小resampled_data_size。单位为字节，len2是重采样后单个声道的采样点数</span></span><br><span class="line">    resampled_data_size = len2 * is-&gt;audio_tgt.channels * bytes_per_sample; </span><br><span class="line">&#125; <span class="keyword">else</span> &#123;<span class="comment">//如果不需要重采样</span></span><br><span class="line">	 is-&gt;audio_buf = af-&gt;frame-&gt;data[<span class="number">0</span>];</span><br><span class="line">      resampled_data_size = data_size;	    </span><br><span class="line">&#125;</span><br><span class="line">is-&gt;audio_buf = is-&gt;audio_buf1;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<p>该部分重采样的逻辑可阅读阅读查看，这里省略</p>
+<p>最后返回的resampled_data_size就是重采样后实际的audio_buf大小。</p>
+<p>4.更新audio_clock，audio_clock_serial。⽤于设置audclk.</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">/* update the audio clock with the pts */</span></span><br><span class="line"><span class="keyword">if</span> (!<span class="built_in">isnan</span>(af-&gt;pts))</span><br><span class="line">    is-&gt;audio_clock = af-&gt;pts + (<span class="type">double</span>) af-&gt;frame-&gt;nb_samples / af-&gt;frame-&gt;sample_rate;<span class="comment">//audio_clock指向这一帧的末尾</span></span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    is-&gt;audio_clock = NAN;</span><br><span class="line">is-&gt;audio_clock_serial = af-&gt;serial;</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-2-视频输出"><a href="#4-2-视频输出" class="headerlink" title="4.2 视频输出"></a>4.2 视频输出</h3><p>在ffplay中，视频输出的函数调用结构为</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//主函数中</span></span><br><span class="line">--&gt;<span class="built_in">event_loop</span>() <span class="comment">//</span></span><br><span class="line">	--&gt;<span class="built_in">refresh_loop_wait_event</span>() <span class="comment">//视频在这里显示</span></span><br><span class="line">		 --&gt;<span class="built_in">video_refresh</span>() </span><br><span class="line">			 --&gt;<span class="built_in">video_display</span>() </span><br><span class="line">				 --&gt;<span class="built_in">video_image_display</span>() </span><br><span class="line">					 --&gt;<span class="built_in">upload_texture</span>()    </span><br></pre></td></tr></table></figure>
+
+<p>ffplay中使用可以跨平台的SDL作为显示的SDK</p>
+<p>因此第一步就是SDL初始化—即先<code>SDL_Init</code>,创建窗口(<code>SDL_CreateWindow</code>)，创建渲染器(<code>SDL_CreateRenderer</code>)</p>
+<p>随后主函数调用stream_open，开启<strong>read_thread()<strong>数据读取线程,并调用播放控制相应循环</strong>event_loop</strong></p>
+<p>与视频画面输出有关的函数解析如下</p>
+<ul>
+<li>read_thread中（包含画面窗口的设置）</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//7 从待处理流中获取相关参数，设置显示窗口的宽度、高度及宽高比</span></span><br><span class="line"><span class="keyword">if</span> (st_index[AVMEDIA_TYPE_VIDEO] &gt;= <span class="number">0</span>) &#123;</span><br><span class="line">    AVStream *st = ic-&gt;streams[st_index[AVMEDIA_TYPE_VIDEO]];</span><br><span class="line">    AVCodecParameters *codecpar = st-&gt;codecpar;</span><br><span class="line">    <span class="comment">//根据流和帧宽高比猜测视频帧单个像素宽高比（像素的宽高比，注意不是图像的）</span></span><br><span class="line">    AVRational sar = <span class="built_in">av_guess_sample_aspect_ratio</span>(ic, st, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="keyword">if</span> (codecpar-&gt;width) &#123;</span><br><span class="line">        <span class="comment">// 设置显示窗口的大小和宽高比</span></span><br><span class="line">        <span class="built_in">set_default_window_size</span>(codecpar-&gt;width, codecpar-&gt;height, sar);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p> set_default_window_size设置了窗口的宽，高，同时还调用<code>calculate_display_rect(&amp;rect, 0, 0, max_width,max_height, width, height, sar);</code>获取了显示区域的起始坐标和大小</p>
+<ul>
+<li>refresh_loop_wait_event()</li>
+</ul>
+<p>视频画面显示逻辑部分，在event_loop()被调用。</p>
+<p>设置休眠等待时间</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="type">double</span> remaining_time = <span class="number">0.0</span>;</span><br></pre></td></tr></table></figure>
+
+<p>抽取输入设备的事件到事件队列中,并再次通过参数SDL_GETEVENT⾮阻塞查询队列中是否有事件</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">SDL_PumpEvents</span>();</span><br><span class="line"><span class="comment">////////</span></span><br><span class="line"><span class="built_in">SDL_PeepEvents</span>(event, <span class="number">1</span>, SDL_GETEVENT, SDL_FIRSTEVENT, S</span><br><span class="line">DL_LASTEVENT)</span><br></pre></td></tr></table></figure>
+
+<p>如果返回值不为0则有时间发生，函数要返回让event_loop处理事件，否则就调用video_refresh显示画面</p>
+<ul>
+<li>video_refresh</li>
+</ul>
+<p>该函数图解如下</p>
+<style>.xjasonumuwrr{zoom: 67%;}</style><img src="/2025/02/18/player/image-20250221174757834.png" class="xjasonumuwrr" alt="image-20250221174757834">
+
+<p>几个时间戳关系如下：</p>
+<p>(<strong>注意丢帧之前一定要保证下一帧存在</strong>)</p>
+<style>.xdrsgjupmkae{zoom:50%;}</style><img src="/2025/02/18/player/image-20250221174324289.png" class="xdrsgjupmkae" alt="image-20250221174324289">
+
+<ul>
+<li>video_display</li>
+</ul>
+<p>其中调用的下层函数不再过多介绍，主要的显示逻辑就要使用<code>video_image_display(is)</code>来显示一帧视频画面.该函数先<code>frame_queue_peek_last</code>取要显示的帧，然后upload_texture 更新图像数据到SDL_Texture(如果是解码图片帧队列像素格式不是sdl支持的像素格式，就要做图像格式转换<code>sws_scale</code>)，最后通过SDL_RenderCopyEx 拷⻉纹理给render显示。</p>
+<p><strong>tips:</strong></p>
+<ul>
+<li><p>当改变播放器窗口大小时，视频的显示宽高比能保持正常的原因就在于—–利用视频解码层保存的<strong>原始视频宽高比信息</strong>(SAR，每个像素的宽高比)，并在视频画面输出时通过<code>calculate_display_rect</code>计算视频正确的显示宽高比(DAR ).</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 转成真正的播放⽐例</span></span><br><span class="line">aspect_ratio = <span class="built_in">av_mul_q</span>(aspect_ratio, <span class="built_in">av_make_q</span>(pic_width, pic_height));</span><br></pre></td></tr></table></figure>
+
+<p>这样当窗口大小变化时，渲染层也会按照上面计算出来的播放比例就行等比例缩放。</p>
+</li>
+<li><p>以ffplay为例，窗口大小改变时，由upload_texture中的sws_scale来对原始数据（解码后的数据）进⾏缩放</p>
+</li>
+</ul>
+<hr>
+<p>下面也给出了参考ijkplayer，画面刷新逻辑的流程图</p>
+<style>.qwszzpdhgrxk{zoom: 50%;}</style><img src="/2025/02/18/player/image-20250221210703870.png" class="qwszzpdhgrxk" alt="image-20250221210703870">
+
+<h2 id="5-音视频同步"><a href="#5-音视频同步" class="headerlink" title="5. 音视频同步"></a>5. 音视频同步</h2><p>同步方式主要分为：</p>
+<ul>
+<li>以视频为主导</li>
+<li>以音频为主导</li>
+<li>以外部时钟为主导</li>
+</ul>
+<h3 id="以音频为主导"><a href="#以音频为主导" class="headerlink" title="以音频为主导"></a>以音频为主导</h3><p>由于人耳对于声音的敏感度相比视频更高，所以一般都是以音频为主导进行同步。下面也只介绍这一种同步方式（ffplay中的案例）</p>
+<p>视频与音频的同步主要通过音频的显示时间戳来维护一个参考时间轴，这样视频就可以通过与该轴上的时间戳进行比较，以判断是播快了，还是播慢了。下面讲讲代码中具体是怎么做的</p>
+<ul>
+<li><p>在ffplay中，音频显示时间戳audclk是在sdl回调函数中维护</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//sdl_audio_callback中</span></span><br><span class="line"><span class="keyword">if</span> (!std::<span class="built_in">isnan</span>(is-&gt;audio_clock)) &#123;</span><br><span class="line">    <span class="type">double</span> audio_clock = is-&gt;audio_clock / pVideoCtl-&gt;<span class="built_in">ffp_get_playback_rate</span>();</span><br><span class="line">    pVideoCtl-&gt;<span class="built_in">set_clock_at</span>(&amp;is-&gt;audclk, audio_clock  - (<span class="type">double</span>)(<span class="number">2</span> * is-&gt;audio_hw_buf_size + is-&gt;audio_write_buf_size) / is-&gt;audio_tgt.bytes_per_sec, is-&gt;audio_clock_serial, audio_callback_time / <span class="number">1000000.0</span>);</span><br><span class="line">    pVideoCtl-&gt;<span class="built_in">sync_clock_to_slave</span>(&amp;is-&gt;extclk, &amp;is-&gt;audclk); <span class="comment">//is-&gt;audclk就是音频显示时间戳pts</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在ffplay中，视频同步的逻辑主要在video_refresh()中完成。假如当**前系统时间time(audclk来维系的时间轴)**是介于vp帧起始时间戳和nextvp帧起始事件戳之间，那么就正常播放这一帧；当视频播放慢了(即time&gt; timer + lastvp的duration)，就丢掉当前vp帧，取nextvp帧(<strong>丢帧的前提就是存在nextvp帧</strong>，注意如果视频慢特别多，即当前图片的时间戳与参考的时间戳差值很多，才是直接丢帧，如果差的小就快速渲染当前帧并马上显示下一帧)；如果视频播放快了，就重复播放上一帧,即lastvp</p>
+</li>
+</ul>
+<h2 id="6-其它功能"><a href="#6-其它功能" class="headerlink" title="6. 其它功能"></a>6. 其它功能</h2><ul>
+<li><p>暂停：图片的暂停就是重复显示上一帧，而声音的暂停则是直接在<code>audio_decode_frame</code>函数中返回-1，回调函数取数据的缓存区audio_buf为空就按静音处理</p>
+</li>
+<li><p>逐帧播放step的本质就是播放一帧暂停</p>
+</li>
+<li><p>音量调节本质就是控制采样点的幅值(通过SDL_MixAudioFormat 调整音量，静音通过将音量设为0实现)</p>
+</li>
+<li><p>快进和快退的本质是seek到某个点重新开始播放</p>
+<ul>
+<li>ffplay通过 av_seek_frame() 实现跳转</li>
+<li>需要清空解码器缓存和播放队列</li>
+<li>重新计算音视频同步时间戳</li>
+</ul>
+</li>
+<li><p>音频倍速可以改变音频的采样率，采样率越高，每s采的样本点越多，每个样本点的持续时间就越短，速度就越快，但是这样会使声调变高；更好的方式是采用<strong>时间拉伸</strong>（Time Stretching）</p>
+</li>
+</ul>
+<blockquote>
+<p><strong>时间拉伸</strong></p>
+<ul>
+<li><strong>原理</strong>：通过算法拉伸或压缩音频时长，保持音调不变。常用算法如：<ul>
+<li><strong>WSOLA（Waveform Similarity Overlap-and-Add）</strong>：通过寻找相似波形片段进行重叠拼接。</li>
+<li><strong>Phase Vocoder</strong>：在频域调整音频时长，适用于音乐等复杂信号。</li>
+</ul>
+</li>
+<li><strong>实现</strong>：使用开源库（如SoundTouch、Sonic或FFmpeg的<code>libavfilter</code>）直接处理PCM数据。</li>
+</ul>
+</blockquote>
+<p>​		而视频倍速播放主要通过调整帧率或显示时间实现：</p>
+<p>​		方法主要有如下</p>
+<blockquote>
+<h4 id="a-跳帧（Frame-Dropping）"><a href="#a-跳帧（Frame-Dropping）" class="headerlink" title="a. 跳帧（Frame Dropping）"></a><strong>a. 跳帧（Frame Dropping）</strong></h4><ul>
+<li><strong>快放</strong>：丢弃部分帧（如2倍速时每秒显示60帧，原帧率30fps则每帧显示一次）。</li>
+<li><strong>缺点</strong>：可能导致画面卡顿，需智能选择丢弃非关键帧（如B帧）。</li>
+</ul>
+<h4 id="b-重复帧或插帧（Frame-Interpolation）"><a href="#b-重复帧或插帧（Frame-Interpolation）" class="headerlink" title="b. 重复帧或插帧（Frame Interpolation）"></a><strong>b. 重复帧或插帧（Frame Interpolation）</strong></h4><ul>
+<li><strong>慢放</strong>：重复帧或生成中间帧（通过光流法、AI插帧算法）。</li>
+<li><strong>缺点</strong>：插帧计算复杂度高，可能影响实时性。</li>
+</ul>
+<h4 id="c-时间戳调整"><a href="#c-时间戳调整" class="headerlink" title="c. 时间戳调整"></a><strong>c. 时间戳调整</strong></h4><ul>
+<li><strong>修改PTS&#x2F;DTS</strong>：调整每一帧的显示时间戳。例如，2倍速播放时，每帧的显示时间减半。</li>
+<li><strong>实现</strong>：在解码后调整<code>AVFrame.pts</code>，确保渲染器按新时间戳播放。</li>
+</ul>
+</blockquote>
+]]></content>
+      <categories>
+        <category>技术开发</category>
+        <category>音视频</category>
+      </categories>
+      <tags>
+        <tag>音视频</tag>
+        <tag>ijkplayer</tag>
+        <tag>ffplay</tag>
+      </tags>
   </entry>
 </search>
