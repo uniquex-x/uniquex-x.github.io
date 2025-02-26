@@ -22,30 +22,35 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":{"valine":{"order":-1}},"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="无限进步">
-<meta property="og:type" content="website">
-<meta property="og:title" content="liujiahua&#39;s personalBlog">
-<meta property="og:url" content="http://example.com/index.html">
+  <meta name="description" content="概述在使用hexo部署博客文章时，发现hexo默认的上传文件方式不太方便(如下) 1&#123;% asset_img image.png name %&#125;  于是上网搜索方案，发现typora配合其它转图片路径的插件的方案很方便，但是在试过hexo-asset-image和hexo-renderer-marked之后，发现直接在typora中粘贴图片(即markdown格式)还是无法在网">
+<meta property="og:type" content="article">
+<meta property="og:title" content="typora+hexo-asset-img插入文章图片">
+<meta property="og:url" content="http://example.com/2025/02/18/[%E5%8D%9A%E5%AE%A2]typora&hexo-asset-img%E9%85%8D%E5%90%88%E6%8F%92%E5%85%A5%E6%96%87%E7%AB%A0%E5%9B%BE%E7%89%87/index.html">
 <meta property="og:site_name" content="liujiahua&#39;s personalBlog">
-<meta property="og:description" content="无限进步">
+<meta property="og:description" content="概述在使用hexo部署博客文章时，发现hexo默认的上传文件方式不太方便(如下) 1&#123;% asset_img image.png name %&#125;  于是上网搜索方案，发现typora配合其它转图片路径的插件的方案很方便，但是在试过hexo-asset-image和hexo-renderer-marked之后，发现直接在typora中粘贴图片(即markdown格式)还是无法在网">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/%5B%E5%8D%9A%E5%AE%A2%5Dtypora&hexo-asset-img%E9%85%8D%E5%90%88%E6%8F%92%E5%85%A5%E6%96%87%E7%AB%A0%E5%9B%BE%E7%89%87/image-20250218221232758.png">
+<meta property="article:published_time" content="2025-02-18T13:57:08.000Z">
+<meta property="article:modified_time" content="2025-02-23T10:13:21.149Z">
 <meta property="article:author" content="Liu Jiahua">
+<meta property="article:tag" content="博客">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/%5B%E5%8D%9A%E5%AE%A2%5Dtypora&hexo-asset-img%E9%85%8D%E5%90%88%E6%8F%92%E5%85%A5%E6%96%87%E7%AB%A0%E5%9B%BE%E7%89%87/image-20250218221232758.png">
 
-<link rel="canonical" href="http://example.com/">
+<link rel="canonical" href="http://example.com/2025/02/18/[%E5%8D%9A%E5%AE%A2]typora&hexo-asset-img%E9%85%8D%E5%90%88%E6%8F%92%E5%85%A5%E6%96%87%E7%AB%A0%E5%9B%BE%E7%89%87/">
 
 
 <script id="page-configurations">
   // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
-    isHome : true,
-    isPost : false,
+    isHome : false,
+    isPost : true,
     lang   : 'zh-CN'
   };
 </script>
 
-  <title>liujiahua's personalBlog</title>
+  <title>typora+hexo-asset-img插入文章图片 | liujiahua's personalBlog</title>
   
 
 
@@ -181,122 +186,10 @@
         <div class="content-wrap">
           
 
-          <div class="content index posts-expand">
+          <div class="content post posts-expand">
             
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2025/02/23/[linux]%E5%9F%BA%E7%A1%80%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.png">
-      <meta itemprop="name" content="Liu Jiahua">
-      <meta itemprop="description" content="无限进步">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="liujiahua's personalBlog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2025/02/23/%5Blinux%5D%E5%9F%BA%E7%A1%80%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93/" class="post-title-link" itemprop="url">linux常用命令总结</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2025-02-23 21:57:08" itemprop="dateCreated datePublished" datetime="2025-02-23T21:57:08+08:00">2025-02-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-02-25 18:17:25" itemprop="dateModified" datetime="2025-02-25T18:17:25+08:00">2025-02-25</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/shell%E5%91%BD%E4%BB%A4/" itemprop="url" rel="index"><span itemprop="name">shell命令</span></a>
-                </span>
-            </span>
-
-          
-  
-  <span class="post-meta-item">
-    
-      <span class="post-meta-item-icon">
-        <i class="far fa-comment"></i>
-      </span>
-      <span class="post-meta-item-text">Valine：</span>
-    
-    <a title="valine" href="/2025/02/23/%5Blinux%5D%E5%9F%BA%E7%A1%80%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2025/02/23/%5Blinux%5D%E5%9F%BA%E7%A1%80%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93/" itemprop="commentCount"></span>
-    </a>
-  </span>
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>685</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>1 分钟</span>
-            </span>
-
-        </div>
-      </header>
 
     
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>一些常用shell命令的总结。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2025/02/23/%5Blinux%5D%E5%9F%BA%E7%A1%80%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
@@ -312,10 +205,9 @@
       <meta itemprop="name" content="liujiahua's personalBlog">
     </span>
       <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2025/02/18/%5B%E5%8D%9A%E5%AE%A2%5Dtypora&hexo-asset-img%E9%85%8D%E5%90%88%E6%8F%92%E5%85%A5%E6%96%87%E7%AB%A0%E5%9B%BE%E7%89%87/" class="post-title-link" itemprop="url">typora+hexo-asset-img插入文章图片</a>
-        </h2>
+        <h1 class="post-title" itemprop="name headline">
+          typora+hexo-asset-img插入文章图片
+        </h1>
 
         <div class="post-meta">
             <span class="post-meta-item">
@@ -344,6 +236,13 @@
             </span>
 
           
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
   
   <span class="post-meta-item">
     
@@ -382,153 +281,71 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>在使用hexo部署博客文章时，发现hexo默认的上传文件方式不太方便(如下)</p>
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>在使用hexo部署博客文章时，发现hexo默认的上传文件方式不太方便(如下)</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;% asset_img image.png name %&#125;</span><br></pre></td></tr></table></figure>
 
 <p>于是上网搜索方案，发现typora配合其它转图片路径的插件的方案很方便，但是在试过<code>hexo-asset-image</code>和<code>hexo-renderer-marked</code>之后，发现直接在typora中粘贴图片(即markdown格式)还是无法在网页上显示图片。</p>
 <p>以下是遇到的主要问题及解决方法</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2025/02/18/%5B%E5%8D%9A%E5%AE%A2%5Dtypora&hexo-asset-img%E9%85%8D%E5%90%88%E6%8F%92%E5%85%A5%E6%96%87%E7%AB%A0%E5%9B%BE%E7%89%87/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
+<span id="more"></span>
+
+<h2 id="问题1："><a href="#问题1：" class="headerlink" title="问题1："></a>问题1：</h2><p><strong>_post目录下如果在生成的.md目录插入图片就会生成两个同名的文件夹(实际上有一个后面多了一个空格)，导致默认的图片上传方式都出问题</strong></p>
+<p><strong>原因及解决方案</strong>：在修改_config.yml文件中的<strong>post_asset_folder为true</strong>之后，如果使用<code>hexo new xxx</code>的方式生成.md文件和同名文件夹，且同时还将typora的偏好设置为<code>./$&#123;filename&#125;</code>，那么就会出现这样的问题，解决办法就是直接手动创建一个.md文件，只要插入图片，typora就自动会生成一个同名文件夹，并加图片放入。（<font color='red'>注意不要将post_asset_folder又设回false了</font>）</p>
+<h2 id="问题2："><a href="#问题2：" class="headerlink" title="问题2："></a>问题2：</h2><p><strong>按照网上许多方法仍然无法直接使用<code>![](xx.png)</code>这种markdown格式插入图片</strong></p>
+<p><strong>原因分析</strong>：<font color='red'>该问题的主要原因在于插件版本和hexo版本不一致</font>。在本地生成的静态网页中我们可以按”F12”查看图片路径是否转换成功。</p>
+<p><img src="/%5B%E5%8D%9A%E5%AE%A2%5Dtypora&hexo-asset-img%E9%85%8D%E5%90%88%E6%8F%92%E5%85%A5%E6%96%87%E7%AB%A0%E5%9B%BE%E7%89%87/image-20250218221232758.png" alt="F12查看图片路径"></p>
+<p>如图所示，&#x2F;2025&#x2F;02&#x2F;18&#x2F;player&#x2F;xx这个目录就是<code>hexo g</code>执行后生成到public目录下的。</p>
+<ul>
+<li>从文件中查看，如果该目录下没有我们文章中出现的图片，则说明图片上传失败；</li>
+<li>而从网页端查看则如图所示，即图片源路径指向了对应的目录。</li>
+</ul>
+<p>上面两种方式都可以用来判断图片是否上传成功</p>
+<p><strong>解决办法:</strong></p>
+<p>由于我们使用的是hexo6.3.0版本，<code>hexo-asset-image</code>插件已经无法适配，所以这里直接下载另外一个<code>hexo-asset-img</code>插件即可。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install hexo-asset-img --save</span><br></pre></td></tr></table></figure>
+
+<p>随后，按照问题1的方式创建.md文件，直接在typora中粘贴图片，即可实现图片和文章一起上传至博客网站.</p>
+<p>在typora中图片插入的具体的格式如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">![命名](与.md同名文件夹/logo.png)</span><br></pre></td></tr></table></figure>
+
+
     </div>
 
     
     
     
+
       <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2025/02/18/[%E9%9F%B3%E8%A7%86%E9%A2%91]player/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.png">
-      <meta itemprop="name" content="Liu Jiahua">
-      <meta itemprop="description" content="无限进步">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="liujiahua's personalBlog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2025/02/18/%5B%E9%9F%B3%E8%A7%86%E9%A2%91%5Dplayer/" class="post-title-link" itemprop="url">播放器总结</a>
-        </h2>
+          <div class="post-tags">
+              <a href="/tags/%E5%8D%9A%E5%AE%A2/" rel="tag"><i class="fa fa-tag"></i> 博客</a>
+          </div>
 
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2025-02-18 17:57:08" itemprop="dateCreated datePublished" datetime="2025-02-18T17:57:08+08:00">2025-02-18</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-02-23 18:14:47" itemprop="dateModified" datetime="2025-02-23T18:14:47+08:00">2025-02-23</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%80%E6%9C%AF%E5%BC%80%E5%8F%91/" itemprop="url" rel="index"><span itemprop="name">技术开发</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%80%E6%9C%AF%E5%BC%80%E5%8F%91/%E9%9F%B3%E8%A7%86%E9%A2%91/" itemprop="url" rel="index"><span itemprop="name">音视频</span></a>
-                </span>
-            </span>
-
-          
-  
-  <span class="post-meta-item">
-    
-      <span class="post-meta-item-icon">
-        <i class="far fa-comment"></i>
-      </span>
-      <span class="post-meta-item-text">Valine：</span>
-    
-    <a title="valine" href="/2025/02/18/%5B%E9%9F%B3%E8%A7%86%E9%A2%91%5Dplayer/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2025/02/18/%5B%E9%9F%B3%E8%A7%86%E9%A2%91%5Dplayer/" itemprop="commentCount"></span>
-    </a>
-  </span>
-  
-  <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="far fa-file-word"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>19k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="far fa-clock"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>17 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="1-播放器实现概述"><a href="#1-播放器实现概述" class="headerlink" title="1. 播放器实现概述"></a>1. 播放器实现概述</h2><p>[<strong>搬运请标注出处</strong>⚠]一个播放器实现大致可以分为两块，即ui主界面，播放器功能模块。这两个模块之间还可以添加其它的模块进行解耦等，例如bilibili的开源项目ijkplayer的框架就是: UI主界面—ijkplayer核心—ff[音视频]player。其中ijkplayer作为ui主界面和ff[音视频]player之间的中转站(<strong>实际ijkplayer核心中也可以处理部分回调的消息，并不需要所有的消息都回到主界面的消息循环函数中处理</strong>)。下文将提炼ijkplayer和ffplay的源码，并主要谈谈qt环境下ijkplayer与ffplay两者不同之处以及相同之处 。(后续对音视频理解更深了会继续更新)</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2025/02/18/%5B%E9%9F%B3%E8%A7%86%E9%A2%91%5Dplayer/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
         
-      
-    </div>
 
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/02/18/%5B%E9%9F%B3%E8%A7%86%E9%A2%91%5Dplayer/" rel="prev" title="播放器总结">
+      <i class="fa fa-chevron-left"></i> 播放器总结
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2025/02/23/%5Blinux%5D%E5%9F%BA%E7%A1%80%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93/" rel="next" title="linux常用命令总结">
+      linux常用命令总结 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
       </footer>
+    
   </article>
   
   
-  
-
-
   
 
 
 
           </div>
           
+    <div class="comments" id="valine-comments"></div>
 
 <script>
   window.addEventListener('tabs:register', () => {
@@ -575,6 +392,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%981%EF%BC%9A"><span class="nav-number">2.</span> <span class="nav-text">问题1：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%982%EF%BC%9A"><span class="nav-number">3.</span> <span class="nav-text">问题2：</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 

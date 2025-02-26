@@ -1,13 +1,106 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>播放器总结</title>
-    <url>/2025/02/18/player/</url>
-    <content><![CDATA[<h2 id="1-播放器实现概述"><a href="#1-播放器实现概述" class="headerlink" title="1. 播放器实现概述"></a>1. 播放器实现概述</h2><p>[<strong>搬运请标注出处</strong>⚠]一个播放器实现大致可以分为两块，即ui主界面，播放器功能模块。这两个模块之间还可以添加其它的模块进行解耦等，例如bilibili的开源项目ijkplayer的框架就是: UI主界面—ijkplayer核心—ffplayer。其中ijkplayer作为ui主界面和ffplayer之间的中转站(<strong>实际ijkplayer核心中也可以处理部分回调的消息，并不需要所有的消息都回到主界面的消息循环函数中处理</strong>)。下文将提炼ijkplayer和ffplay的源码，并主要谈谈qt环境下ijkplayer与ffplay两者不同之处以及相同之处 。(后续对音视频理解更深了会继续更新)</p>
+    <title>linux常用命令总结</title>
+    <url>/2025/02/23/%5Blinux%5D%E5%9F%BA%E7%A1%80%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93/</url>
+    <content><![CDATA[<p>一些常用shell命令的总结。</p>
 <span id="more"></span>
 
-<img src="/2025/02/18/player/image-20250218222315603.png" class="" title="image-20250218222315603">
+<h2 id="基础概念"><a href="#基础概念" class="headerlink" title="基础概念"></a>基础概念</h2><ul>
+<li>shell ：即命令解释器，是用户和linux内核交互的桥梁，通过在shell终端输入命令让linux内核相应部分识别用户命令并处理。</li>
+</ul>
+<p>​	shell命令的基本格式为</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">命令 [option] 参数 </span><br></pre></td></tr></table></figure>
+<p>​	其中加”[]”符号表示可以不输入这个选项</p>
+<p><strong>tips</strong>: 对于不熟悉的命令可以使用<code>man 1 命令</code>或者<code>命令 --help</code>来查看说明</p>
+<h2 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h2><ol>
+<li>切换用户权限组</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">sudo su //切换为管理员</span><br><span class="line">exit //推出管理员权限</span><br></pre></td></tr></table></figure>
 
+<p>在命令前加<code>sudo</code>也可以使用管理员权限</p>
+<ol start="2">
+<li>创建目录</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">mkdir -m 目录名</span><br><span class="line">mkdir -r /home/hh # -r 可以递归的创建目录</span><br></pre></td></tr></table></figure>
+
+<p>3.删除目录或者文件</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">rm -i 文件名</span><br><span class="line">rm -r 目录名 #主要用来删除目录</span><br><span class="line">rm -f 文件名 #强制删除</span><br></pre></td></tr></table></figure>
+
+<p>4.切换路径</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cd /  #切换到根目录</span><br><span class="line">cd ~  #切换到家目录</span><br><span class="line">cd /home/xxx  </span><br></pre></td></tr></table></figure>
+
+<p>5.gedit 记事本</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">gedit main.c</span><br></pre></td></tr></table></figure>
+
+<p>6.查看文件</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cat main.c #查看文件内容并输出到shell终端</span><br><span class="line">cat -A 文件名  #隐藏的字符也可以查看</span><br></pre></td></tr></table></figure>
+
+<p>7.复制</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cp -r 源文件 目标文件 #可以复制目录的所有文件</span><br></pre></td></tr></table></figure>
+
+<p>8.移动或重命名</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">mv [选项] 源文件 目标文件</span><br><span class="line">mv old.txt new.txt #重命名单个文件</span><br><span class="line">mv old_folder new_folder #重命名目录</span><br><span class="line">mv file.txt /home/user/documents/newfile.txt #移动文件到其他目录并重命名</span><br></pre></td></tr></table></figure>
+
+<p>9.查看当前路径</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">pwd</span><br></pre></td></tr></table></figure>
+
+<p>10.查看当前目录文件</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">ls [option]</span><br><span class="line">ls -a #查看所有文件，包括隐藏的</span><br></pre></td></tr></table></figure>
+
+<p>11 解压缩</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">tar -zxvf xx.tar.gz # 解压缩tar.gz文件</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>linux</category>
+        <category>shell命令</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>typora+hexo-asset-img插入文章图片</title>
+    <url>/2025/02/18/%5B%E5%8D%9A%E5%AE%A2%5Dtypora&amp;hexo-asset-img%E9%85%8D%E5%90%88%E6%8F%92%E5%85%A5%E6%96%87%E7%AB%A0%E5%9B%BE%E7%89%87/</url>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>在使用hexo部署博客文章时，发现hexo默认的上传文件方式不太方便(如下)</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;% asset_img image.png name %&#125;</span><br></pre></td></tr></table></figure>
+
+<p>于是上网搜索方案，发现typora配合其它转图片路径的插件的方案很方便，但是在试过<code>hexo-asset-image</code>和<code>hexo-renderer-marked</code>之后，发现直接在typora中粘贴图片(即markdown格式)还是无法在网页上显示图片。</p>
+<p>以下是遇到的主要问题及解决方法</p>
+<span id="more"></span>
+
+<h2 id="问题1："><a href="#问题1：" class="headerlink" title="问题1："></a>问题1：</h2><p><strong>_post目录下如果在生成的.md目录插入图片就会生成两个同名的文件夹(实际上有一个后面多了一个空格)，导致默认的图片上传方式都出问题</strong></p>
+<p><strong>原因及解决方案</strong>：在修改_config.yml文件中的<strong>post_asset_folder为true</strong>之后，如果使用<code>hexo new xxx</code>的方式生成.md文件和同名文件夹，且同时还将typora的偏好设置为<code>./$&#123;filename&#125;</code>，那么就会出现这样的问题，解决办法就是直接手动创建一个.md文件，只要插入图片，typora就自动会生成一个同名文件夹，并加图片放入。（<font color='red'>注意不要将post_asset_folder又设回false了</font>）</p>
+<h2 id="问题2："><a href="#问题2：" class="headerlink" title="问题2："></a>问题2：</h2><p><strong>按照网上许多方法仍然无法直接使用<code>![](xx.png)</code>这种markdown格式插入图片</strong></p>
+<p><strong>原因分析</strong>：<font color='red'>该问题的主要原因在于插件版本和hexo版本不一致</font>。在本地生成的静态网页中我们可以按”F12”查看图片路径是否转换成功。</p>
+<p><img src="/%5B%E5%8D%9A%E5%AE%A2%5Dtypora&hexo-asset-img%E9%85%8D%E5%90%88%E6%8F%92%E5%85%A5%E6%96%87%E7%AB%A0%E5%9B%BE%E7%89%87/image-20250218221232758.png" alt="F12查看图片路径"></p>
+<p>如图所示，&#x2F;2025&#x2F;02&#x2F;18&#x2F;player&#x2F;xx这个目录就是<code>hexo g</code>执行后生成到public目录下的。</p>
+<ul>
+<li>从文件中查看，如果该目录下没有我们文章中出现的图片，则说明图片上传失败；</li>
+<li>而从网页端查看则如图所示，即图片源路径指向了对应的目录。</li>
+</ul>
+<p>上面两种方式都可以用来判断图片是否上传成功</p>
+<p><strong>解决办法:</strong></p>
+<p>由于我们使用的是hexo6.3.0版本，<code>hexo-asset-image</code>插件已经无法适配，所以这里直接下载另外一个<code>hexo-asset-img</code>插件即可。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">npm install hexo-asset-img --save</span><br></pre></td></tr></table></figure>
+
+<p>随后，按照问题1的方式创建.md文件，直接在typora中粘贴图片，即可实现图片和文章一起上传至博客网站.</p>
+<p>在typora中图片插入的具体的格式如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">![命名](与.md同名文件夹/logo.png)</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>疑难杂症</category>
+      </categories>
+      <tags>
+        <tag>博客</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>播放器总结</title>
+    <url>/2025/02/18/%5B%E9%9F%B3%E8%A7%86%E9%A2%91%5Dplayer/</url>
+    <content><![CDATA[<h2 id="1-播放器实现概述"><a href="#1-播放器实现概述" class="headerlink" title="1. 播放器实现概述"></a>1. 播放器实现概述</h2><p>[<strong>搬运请标注出处</strong>⚠]一个播放器实现大致可以分为两块，即ui主界面，播放器功能模块。这两个模块之间还可以添加其它的模块进行解耦等，例如bilibili的开源项目ijkplayer的框架就是: UI主界面—ijkplayer核心—ff[音视频]player。其中ijkplayer作为ui主界面和ff[音视频]player之间的中转站(<strong>实际ijkplayer核心中也可以处理部分回调的消息，并不需要所有的消息都回到主界面的消息循环函数中处理</strong>)。下文将提炼ijkplayer和ffplay的源码，并主要谈谈qt环境下ijkplayer与ffplay两者不同之处以及相同之处 。(后续对音视频理解更深了会继续更新)</p>
+<span id="more"></span>
+
+<p><img src="/%5B%E9%9F%B3%E8%A7%86%E9%A2%91%5Dplayer/image-20250218222315603.png" alt="image-20250218222315603"></p>
 <h3 id="1-1-按下播放按钮到视频播放的过程"><a href="#1-1-按下播放按钮到视频播放的过程" class="headerlink" title="1.1 按下播放按钮到视频播放的过程"></a>1.1 按下播放按钮到视频播放的过程</h3><p>播放按钮到视频播放这一个功能实现大概分为以下过程</p>
 <blockquote>
 <ul>
@@ -22,17 +115,14 @@
 </li>
 </ul>
 </blockquote>
-<p>整个ffplay的执行过程一图流如下：(参考八小时码字员)</p>
-<img src="/2025/02/18/player/image-20250218222358324.png" class="" title="image-20250218222358324">
-
+<p>整个ffplay的执行过程一图流如下：(参考八小时码字员)<br><img src="/%5B%E9%9F%B3%E8%A7%86%E9%A2%91%5Dplayer/image-20250218222358324.png" alt="image-20250218222358324"></p>
 <h3 id="1-2-ijkplayer主要的改进之处–消息循环机制"><a href="#1-2-ijkplayer主要的改进之处–消息循环机制" class="headerlink" title="1.2 ijkplayer主要的改进之处–消息循环机制"></a>1.2 ijkplayer主要的改进之处–消息循环机制</h3><p>相比于ffplay播放器，ijkplayer主要增加了一个独立的消息队列，在播放按键被按下后便会有一个消息循环线程一直执行。这里也给出一个qt环境下该机制的总结图解。</p>
-<img src="/2025/02/18/player/image-20250220210418225.png" class="" title="image-20250220210418225">
-
+<p><img src="/%5B%E9%9F%B3%E8%A7%86%E9%A2%91%5Dplayer/image-20250220210418225.png" alt="image-20250220210418225"></p>
 <p>上面循环机制中牵涉到了状态的转换，而播放器状态的检查主要在ijkplayer的<code>ijkmp_prepare_async_l</code>和<code>ikjmp_chkst_start_l</code>函数中，即如果状态为错误状态，那么就会释放内存并结束，下面这张状态机图，描述了播放器状态转换的流程。</p>
-<style>.wclcnvktpvih{zoom: 50%;}</style><img src="/2025/02/18/player/image-20250220210507008.png" class="wclcnvktpvih" alt="image-20250220210507008">
+<img src="[音视频]player/image-20250220210507008.png" alt="image-20250220210507008" style="zoom: 50%;" />
 
 <p>qt环境中，消息队列中的消息在message中被取出来，并通知上层ui主界面 ，而ijkplayer也需要通知上层的app处理消息，因此这里也给出添加注释后ijkplayer中的消息循环函数，以便读者区分。</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//相当于主界面的消息循环函数</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">media_player_msg_loop</span><span class="params">(<span class="type">void</span>* arg)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    @autoreleasepool &#123;<span class="comment">// 创建自动释放池以管理内存</span></span><br><span class="line">        IjkMediaPlayer *mp = (IjkMediaPlayer*)arg; </span><br><span class="line">        <span class="comment">// 创建一个弱引用的播放器控制器，避免循环引用</span></span><br><span class="line">        __weak IJKFFMoviePlayerController *ffpController = <span class="built_in">ffplayerRetain</span>(<span class="built_in">ijkmp_set_weak_thiz</span>(mp, <span class="literal">NULL</span>));</span><br><span class="line">        <span class="comment">// 消息循环主体，当控制器存在时持续运行</span></span><br><span class="line">        <span class="keyword">while</span> (ffpController) &#123;</span><br><span class="line">            @autoreleasepool &#123;<span class="comment">// 为每次循环创建独立的自动释放池</span></span><br><span class="line">                <span class="comment">// 获取一个新的消息对象</span></span><br><span class="line">                IJKFFMoviePlayerMessage *msg = [ffpController obtainMessage];</span><br><span class="line">                <span class="keyword">if</span> (!msg)</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                </span><br><span class="line">			   <span class="comment">// 从消息队列中获取消息，timeout为1</span></span><br><span class="line">                <span class="type">int</span> retval = <span class="built_in">ijkmp_get_msg</span>(mp, &amp;msg-&gt;_msg, <span class="number">1</span>);</span><br><span class="line">                <span class="keyword">if</span> (retval &lt; <span class="number">0</span>)</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">                <span class="comment">// block-get should never return 0</span></span><br><span class="line">                <span class="built_in">assert</span>(retval &gt; <span class="number">0</span>);	<span class="comment">// 确保消息获取成功</span></span><br><span class="line">                <span class="comment">// 通知app上层处理消息. 在主线程上异步处理消息事件</span></span><br><span class="line">                [ffpController performSelectorOnMainThread:@<span class="built_in">selector</span>(postEvent:) withObject:msg waitUntilDone:NO];</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">		<span class="comment">// 减少播放器引用计数并释放资源</span></span><br><span class="line">        <span class="comment">// retained in prepare_async, before SDL_CreateThreadEx</span></span><br><span class="line">        <span class="built_in">ijkmp_dec_ref_p</span>(&amp;mp);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//相当于主界面的消息循环函数</span></span><br><span class="line"><span class="type">int</span> media_[音视频]<span class="built_in">player_msg_loop</span>(<span class="type">void</span>* arg)</span><br><span class="line">&#123;</span><br><span class="line">    @autoreleasepool &#123;<span class="comment">// 创建自动释放池以管理内存</span></span><br><span class="line">        IjkMedia[音视频]player *mp = (IjkMedia[音视频]player*)arg; </span><br><span class="line">        <span class="comment">// 创建一个弱引用的播放器控制器，避免循环引用</span></span><br><span class="line">        __weak IJKFFMovie[音视频]playerController *ffpController = ff[音视频]<span class="built_in">playerRetain</span>(<span class="built_in">ijkmp_set_weak_thiz</span>(mp, <span class="literal">NULL</span>));</span><br><span class="line">        <span class="comment">// 消息循环主体，当控制器存在时持续运行</span></span><br><span class="line">        <span class="keyword">while</span> (ffpController) &#123;</span><br><span class="line">            @autoreleasepool &#123;<span class="comment">// 为每次循环创建独立的自动释放池</span></span><br><span class="line">                <span class="comment">// 获取一个新的消息对象</span></span><br><span class="line">                IJKFFMovie[音视频]playerMessage *msg = [ffpController obtainMessage];</span><br><span class="line">                <span class="keyword">if</span> (!msg)</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                </span><br><span class="line">			   <span class="comment">// 从消息队列中获取消息，timeout为1</span></span><br><span class="line">                <span class="type">int</span> retval = <span class="built_in">ijkmp_get_msg</span>(mp, &amp;msg-&gt;_msg, <span class="number">1</span>);</span><br><span class="line">                <span class="keyword">if</span> (retval &lt; <span class="number">0</span>)</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">                <span class="comment">// block-get should never return 0</span></span><br><span class="line">                <span class="built_in">assert</span>(retval &gt; <span class="number">0</span>);	<span class="comment">// 确保消息获取成功</span></span><br><span class="line">                <span class="comment">// 通知app上层处理消息. 在主线程上异步处理消息事件</span></span><br><span class="line">                [ffpController performSelectorOnMainThread:@<span class="built_in">selector</span>(postEvent:) withObject:msg waitUntilDone:NO];</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">		<span class="comment">// 减少播放器引用计数并释放资源</span></span><br><span class="line">        <span class="comment">// retained in prepare_async, before SDL_CreateThreadEx</span></span><br><span class="line">        <span class="built_in">ijkmp_dec_ref_p</span>(&amp;mp);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <h2 id="2-解复用"><a href="#2-解复用" class="headerlink" title="2.解复用"></a>2.解复用</h2><blockquote>
 <p>因为从read_thread开始，ijkplayer主要是按照ffplay的流程写的，所以下面也基本按照ffplay的总结了。</p>
@@ -72,7 +162,7 @@
 
 <p>重复6、7步，即可不断获取待播放的数据。</p>
 </blockquote>
-<h2 id="3-解码"><a href="#3-解码" class="headerlink" title="3. 解码"></a>3. 解码</h2><style>.otnflaoigsmm{zoom: 67%;}</style><img src="/2025/02/18/player/image-20250220224325219.png" class="otnflaoigsmm" alt="image-20250220224325219">
+<h2 id="3-解码"><a href="#3-解码" class="headerlink" title="3. 解码"></a>3. 解码</h2><img src="[音视频]player/image-20250220224325219.png" alt="image-20250220224325219" style="zoom: 67%;" />
 
 <ul>
 <li>解码定义：<strong>将压缩的视频&#x2F;音频数据转换回原始的未压缩格式</strong></li>
@@ -275,11 +365,11 @@
 <li>video_refresh</li>
 </ul>
 <p>该函数图解如下</p>
-<style>.uicgxhlulpny{zoom: 67%;}</style><img src="/2025/02/18/player/image-20250221174757834.png" class="uicgxhlulpny" alt="image-20250221174757834">
+<img src="[音视频]player/image-20250221174757834.png" alt="image-20250221174757834" style="zoom: 67%;" />
 
 <p>几个时间戳关系如下：</p>
 <p>(<strong>注意丢帧之前一定要保证下一帧存在</strong>)</p>
-<style>.qvhneprjyube{zoom:50%;}</style><img src="/2025/02/18/player/image-20250221174324289.png" class="qvhneprjyube" alt="image-20250221174324289">
+<img src="[音视频]player/image-20250221174324289.png" alt="image-20250221174324289" style="zoom:50%;" />
 
 <ul>
 <li>video_display</li>
@@ -297,7 +387,7 @@
 </ul>
 <hr>
 <p>下面也给出了参考ijkplayer，画面刷新逻辑的流程图</p>
-<style>.vcdnfppmwepw{zoom: 50%;}</style><img src="/2025/02/18/player/image-20250221210703870.png" class="vcdnfppmwepw" alt="image-20250221210703870">
+<img src="[音视频]player/image-20250221210703870.png" alt="image-20250221210703870" style="zoom: 50%;" />
 
 <h2 id="5-音视频同步"><a href="#5-音视频同步" class="headerlink" title="5. 音视频同步"></a>5. 音视频同步</h2><p>同步方式主要分为：</p>
 <ul>
@@ -345,15 +435,18 @@
 <p>​		而视频倍速播放主要通过调整帧率或显示时间实现：</p>
 <p>​		方法主要有如下</p>
 <blockquote>
-<h4 id="a-跳帧（Frame-Dropping）"><a href="#a-跳帧（Frame-Dropping）" class="headerlink" title="a. 跳帧（Frame Dropping）"></a><strong>a. 跳帧（Frame Dropping）</strong></h4><ul>
+<p><strong>a. 跳帧（Frame Dropping）</strong></p>
+<ul>
 <li><strong>快放</strong>：丢弃部分帧（如2倍速时每秒显示60帧，原帧率30fps则每帧显示一次）。</li>
 <li><strong>缺点</strong>：可能导致画面卡顿，需智能选择丢弃非关键帧（如B帧）。</li>
 </ul>
-<h4 id="b-重复帧或插帧（Frame-Interpolation）"><a href="#b-重复帧或插帧（Frame-Interpolation）" class="headerlink" title="b. 重复帧或插帧（Frame Interpolation）"></a><strong>b. 重复帧或插帧（Frame Interpolation）</strong></h4><ul>
+<p><strong>b. 重复帧或插帧（Frame Interpolation）</strong></p>
+<ul>
 <li><strong>慢放</strong>：重复帧或生成中间帧（通过光流法、AI插帧算法）。</li>
 <li><strong>缺点</strong>：插帧计算复杂度高，可能影响实时性。</li>
 </ul>
-<h4 id="c-时间戳调整"><a href="#c-时间戳调整" class="headerlink" title="c. 时间戳调整"></a><strong>c. 时间戳调整</strong></h4><ul>
+<p><strong>c. 时间戳调整</strong></p>
+<ul>
 <li><strong>修改PTS&#x2F;DTS</strong>：调整每一帧的显示时间戳。例如，2倍速播放时，每帧的显示时间减半。</li>
 <li><strong>实现</strong>：在解码后调整<code>AVFrame.pts</code>，确保渲染器按新时间戳播放。</li>
 </ul>
@@ -367,44 +460,6 @@
         <tag>音视频</tag>
         <tag>ijkplayer</tag>
         <tag>ffplay</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>typora+hexo-asset-img插入文章图片</title>
-    <url>/2025/02/18/typora&amp;hexo-asset-img%E9%85%8D%E5%90%88%E6%8F%92%E5%85%A5%E6%96%87%E7%AB%A0%E5%9B%BE%E7%89%87/</url>
-    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>在使用hexo部署博客文章时，发现hexo默认的上传文件方式不太方便(如下)</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;% asset_img image.png name %&#125;</span><br></pre></td></tr></table></figure>
-
-<p>于是上网搜索方案，在试过<code>hexo-asset-image</code>和<code>hexo-renderer-marked</code>之后，发现都不行。</p>
-<p>以下是遇到的主要问题及解决方法</p>
-<span id="more"></span>
-
-<h2 id="问题1："><a href="#问题1：" class="headerlink" title="问题1："></a>问题1：</h2><p><strong>_post目录下如果在生成的.md目录插入图片就会生成两个同名的文件夹(实际上有一个后面多了一个空格)，导致默认的图片上传方式都出问题</strong></p>
-<p><strong>原因及解决方案</strong>：在修改_config.yml文件中的<strong>post_asset_folder为true</strong>之后，如果使用<code>hexo new xxx</code>的方式生成.md文件和同名文件夹，且同时还将typora的偏好设置为<code>./$&#123;filename&#125;</code>，那么就会出现这样的问题，解决办法就是直接手动创建一个.md文件，只要插入图片，typora就自动会生成一个同名文件夹，并加图片放入。（<font color='red'>注意不要将post_asset_folder又设回false了</font>）</p>
-<h2 id="问题2："><a href="#问题2：" class="headerlink" title="问题2："></a>问题2：</h2><p><strong>按照网上许多方法仍然无法直接使用<code>![](xx.png)</code>这种markdown格式插入图片</strong></p>
-<p><strong>原因分析</strong>：<font color='red'>该问题的主要原因在于插件版本和hexo版本不一致</font>。在本地生成的静态网页中我们可以按”F12”查看图片路径是否转换成功。</p>
-<img src="/2025/02/18/typora&hexo-asset-img%E9%85%8D%E5%90%88%E6%8F%92%E5%85%A5%E6%96%87%E7%AB%A0%E5%9B%BE%E7%89%87/image-20250218221232758.png" class="" title="F12查看图片路径">
-
-<p>如图所示，&#x2F;2025&#x2F;02&#x2F;18&#x2F;player&#x2F;xx这个目录就是<code>hexo g</code>执行后生成到public目录下的。</p>
-<ul>
-<li>从文件中查看，如果该目录下没有我们文章中出现的图片，则说明图片上传失败；</li>
-<li>而从网页端查看则如图所示，即图片源路径指向了对应的目录。</li>
-</ul>
-<p>上面两种方式都可以用来判断图片是否上传成功</p>
-<p><strong>解决办法:</strong></p>
-<p>由于我们使用的是hexo6.3.0版本，<code>hexo-asset-image</code>插件已经无法适配，所以这里直接下载另外一个<code>hexo-asset-img</code>插件即可。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">npm install hexo-asset-img --save</span><br></pre></td></tr></table></figure>
-
-<p>随后，按照问题1的方式创建.md文件，直接插入文件即可实现图片和文章一起上传至博客网站.</p>
-<p>在typora中图片插入的具体的格式如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">![命名](与.md同名文件夹/logo.png)</span><br></pre></td></tr></table></figure>
-
-]]></content>
-      <categories>
-        <category>疑难杂症</category>
-      </categories>
-      <tags>
-        <tag>博客</tag>
       </tags>
   </entry>
 </search>
