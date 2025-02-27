@@ -1,180 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>linux常用命令总结</title>
-    <url>/2025/02/23/%5Blinux%5D%E5%9F%BA%E7%A1%80%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4%E6%80%BB%E7%BB%93/</url>
-    <content><![CDATA[<p>一些常用shell命令的总结。</p>
-<span id="more"></span>
-
-<h2 id="基础概念"><a href="#基础概念" class="headerlink" title="基础概念"></a>基础概念</h2><ul>
-<li>shell ：即命令解释器，是用户和linux内核交互的桥梁，通过在shell终端输入命令让linux内核相应部分识别用户命令并处理。</li>
-</ul>
-<p>​	shell命令的基本格式为</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">命令 [option] 参数 </span><br></pre></td></tr></table></figure>
-<p>​	其中加”[]”符号表示可以不输入这个选项</p>
-<p><strong>tips</strong>: 对于不熟悉的命令可以使用<code>man 1 命令</code>或者<code>命令 --help</code>来查看说明</p>
-<h2 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h2><ol>
-<li>切换用户权限组</li>
-</ol>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">sudo su //切换为管理员</span><br><span class="line">exit //推出管理员权限</span><br></pre></td></tr></table></figure>
-
-<p>在命令前加<code>sudo</code>也可以使用管理员权限</p>
-<ol start="2">
-<li>创建目录</li>
-</ol>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">mkdir -m 目录名</span><br><span class="line">mkdir -r /home/hh # -r 可以递归的创建目录</span><br></pre></td></tr></table></figure>
-
-<p>3.删除目录或者文件</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">rm -i 文件名</span><br><span class="line">rm -r 目录名 #主要用来删除目录</span><br><span class="line">rm -f 文件名 #强制删除</span><br></pre></td></tr></table></figure>
-
-<p>4.切换路径</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cd /  #切换到根目录</span><br><span class="line">cd ~  #切换到家目录</span><br><span class="line">cd /home/xxx  </span><br></pre></td></tr></table></figure>
-
-<p>5.gedit 记事本</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">gedit main.c</span><br></pre></td></tr></table></figure>
-
-<p>6.查看文件</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cat main.c #查看文件内容并输出到shell终端</span><br><span class="line">cat -A 文件名  #隐藏的字符也可以查看</span><br></pre></td></tr></table></figure>
-
-<p>7.复制</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cp -r 源文件 目标文件 #可以复制目录的所有文件</span><br></pre></td></tr></table></figure>
-
-<p>8.移动或重命名</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">mv [选项] 源文件 目标文件</span><br><span class="line">mv old.txt new.txt #重命名单个文件</span><br><span class="line">mv old_folder new_folder #重命名目录</span><br><span class="line">mv file.txt /home/user/documents/newfile.txt #移动文件到其他目录并重命名</span><br></pre></td></tr></table></figure>
-
-<p>9.查看当前路径</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">pwd</span><br></pre></td></tr></table></figure>
-
-<p>10.查看当前目录文件</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">ls [option]</span><br><span class="line">ls -a #查看所有文件，包括隐藏的</span><br></pre></td></tr></table></figure>
-
-<p>11 解压缩</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">tar -zxvf xx.tar.gz # 解压缩tar.gz文件</span><br></pre></td></tr></table></figure>
-
-]]></content>
-      <categories>
-        <category>linux</category>
-        <category>shell命令</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>遍历排序与分治排序</title>
-    <url>/2025/02/27/%5B%E7%AE%97%E6%B3%95%5D%E6%8E%92%E5%BA%8F/</url>
-    <content><![CDATA[<p><strong>排序算法性质</strong>：</p>
-<p><strong>自适应性</strong>：自适应排序能够利用输入已有的顺序信息来减少计算量，达到更优的时间效率</p>
-<p><strong>稳定性</strong>：排序完成后，相等元素在数组中的顺序不发生改变</p>
-<span id="more"></span>
-
-<h2 id="遍历排序"><a href="#遍历排序" class="headerlink" title="遍历排序"></a>遍历排序</h2><h3 id="选择排序"><a href="#选择排序" class="headerlink" title="选择排序"></a>选择排序</h3><p>思路：每次查找未排序区间的最小值，并与排序区间的尾部(实际这个位置是每轮外循环未排序区间的第一个位置)交换位置</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">selectSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums)</span> </span>&#123;</span><br><span class="line">	<span class="comment">//外循环，未排序区间为[i,n-1],每轮未排序区间长度减1</span></span><br><span class="line">    <span class="type">int</span> n = nums.<span class="built_in">size</span>();</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n<span class="number">-1</span>; i++) &#123;<span class="comment">//最后一个不用排了</span></span><br><span class="line">    	<span class="type">int</span> k = i; <span class="comment">//未排序区间最小元素索引</span></span><br><span class="line">        <span class="comment">//内循环找未排序区间最小值</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> j = i<span class="number">+1</span>; j &lt; n; j++) &#123;</span><br><span class="line">            <span class="keyword">if</span> (nums[k] &lt; nums[j]) &#123;</span><br><span class="line">                k = j;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">swap</span>(nums[i], nums[k]); <span class="comment">//将最小元素与未排序区间最小值交换</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>时间复杂度o(n^2),空间复杂度o(1)，非稳定性排序</li>
-</ul>
-<h3 id="冒泡排序"><a href="#冒泡排序" class="headerlink" title="冒泡排序"></a>冒泡排序</h3><p>思路：每次冒泡都得到未排序区间的最大值，并交换至未排序区间的尾部，n个数冒泡n-1次即可(外循环次数),</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">bubbleSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> n = nums.<span class="built_in">size</span>();</span><br><span class="line">    <span class="comment">//外循环，未排序区间[0,i]</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = n<span class="number">-1</span>; i &gt; <span class="number">0</span>; i--) &#123;</span><br><span class="line">        <span class="type">bool</span> flag = <span class="literal">false</span>; <span class="comment">//标志</span></span><br><span class="line">   		<span class="comment">//内循环，交换最大值至未排序区间的末尾</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j &lt; i; j++) &#123;</span><br><span class="line">            <span class="keyword">if</span> (nums[j<span class="number">+1</span>] &lt; nums[j]) &#123;</span><br><span class="line">                <span class="built_in">swap</span>(nums[j],numss[j<span class="number">+1</span>]);</span><br><span class="line">                flage = <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//本轮没有交换说明已经有序了，直接推出即可</span></span><br><span class="line">        <span class="keyword">if</span> (!flag) &#123;<span class="keyword">break</span>;&#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>时间复杂度o(n^2), 有flag的情况下最佳时间复杂度o(n), 空间复杂度o(1)，稳定排序</li>
-</ul>
-<h3 id="插入排序"><a href="#插入排序" class="headerlink" title="插入排序"></a>插入排序</h3><p>思路：在未排序区间选择一个基准元素，将其与左边的已排序区间比较，一直到左边元素不大于基准元素为止</p>
-<img src="[算法]排序/image-20250227120737150.png" alt="image-20250227120737150" style="zoom:33%;" />
-
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">insertionSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums)</span> </span>&#123;</span><br><span class="line">	<span class="comment">//外循环，已排序区间为[0,i-1]</span></span><br><span class="line">    <span class="comment">//初始状态，第一个元素已完成排序</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt; nums.<span class="built_in">size</span>(); i++) &#123;</span><br><span class="line">        <span class="type">int</span> base = nums[i], j = i<span class="number">-1</span>; </span><br><span class="line">    	<span class="comment">//内循环，将base插入到已排序区间</span></span><br><span class="line">		<span class="keyword">while</span> (j &gt;= <span class="number">0</span> &amp;&amp; nums[j] &gt; base) &#123;</span><br><span class="line">            nums[j<span class="number">+1</span>] = nums[j]; <span class="comment">//右移一位</span></span><br><span class="line">            j--;</span><br><span class="line">        &#125;</span><br><span class="line">        nums[j<span class="number">+1</span>] = base; <span class="comment">//插入base</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>最差时间复杂度为o(n^2)，数据完全有序的情况下时间复杂度为o(n)，空间复杂度为o(1),稳定排序</p>
-<p><img src="/%5B%E7%AE%97%E6%B3%95%5D%E6%8E%92%E5%BA%8F/image-20250227132530692.png" alt="image-20250227132530692"></p>
-<hr>
-<h2 id="分治排序"><a href="#分治排序" class="headerlink" title="分治排序"></a>分治排序</h2><h3 id="快速排序"><a href="#快速排序" class="headerlink" title="快速排序"></a>快速排序</h3><p>思路：</p>
-<ul>
-<li><p>在未优化的情况下，快速排序的思路为先进行哨兵划分：即将数组最左边的元素nums[left]作为基准值，定义定义两个指针i,j,并分别初始化指向数组左边left和右边right，i从左往右找大于基准值的位置，j从右往左找小于基准值的位置，随后交换对应位置的值，并继续循环。  </p>
-</li>
-<li><p>进过哨兵划分之后，数组分成了两个子数组，接着递归这两个子数组即可。</p>
-</li>
-</ul>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//哨兵划分</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">partition</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> left, <span class="type">int</span> right)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> i = left, j = right;</span><br><span class="line">    <span class="comment">//以nums[left]为基准值</span></span><br><span class="line">    <span class="keyword">while</span> (i &lt; j) &#123;</span><br><span class="line">    	<span class="keyword">while</span> (i &lt; j &amp;&amp; nums[i] &lt;= nums[left]) &#123;</span><br><span class="line">            ++i;</span><br><span class="line">        &#125;  </span><br><span class="line">        <span class="keyword">while</span> (i &lt; j &amp;&amp; nums[j] &gt;= nums[left]) &#123;</span><br><span class="line">            --j;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">swap</span>(nums[i], nums[j]);   															 	   	 </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//i==j时，将基准值交换到i的位置</span></span><br><span class="line">    <span class="built_in">swap</span>(nums[left], nums[i]);</span><br><span class="line">    <span class="keyword">return</span> i; </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//快速排序</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">quickSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> left, <span class="type">int</span> right)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//终止条件</span></span><br><span class="line">    <span class="keyword">if</span> (left &gt;= right) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//哨兵划分</span></span><br><span class="line">    <span class="comment">//左闭右闭</span></span><br><span class="line">    <span class="type">int</span> pivot = <span class="built_in">partition</span>(nums, left, right);</span><br><span class="line">    <span class="built_in">quickSort</span>(nums, left, pivot<span class="number">-1</span>);</span><br><span class="line">    <span class="built_in">queickSort</span>(nums, pivot<span class="number">+1</span>, right);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><strong>优化：</strong>在数组倒序的情况下，基准数左边或者右边数组长度为n-1，每次递归都会出现有一个子数组长度为0的情况，快速排序退化为类似冒泡排序，时间复杂度劣化为o(n^2)。同样正序的情况下，也会出现有一个子数组长度为0的情况，每次递归长度为n-1的数组都只减少一个元素，递归深度为n-1，需要占用o(n)的栈帧空间</p>
-<p>因此要对基准值和递归区间的选取进行优化：即选择数组左，中，右值的中位数作为基准值，选择对长度更短的子数组递归</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//选择基准数</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">medianThree</span><span class="params">(vector&lt;<span class="type">int</span>&gt; nums, <span class="type">int</span> left, <span class="type">int</span> mid, <span class="type">int</span> right)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> l = nums[left], m = nums[mid], r = nums[right];</span><br><span class="line">    <span class="keyword">if</span> ((l &lt;= m &amp;&amp; m &lt;= r) || (r &lt;= m &amp;&amp; m &lt;= l)) &#123;</span><br><span class="line">   		<span class="keyword">return</span> m;		     </span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> ((m &lt;= l &amp;&amp; l &lt;= r) || (r &lt;= l &amp;&amp; l &lt;= m)) &#123;</span><br><span class="line">        <span class="keyword">return</span> l;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> r;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//哨兵划分</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">partition</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> left, <span class="type">int</span> right)</span> </span>&#123;</span><br><span class="line">	<span class="type">int</span> median = <span class="built_in">medianThree</span>(nums, left, left+(right-left)/<span class="number">2</span> ,right); 	 </span><br><span class="line"> 	<span class="comment">//将数组交换至数组最左端</span></span><br><span class="line">    <span class="built_in">swap</span>(median, nums[left]);</span><br><span class="line">   	<span class="comment">//后面一样，省略</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//快速排序</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">quickSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> left, <span class="type">int</span> right)</span> </span>&#123;</span><br><span class="line">	<span class="comment">// 子数组长度为1 时终止</span></span><br><span class="line">    <span class="keyword">while</span> (left &lt; right) &#123;</span><br><span class="line">        <span class="comment">// 哨兵划分操作</span></span><br><span class="line">        <span class="type">int</span> pivot = <span class="built_in">partition</span>(nums, left, right);</span><br><span class="line">        <span class="comment">// 对两个子数组中较短的那个执行快速排序</span></span><br><span class="line">        <span class="keyword">if</span> (pivot - left &lt; right - pivot) &#123;</span><br><span class="line">            <span class="built_in">quickSort</span>(nums, left, pivot - <span class="number">1</span>); <span class="comment">// 递归排序左子数组</span></span><br><span class="line">            left = pivot + <span class="number">1</span>; <span class="comment">// 剩余未排序区间为[pivot + 1, right]</span></span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="built_in">quickSort</span>(nums, pivot + <span class="number">1</span>, right); <span class="comment">// 递归排序右子数组</span></span><br><span class="line">            right = pivot - <span class="number">1</span>; <span class="comment">// 剩余未排序区间为[left, pivot - 1]  </span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><img src="/%5B%E7%AE%97%E6%B3%95%5D%E6%8E%92%E5%BA%8F/image-20250227153337619.png" alt="image-20250227153337619"></p>
-<h3 id="归并排序"><a href="#归并排序" class="headerlink" title="归并排序"></a>归并排序</h3><p>归并排序的递归顺序和二叉树的后序遍历是一样的，即先递归左数组，再递归右数组，最后合并，注意合并时的子数组是有序的。一图总结如下：</p>
-<img src="[算法]排序/image-20250227153030239.png" alt="image-20250227153030239" style="zoom: 67%;" />
-
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//合并左右子数组,左数组[left, mid], 右数组[mid+1, right]</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">merge</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> left, <span class="type">int</span> mid, <span class="type">int</span> right)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> i = left, j = mid + <span class="number">1</span>, k = <span class="number">0</span>;</span><br><span class="line">    <span class="comment">//创建临时数组存放合并后数组</span></span><br><span class="line">    <span class="function">vector&lt;<span class="type">int</span>&gt; <span class="title">tmp</span><span class="params">(right- left <span class="number">+1</span>)</span></span>;</span><br><span class="line">    <span class="comment">//左右数组都还有元素时进行比较</span></span><br><span class="line">    <span class="keyword">while</span> (i &lt;= mid &amp;&amp; j &lt;= right) &#123;</span><br><span class="line">        <span class="comment">//将较小元素放入tmp</span></span><br><span class="line">        <span class="keyword">if</span> (nums[i] &lt;= nums[j]) &#123;</span><br><span class="line">            tmp[k++] = nums[i++]</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            tmp[k++] = nums[j++];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//将剩下元素放入tmp,注意i,j往后移动</span></span><br><span class="line">    <span class="keyword">while</span> (i &lt;= mid) &#123;</span><br><span class="line">        tmp[k++] = nums[i++]; </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> (j &lt;= right) &#123;</span><br><span class="line">        tmp[k++] = nums[j++]</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//将合并后放回到原数组对应位置</span></span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; tmp.<span class="built_in">size</span>(); i++) &#123;</span><br><span class="line">        nums[left+i] = tmp[i]; </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//归并排序</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">mergeSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> left, <span class="type">int</span> right)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//子数组长度为1时终止</span></span><br><span class="line">	<span class="keyword">if</span> (left &gt;= right) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;    </span><br><span class="line">    <span class="comment">//子数组划分</span></span><br><span class="line">    <span class="type">int</span> mid = left + (right - left) / <span class="number">2</span>;</span><br><span class="line">    <span class="built_in">mergeSort</span>(nums, left, mid); <span class="comment">//左</span></span><br><span class="line">    <span class="built_in">mergeSort</span>(nums, mid<span class="number">+1</span>, right); <span class="comment">//右</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">//对子数组进行合并</span></span><br><span class="line">    <span class="built_in">merge</span>(nums, left, mid, right);  <span class="comment">//中</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>时间复杂度为o(n*logn)，递归深度logn,每层操作n次。  空间复杂度为o(n)，具体：栈帧空间占o(logn), 创建临时数组空间为o(n)</li>
-</ul>
-<p><font color='red'>归并排序特别适合链表排序</font>，在划分阶段可以使用迭代来代替递归，在合并阶段也不用创建额外的辅助数据，因为链表的合并只需要操作指针</p>
-<h4 id="148-排序链表"><a href="#148-排序链表" class="headerlink" title="148 排序链表"></a>148 排序链表</h4><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">//找到链表中点</span></span><br><span class="line">    <span class="function">ListNode* <span class="title">findListMid</span><span class="params">(ListNode* head)</span> </span>&#123;</span><br><span class="line">        ListNode* fast = head;</span><br><span class="line">        ListNode* slow = head;</span><br><span class="line">        <span class="keyword">while</span> (fast-&gt;next != <span class="literal">NULL</span> &amp;&amp; fast-&gt;next-&gt;next != <span class="literal">NULL</span>) &#123;</span><br><span class="line">            slow = slow-&gt;next;</span><br><span class="line">            fast = fast-&gt;next-&gt;next;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> slow;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//合并左右子链表</span></span><br><span class="line">    <span class="function">ListNode* <span class="title">merge</span><span class="params">(ListNode* left, ListNode* right)</span> </span>&#123;</span><br><span class="line">        ListNode* dummyNode = <span class="keyword">new</span> <span class="built_in">ListNode</span>();<span class="comment">//虚拟头节点用于链表合并</span></span><br><span class="line">        ListNode* cur = dummyNode;</span><br><span class="line">        <span class="keyword">while</span> (left &amp;&amp; right) &#123;</span><br><span class="line">            <span class="keyword">if</span> (left-&gt;val &lt;= right-&gt;val) &#123;</span><br><span class="line">                cur-&gt;next = left;</span><br><span class="line">                left = left-&gt;next;<span class="comment">//右移</span></span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                cur-&gt;next = right;</span><br><span class="line">                right = right-&gt;next;</span><br><span class="line">            &#125;  </span><br><span class="line">            cur = cur-&gt;next;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//链接剩下的节点</span></span><br><span class="line">        <span class="comment">//注意直接if链接就行，不用while</span></span><br><span class="line">        <span class="keyword">if</span> (left) cur-&gt;next = left;</span><br><span class="line">        <span class="keyword">if</span> (right) cur-&gt;next = right;</span><br><span class="line"></span><br><span class="line">        ListNode* result = dummyNode-&gt;next;</span><br><span class="line">        <span class="keyword">delete</span> dummyNode;</span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function">ListNode* <span class="title">sortList</span><span class="params">(ListNode* head)</span> </span>&#123;</span><br><span class="line">        <span class="comment">//归并排序</span></span><br><span class="line">        <span class="comment">//终止条件，空链表或者只有一个节点时终止</span></span><br><span class="line">        <span class="keyword">if</span> (head == <span class="literal">NULL</span> || head-&gt;next == <span class="literal">NULL</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> head;</span><br><span class="line">        &#125;</span><br><span class="line">        ListNode* mid = <span class="built_in">findListMid</span>(head);</span><br><span class="line">        ListNode* right = mid-&gt;next;</span><br><span class="line">        mid-&gt;next = <span class="literal">nullptr</span>;</span><br><span class="line"></span><br><span class="line">        ListNode* leftSortedList = <span class="built_in">sortList</span>(head); <span class="comment">//递归左链表</span></span><br><span class="line">        ListNode* righSortedtList = <span class="built_in">sortList</span>(right); <span class="comment">//递归右链表</span></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">merge</span>(leftSortedList, righSortedtList);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<p>时间复杂度为o(nlogn)，空间复杂度为栈帧空间o(logn)</p>
-<h3 id="堆排序"><a href="#堆排序" class="headerlink" title="堆排序"></a>堆排序</h3><p>思路：</p>
-<ul>
-<li>先建立一个大顶堆，对数组执行堆化处理</li>
-<li>交换堆顶元素和堆底元素,此时堆长度-1，已排序元素+1</li>
-<li>堆顶元素从顶向下堆化</li>
-<li>循环n-1次交换和堆化的过程</li>
-</ul>
-<img src="[算法]排序/image-20250227171531676.png" alt="image-20250227171531676" style="zoom: 50%;" />
-
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//堆的长度为n，从节点i开始，从顶至底执行堆化</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">siftDown</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> n, <span class="type">int</span> i)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">        <span class="type">int</span> l = <span class="number">2</span>i<span class="number">+1</span>, r = <span class="number">2</span>i<span class="number">+2</span>;</span><br><span class="line">        <span class="type">int</span> ma = i;</span><br><span class="line">        <span class="keyword">if</span> (l &lt; n &amp;&amp; nums[l] &gt;= nums[ma]) &#123;</span><br><span class="line">            ma = l;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (r &lt; n &amp;&amp; nums[r] &gt;= nums[ma]) &#123;</span><br><span class="line">           ma = r; </span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//如节点i最大或则l，r越界则无需继续堆化</span></span><br><span class="line">        <span class="keyword">if</span> (ma == i) &#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">swap</span>(nums[i], nums[ma]);</span><br><span class="line">        i = ma;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//堆排序</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">haepSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums)</span> </span>&#123;</span><br><span class="line">	<span class="comment">//建堆，堆化除叶子节点外所有节点</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = nums.<span class="built_in">size</span>() / <span class="number">2</span> - <span class="number">1</span>; i &gt;= <span class="number">0</span>; --i) &#123;</span><br><span class="line">    	<span class="built_in">siftDown</span>(nums, nums.<span class="built_in">size</span>(), i); 	   </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//循环n-1次</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = nums.<span class="built_in">size</span>() - <span class="number">1</span>; i &gt;<span class="number">0</span>; --i) &#123;</span><br><span class="line">        <span class="comment">//交换堆顶元素与堆底元素</span></span><br><span class="line">        <span class="built_in">swap</span>(nums[<span class="number">0</span>], nums[i]); <span class="comment">//堆长度减1</span></span><br><span class="line">        <span class="built_in">siftDown</span>(nums, i, <span class="number">0</span>); <span class="comment">//从堆顶开始堆化</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>时间复杂度o(nlogn),建堆操作使用o(n)时间。从堆中提取最大元素的时间复杂度为o(nlogn)。 原地排序，空间复杂度为o(1)</li>
-</ul>
-]]></content>
-      <categories>
-        <category>数据结构与算法</category>
-        <category>排序</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>typora+hexo-asset-img插入文章图片</title>
-    <url>/2025/02/18/%5B%E5%8D%9A%E5%AE%A2%5Dtypora&amp;hexo-asset-img%E9%85%8D%E5%90%88%E6%8F%92%E5%85%A5%E6%96%87%E7%AB%A0%E5%9B%BE%E7%89%87/</url>
-    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>在使用hexo部署博客文章时，发现hexo默认的上传文件方式不太方便(如下)</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;% asset_img image.png name %&#125;</span><br></pre></td></tr></table></figure>
-
-<p>于是上网搜索方案，发现typora配合其它转图片路径的插件的方案很方便，但是在试过<code>hexo-asset-image</code>和<code>hexo-renderer-marked</code>之后，发现直接在typora中粘贴图片(即markdown格式)还是无法在网页上显示图片。</p>
-<p>以下是遇到的主要问题及解决方法</p>
-<span id="more"></span>
-
-<h2 id="问题1："><a href="#问题1：" class="headerlink" title="问题1："></a>问题1：</h2><p><strong>_post目录下如果在生成的.md目录插入图片就会生成两个同名的文件夹(实际上有一个后面多了一个空格)，导致默认的图片上传方式都出问题</strong></p>
-<p><strong>原因及解决方案</strong>：在修改_config.yml文件中的<strong>post_asset_folder为true</strong>之后，如果使用<code>hexo new xxx</code>的方式生成.md文件和同名文件夹，且同时还将typora的偏好设置为<code>./$&#123;filename&#125;</code>，那么就会出现这样的问题，解决办法就是直接手动创建一个.md文件，只要插入图片，typora就自动会生成一个同名文件夹，并加图片放入。（<font color='red'>注意不要将post_asset_folder又设回false了</font>）</p>
-<h2 id="问题2："><a href="#问题2：" class="headerlink" title="问题2："></a>问题2：</h2><p><strong>按照网上许多方法仍然无法直接使用<code>![](xx.png)</code>这种markdown格式插入图片</strong></p>
-<p><strong>原因分析</strong>：<font color='red'>该问题的主要原因在于插件版本和hexo版本不一致</font>。在本地生成的静态网页中我们可以按”F12”查看图片路径是否转换成功。</p>
-<p><img src="/%5B%E5%8D%9A%E5%AE%A2%5Dtypora&hexo-asset-img%E9%85%8D%E5%90%88%E6%8F%92%E5%85%A5%E6%96%87%E7%AB%A0%E5%9B%BE%E7%89%87/image-20250218221232758.png" alt="F12查看图片路径"></p>
-<p>如图所示，&#x2F;2025&#x2F;02&#x2F;18&#x2F;player&#x2F;xx这个目录就是<code>hexo g</code>执行后生成到public目录下的。</p>
-<ul>
-<li>从文件中查看，如果该目录下没有我们文章中出现的图片，则说明图片上传失败；</li>
-<li>而从网页端查看则如图所示，即图片源路径指向了对应的目录。</li>
-</ul>
-<p>上面两种方式都可以用来判断图片是否上传成功</p>
-<p><strong>解决办法:</strong></p>
-<p>由于我们使用的是hexo6.3.0版本，<code>hexo-asset-image</code>插件已经无法适配，所以这里直接下载另外一个<code>hexo-asset-img</code>插件即可。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">npm install hexo-asset-img --save</span><br></pre></td></tr></table></figure>
-
-<p>随后，按照问题1的方式创建.md文件，直接在typora中粘贴图片，即可实现图片和文章一起上传至博客网站.</p>
-<p>在typora中图片插入的具体的格式如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">![命名](与.md同名文件夹/logo.png)</span><br></pre></td></tr></table></figure>
-
-]]></content>
-      <categories>
-        <category>疑难杂症</category>
-      </categories>
-      <tags>
-        <tag>博客</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>播放器总结</title>
-    <url>/2025/02/18/%5B%E9%9F%B3%E8%A7%86%E9%A2%91%5Dplayer/</url>
+    <url>/2025/02/18/AVDev_player/</url>
     <content><![CDATA[<h2 id="1-播放器实现概述"><a href="#1-播放器实现概述" class="headerlink" title="1. 播放器实现概述"></a>1. 播放器实现概述</h2><p>[<strong>搬运请标注出处</strong>⚠]一个播放器实现大致可以分为两块，即ui主界面，播放器功能模块。这两个模块之间还可以添加其它的模块进行解耦等，例如bilibili的开源项目ijkplayer的框架就是: UI主界面—ijkplayer核心—ffplayer。其中ijkplayer作为ui主界面和ffplayer之间的中转站(<strong>实际ijkplayer核心中也可以处理部分回调的消息，并不需要所有的消息都回到主界面的消息循环函数中处理</strong>)。下文将提炼ijkplayer和ffplay的源码，并主要谈谈qt环境下ijkplayer与ffplay两者不同之处以及相同之处 。(后续对音视频理解更深了会继续更新)</p>
 <span id="more"></span>
 
-<p><img src="/%5B%E9%9F%B3%E8%A7%86%E9%A2%91%5Dplayer/image-20250218222315603.png" alt="image-20250218222315603"></p>
+<img src="/2025/02/18/AVDev_player/image-20250218222315603.png" class="" title="image-20250218222315603">
+
 <h3 id="1-1-按下播放按钮到视频播放的过程"><a href="#1-1-按下播放按钮到视频播放的过程" class="headerlink" title="1.1 按下播放按钮到视频播放的过程"></a>1.1 按下播放按钮到视频播放的过程</h3><p>播放按钮到视频播放这一个功能实现大概分为以下过程</p>
 <blockquote>
 <ul>
@@ -185,18 +18,21 @@
 </li>
 <li><p>在准备播放函数中(prepare_async())启用消息队列并创建消息循环线程(<strong>消息循环队列有解耦的作用</strong>)，接着调用真正的播放器ffplay的众多接口</p>
 </li>
-<li><p>在ffplay.cpp中调用stream_open(该函数主要完成初始化工作),接下来就是ffplay框架的一系列执行动作了，即完成解复用，解码，音频输出，视频图像显示，音视频同步等等（注意ffplay播放器read_thread还完成了将相关消息放到消息队列的过程，这样消息循环线程就可以取相应消息并让播放器完成相应的动作。）</p>
+<li><p>在ffplay.cpp中调用stream_open(该函数主要完成初始化工作),接下来就是ffplay框架的一系列执行动作了，即完成解复用，解码，音频输出，视频图像显示，AVDev_同步等等（注意ffplay播放器read_thread还完成了将相关消息放到消息队列的过程，这样消息循环线程就可以取相应消息并让播放器完成相应的动作。）</p>
 </li>
 </ul>
 </blockquote>
-<p>整个ffplay的执行过程一图流如下：(参考八小时码字员)<br><img src="/%5B%E9%9F%B3%E8%A7%86%E9%A2%91%5Dplayer/image-20250218222358324.png" alt="image-20250218222358324"></p>
+<p>整个ffplay的执行过程一图流如下：(参考八小时码字员)</p>
+<img src="/2025/02/18/AVDev_player/image-20250218222358324.png" class="" title="image-20250218222358324">
+
 <h3 id="1-2-ijkplayer主要的改进之处–消息循环机制"><a href="#1-2-ijkplayer主要的改进之处–消息循环机制" class="headerlink" title="1.2 ijkplayer主要的改进之处–消息循环机制"></a>1.2 ijkplayer主要的改进之处–消息循环机制</h3><p>相比于ffplay播放器，ijkplayer主要增加了一个独立的消息队列，在播放按键被按下后便会有一个消息循环线程一直执行。这里也给出一个qt环境下该机制的总结图解。</p>
-<p><img src="/%5B%E9%9F%B3%E8%A7%86%E9%A2%91%5Dplayer/image-20250220210418225.png" alt="image-20250220210418225"></p>
+<img src="/2025/02/18/AVDev_player/image-20250220210418225.png" class="" title="image-20250220210418225">
+
 <p>上面循环机制中牵涉到了状态的转换，而播放器状态的检查主要在ijkplayer的<code>ijkmp_prepare_async_l</code>和<code>ikjmp_chkst_start_l</code>函数中，即如果状态为错误状态，那么就会释放内存并结束，下面这张状态机图，描述了播放器状态转换的流程。</p>
-<img src="[音视频]player/image-20250220210507008.png" alt="image-20250220210507008" style="zoom: 50%;" />
+<style>.gtqkmoghbbwh{zoom: 50%;}</style><img src="/2025/02/18/AVDev_player/image-20250220210507008.png" class="gtqkmoghbbwh" alt="image-20250220210507008">
 
 <p>qt环境中，消息队列中的消息在message中被取出来，并通知上层ui主界面 ，而ijkplayer也需要通知上层的app处理消息，因此这里也给出添加注释后ijkplayer中的消息循环函数，以便读者区分。</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//相当于主界面的消息循环函数</span></span><br><span class="line"><span class="type">int</span> media_[音视频]<span class="built_in">player_msg_loop</span>(<span class="type">void</span>* arg)</span><br><span class="line">&#123;</span><br><span class="line">    @autoreleasepool &#123;<span class="comment">// 创建自动释放池以管理内存</span></span><br><span class="line">        IjkMedia[音视频]player *mp = (IjkMedia[音视频]player*)arg; </span><br><span class="line">        <span class="comment">// 创建一个弱引用的播放器控制器，避免循环引用</span></span><br><span class="line">        __weak IJKFFMovie[音视频]playerController *ffpController = <span class="built_in">ffplayerRetain</span>(<span class="built_in">ijkmp_set_weak_thiz</span>(mp, <span class="literal">NULL</span>));</span><br><span class="line">        <span class="comment">// 消息循环主体，当控制器存在时持续运行</span></span><br><span class="line">        <span class="keyword">while</span> (ffpController) &#123;</span><br><span class="line">            @autoreleasepool &#123;<span class="comment">// 为每次循环创建独立的自动释放池</span></span><br><span class="line">                <span class="comment">// 获取一个新的消息对象</span></span><br><span class="line">                IJKFFMovie[音视频]playerMessage *msg = [ffpController obtainMessage];</span><br><span class="line">                <span class="keyword">if</span> (!msg)</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                </span><br><span class="line">			   <span class="comment">// 从消息队列中获取消息，timeout为1</span></span><br><span class="line">                <span class="type">int</span> retval = <span class="built_in">ijkmp_get_msg</span>(mp, &amp;msg-&gt;_msg, <span class="number">1</span>);</span><br><span class="line">                <span class="keyword">if</span> (retval &lt; <span class="number">0</span>)</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">                <span class="comment">// block-get should never return 0</span></span><br><span class="line">                <span class="built_in">assert</span>(retval &gt; <span class="number">0</span>);	<span class="comment">// 确保消息获取成功</span></span><br><span class="line">                <span class="comment">// 通知app上层处理消息. 在主线程上异步处理消息事件</span></span><br><span class="line">                [ffpController performSelectorOnMainThread:@<span class="built_in">selector</span>(postEvent:) withObject:msg waitUntilDone:NO];</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">		<span class="comment">// 减少播放器引用计数并释放资源</span></span><br><span class="line">        <span class="comment">// retained in prepare_async, before SDL_CreateThreadEx</span></span><br><span class="line">        <span class="built_in">ijkmp_dec_ref_p</span>(&amp;mp);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//相当于主界面的消息循环函数</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">media_AVDev_player_msg_loop</span><span class="params">(<span class="type">void</span>* arg)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    @autoreleasepool &#123;<span class="comment">// 创建自动释放池以管理内存</span></span><br><span class="line">        IjkMediaAVDev_player *mp = (IjkMediaAVDev_player*)arg; </span><br><span class="line">        <span class="comment">// 创建一个弱引用的播放器控制器，避免循环引用</span></span><br><span class="line">        __weak IJKFFMovieAVDev_playerController *ffpController = <span class="built_in">ffplayerRetain</span>(<span class="built_in">ijkmp_set_weak_thiz</span>(mp, <span class="literal">NULL</span>));</span><br><span class="line">        <span class="comment">// 消息循环主体，当控制器存在时持续运行</span></span><br><span class="line">        <span class="keyword">while</span> (ffpController) &#123;</span><br><span class="line">            @autoreleasepool &#123;<span class="comment">// 为每次循环创建独立的自动释放池</span></span><br><span class="line">                <span class="comment">// 获取一个新的消息对象</span></span><br><span class="line">                IJKFFMovieAVDev_playerMessage *msg = [ffpController obtainMessage];</span><br><span class="line">                <span class="keyword">if</span> (!msg)</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                </span><br><span class="line">			   <span class="comment">// 从消息队列中获取消息，timeout为1</span></span><br><span class="line">                <span class="type">int</span> retval = <span class="built_in">ijkmp_get_msg</span>(mp, &amp;msg-&gt;_msg, <span class="number">1</span>);</span><br><span class="line">                <span class="keyword">if</span> (retval &lt; <span class="number">0</span>)</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">                <span class="comment">// block-get should never return 0</span></span><br><span class="line">                <span class="built_in">assert</span>(retval &gt; <span class="number">0</span>);	<span class="comment">// 确保消息获取成功</span></span><br><span class="line">                <span class="comment">// 通知app上层处理消息. 在主线程上异步处理消息事件</span></span><br><span class="line">                [ffpController performSelectorOnMainThread:@<span class="built_in">selector</span>(postEvent:) withObject:msg waitUntilDone:NO];</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">		<span class="comment">// 减少播放器引用计数并释放资源</span></span><br><span class="line">        <span class="comment">// retained in prepare_async, before SDL_CreateThreadEx</span></span><br><span class="line">        <span class="built_in">ijkmp_dec_ref_p</span>(&amp;mp);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <h2 id="2-解复用"><a href="#2-解复用" class="headerlink" title="2.解复用"></a>2.解复用</h2><blockquote>
 <p>因为从read_thread开始，ijkplayer主要是按照ffplay的流程写的，所以下面也基本按照ffplay的总结了。</p>
@@ -207,7 +43,7 @@
 <p>—-&gt;来到read_thread()中</p>
 <blockquote>
 <p>引用<a href="https://www.jianshu.com/p/daf0a61cc1e0">ijkplayer框架深入剖析 - 简书</a></p>
-<p><strong>read_thread主要完成解复用，并得到解码前音视频流分开后各自的包队列。</strong></p>
+<p><strong>read_thread主要完成解复用，并得到解码前AVDev_流分开后各自的包队列。</strong></p>
 <ol>
 <li><p>创建上下文结构体，这个结构体是最上层的结构体，表示输入上下文</p>
    <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">ic = <span class="built_in">avformat_alloc_context</span>();</span><br></pre></td></tr></table></figure>
@@ -219,24 +55,24 @@
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">err = <span class="built_in">avformat_open_input</span>(&amp;ic, is-&gt;filename, is-&gt;iformat, &amp;ffp-&gt;format_opts);</span><br></pre></td></tr></table></figure>
 
 <ol start="4">
-<li>探测媒体类型，可得到当前文件的封装格式，音视频编码参数等信息</li>
+<li>探测媒体类型，可得到当前文件的封装格式，AVDev_编码参数等信息</li>
 </ol>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">err = <span class="built_in">avformat_find_stream_info</span>(ic, opts);</span><br></pre></td></tr></table></figure>
 </li>
 <li><p>打开视频、音频解码器。在此会打开相应解码器，并创建相应的解码线程。</p>
    <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">stream_component_open</span>(ffp, st_index[AVMEDIA_TYPE_AUDIO]);</span><br></pre></td></tr></table></figure>
 </li>
-<li><p>读取媒体数据，<strong>得到的是音视频分离的解码前数据</strong></p>
+<li><p>读取媒体数据，<strong>得到的是AVDev_分离的解码前数据</strong></p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">ret = <span class="built_in">av_read_frame</span>(ic, pkt);</span><br><span class="line">  <span class="comment">//被读取出来的数据如果不入包队列PacketQueue就要释放,而且必须要手动释放packet的数据</span></span><br></pre></td></tr></table></figure>
 </li>
-<li><p>将音视频数据分别送入相应的queue中</p>
+<li><p>将AVDev_数据分别送入相应的queue中</p>
 </li>
 </ol>
   <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (pkt-&gt;stream_index == is-&gt;audio_stream &amp;&amp; pkt_in_play_range) &#123;</span><br><span class="line">   <span class="built_in">packet_queue_put</span>(&amp;is-&gt;audioq, pkt);</span><br><span class="line">   &#125; <span class="keyword">else</span> <span class="keyword">if</span> (pkt-&gt;stream_index == is-&gt;video_stream &amp;&amp; pkt_in_play_range &amp;&amp; !(is-&gt;video_st &amp;&amp; (is-&gt;video_st-&gt;disposition &amp; AV_DISPOSITION_ATTACHED_PIC))) &#123;</span><br><span class="line">   <span class="built_in">packet_queue_put</span>(&amp;is-&gt;videoq, pkt);</span><br><span class="line">    ......</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="built_in">av_packet_unref</span>(pkt);<span class="comment">//释放pkt的数据</span></span><br><span class="line">&#125;   </span><br></pre></td></tr></table></figure>
 
 <p>重复6、7步，即可不断获取待播放的数据。</p>
 </blockquote>
-<h2 id="3-解码"><a href="#3-解码" class="headerlink" title="3. 解码"></a>3. 解码</h2><img src="[音视频]player/image-20250220224325219.png" alt="image-20250220224325219" style="zoom: 67%;" />
+<h2 id="3-解码"><a href="#3-解码" class="headerlink" title="3. 解码"></a>3. 解码</h2><style>.ohbdfyvmzgnh{zoom: 67%;}</style><img src="/2025/02/18/AVDev_player/image-20250220224325219.png" class="ohbdfyvmzgnh" alt="image-20250220224325219">
 
 <ul>
 <li>解码定义：<strong>将压缩的视频&#x2F;音频数据转换回原始的未压缩格式</strong></li>
@@ -333,7 +169,7 @@
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//decoder_decode_frame()函数中	</span></span><br><span class="line"><span class="keyword">case</span> AVMEDIA_TYPE_AUDIO:</span><br><span class="line">    ret = <span class="built_in">avcodec_receive_frame</span>(d-&gt;avctx, frame);</span><br><span class="line">    <span class="keyword">if</span> (ret &gt;= <span class="number">0</span>) &#123;</span><br><span class="line">        AVRational tb = &#123;<span class="number">1</span>, frame-&gt;sample_rate&#125;;    <span class="comment">//</span></span><br><span class="line">        <span class="keyword">if</span> (frame-&gt;pts != AV_NOPTS_VALUE) &#123;</span><br><span class="line">            <span class="comment">// 如果frame-&gt;pts正常则先将其从pkt_timebase转成&#123;1, frame-&gt;sample_rate&#125;</span></span><br><span class="line">            <span class="comment">// pkt_timebase实质就是stream-&gt;time_base</span></span><br><span class="line">            frame-&gt;pts = <span class="built_in">av_rescale_q</span>(frame-&gt;pts, d-&gt;avctx-&gt;pkt_timebase, tb);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (d-&gt;next_pts != AV_NOPTS_VALUE) &#123;</span><br><span class="line">            <span class="comment">// 如果frame-&gt;pts不正常则使用上一帧更新的next_pts和next_pts_tb</span></span><br><span class="line">            <span class="comment">// 转成&#123;1, frame-&gt;sample_rate&#125;</span></span><br><span class="line">            frame-&gt;pts = <span class="built_in">av_rescale_q</span>(d-&gt;next_pts, d-&gt;next_pts_tb, tb);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (frame-&gt;pts != AV_NOPTS_VALUE) &#123;</span><br><span class="line">            <span class="comment">// 根据当前帧的pts和nb_samples预估下一帧的pts</span></span><br><span class="line">            d-&gt;next_pts = frame-&gt;pts + frame-&gt;nb_samples;</span><br><span class="line">            d-&gt;next_pts_tb = tb; <span class="comment">// 设置timebase</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">	<span class="keyword">break</span>;</span><br></pre></td></tr></table></figure>
 
 <p>从上可以看出来，将audio frame从decoder_decode_frame取出来后，已由stream-&gt;time_base转成了{1, frame-&gt;sample_rate}作为time_base。</p>
-<h2 id="4-音视频输出"><a href="#4-音视频输出" class="headerlink" title="4. 音视频输出"></a>4. 音视频输出</h2><h3 id="4-1-音频输出"><a href="#4-1-音频输出" class="headerlink" title="4.1 音频输出"></a>4.1 音频输出</h3><p>播放流程总结：</p>
+<h2 id="4-AVDev-输出"><a href="#4-AVDev-输出" class="headerlink" title="4. AVDev_输出"></a>4. AVDev_输出</h2><h3 id="4-1-音频输出"><a href="#4-1-音频输出" class="headerlink" title="4.1 音频输出"></a>4.1 音频输出</h3><p>播放流程总结：</p>
 <blockquote>
 <p>[SDL音频设备] -&gt; [需要数据] -&gt; [调用sdl_audio_callback] -&gt; [从音频队列获取数据] -&gt; [填充到设备缓冲区] -&gt; [播放]</p>
 </blockquote>
@@ -439,11 +275,11 @@
 <li>video_refresh</li>
 </ul>
 <p>该函数图解如下</p>
-<img src="[音视频]player/image-20250221174757834.png" alt="image-20250221174757834" style="zoom: 67%;" />
+<style>.tfeirgkredpf{zoom: 67%;}</style><img src="/2025/02/18/AVDev_player/image-20250221174757834.png" class="tfeirgkredpf" alt="image-20250221174757834">
 
 <p>几个时间戳关系如下：</p>
 <p>(<strong>注意丢帧之前一定要保证下一帧存在</strong>)</p>
-<img src="[音视频]player/image-20250221174324289.png" alt="image-20250221174324289" style="zoom:50%;" />
+<style>.corxorfdxswb{zoom:50%;}</style><img src="/2025/02/18/AVDev_player/image-20250221174324289.png" class="corxorfdxswb" alt="image-20250221174324289">
 
 <ul>
 <li>video_display</li>
@@ -461,9 +297,9 @@
 </ul>
 <hr>
 <p>下面也给出了参考ijkplayer，画面刷新逻辑的流程图</p>
-<img src="[音视频]player/image-20250221210703870.png" alt="image-20250221210703870" style="zoom: 50%;" />
+<style>.obupnyroepem{zoom: 50%;}</style><img src="/2025/02/18/AVDev_player/image-20250221210703870.png" class="obupnyroepem" alt="image-20250221210703870">
 
-<h2 id="5-音视频同步"><a href="#5-音视频同步" class="headerlink" title="5. 音视频同步"></a>5. 音视频同步</h2><p>同步方式主要分为：</p>
+<h2 id="5-AVDev-同步"><a href="#5-AVDev-同步" class="headerlink" title="5. AVDev_同步"></a>5. AVDev_同步</h2><p>同步方式主要分为：</p>
 <ul>
 <li>以视频为主导</li>
 <li>以音频为主导</li>
@@ -489,7 +325,7 @@
 <ul>
 <li>ffplay通过 av_seek_frame() 实现跳转</li>
 <li>需要清空解码器缓存和播放队列</li>
-<li>重新计算音视频同步时间戳</li>
+<li>重新计算AVDev_同步时间戳</li>
 </ul>
 </li>
 <li><p>音频倍速可以改变音频的采样率，采样率越高，每s采的样本点越多，每个样本点的持续时间就越短，速度就越快，但是这样会使声调变高；更好的方式是采用<strong>时间拉伸</strong>（Time Stretching）</p>
@@ -535,5 +371,176 @@
         <tag>ijkplayer</tag>
         <tag>ffplay</tag>
       </tags>
+  </entry>
+  <entry>
+    <title>typora+hexo-asset-img插入文章图片</title>
+    <url>/2025/02/18/blog_typora&amp;hexo-asset-img/</url>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>在使用hexo部署博客文章时，发现hexo默认的上传文件方式不太方便(如下)</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;% asset_img image.png name %&#125;</span><br></pre></td></tr></table></figure>
+
+<p>于是上网搜索方案，发现typora配合其它转图片路径的插件的方案很方便，但是在试过<code>hexo-asset-image</code>和<code>hexo-renderer-marked</code>之后，发现直接在typora中粘贴图片(即markdown格式)还是无法在网页上显示图片。</p>
+<p>以下是遇到的主要问题及解决方法</p>
+<span id="more"></span>
+
+<h2 id="问题1："><a href="#问题1：" class="headerlink" title="问题1："></a>问题1：</h2><p><strong>_post目录下如果在生成的.md目录插入图片就会生成两个同名的文件夹(实际上有一个后面多了一个空格)，导致默认的图片上传方式都出问题</strong></p>
+<p><strong>原因及解决方案</strong>：在修改_config.yml文件中的<strong>post_asset_folder为true</strong>之后，如果使用<code>hexo new xxx</code>的方式生成.md文件和同名文件夹，且同时还将typora的偏好设置为<code>./$&#123;filename&#125;</code>，那么就会出现这样的问题，解决办法就是直接手动创建一个.md文件，只要插入图片，typora就自动会生成一个同名文件夹，并加图片放入。（<font color='red'>注意不要将post_asset_folder又设回false了</font>）</p>
+<h2 id="问题2："><a href="#问题2：" class="headerlink" title="问题2："></a>问题2：</h2><p><strong>按照网上许多方法仍然无法直接使用<code>![](xx.png)</code>这种markdown格式插入图片</strong></p>
+<p><strong>原因分析</strong>：<font color='red'>该问题的主要原因在于插件版本和hexo版本不一致</font>。在本地生成的静态网页中我们可以按”F12”查看图片路径是否转换成功。</p>
+<img src="/2025/02/18/blog_typora&hexo-asset-img/image-20250218221232758.png" class="" title="F12查看图片路径">
+
+<p>如图所示，&#x2F;2025&#x2F;02&#x2F;18&#x2F;player&#x2F;xx这个目录就是<code>hexo g</code>执行后生成到public目录下的。</p>
+<ul>
+<li>从文件中查看，如果该目录下没有我们文章中出现的图片，则说明图片上传失败；</li>
+<li>而从网页端查看则如图所示，即图片源路径指向了对应的目录。</li>
+</ul>
+<p>上面两种方式都可以用来判断图片是否上传成功</p>
+<p><strong>解决办法:</strong></p>
+<p>由于我们使用的是hexo6.3.0版本，<code>hexo-asset-image</code>插件已经无法适配，所以这里直接下载另外一个<code>hexo-asset-img</code>插件即可。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">npm install hexo-asset-img --save</span><br></pre></td></tr></table></figure>
+
+<p>随后，按照问题1的方式创建.md文件，直接在typora中粘贴图片，即可实现图片和文章一起上传至博客网站.</p>
+<p>在typora中图片插入的具体的格式如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">![命名](与.md同名文件夹/logo.png)</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>疑难杂症</category>
+      </categories>
+      <tags>
+        <tag>博客</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>linux常用命令总结</title>
+    <url>/2025/02/23/linux_BasicShellCmd/</url>
+    <content><![CDATA[<p>一些常用shell命令的总结。</p>
+<span id="more"></span>
+
+<h2 id="基础概念"><a href="#基础概念" class="headerlink" title="基础概念"></a>基础概念</h2><ul>
+<li>shell ：即命令解释器，是用户和linux内核交互的桥梁，通过在shell终端输入命令让linux内核相应部分识别用户命令并处理。</li>
+</ul>
+<p>​	shell命令的基本格式为</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">命令 [option] 参数 </span><br></pre></td></tr></table></figure>
+<p>​	其中加”[]”符号表示可以不输入这个选项</p>
+<p><strong>tips</strong>: 对于不熟悉的命令可以使用<code>man 1 命令</code>或者<code>命令 --help</code>来查看说明</p>
+<h2 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h2><ol>
+<li>切换用户权限组</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">sudo su //切换为管理员</span><br><span class="line">exit //推出管理员权限</span><br></pre></td></tr></table></figure>
+
+<p>在命令前加<code>sudo</code>也可以使用管理员权限</p>
+<ol start="2">
+<li>创建目录</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">mkdir -m 目录名</span><br><span class="line">mkdir -r /home/hh # -r 可以递归的创建目录</span><br></pre></td></tr></table></figure>
+
+<p>3.删除目录或者文件</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">rm -i 文件名</span><br><span class="line">rm -r 目录名 #主要用来删除目录</span><br><span class="line">rm -f 文件名 #强制删除</span><br></pre></td></tr></table></figure>
+
+<p>4.切换路径</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cd /  #切换到根目录</span><br><span class="line">cd ~  #切换到家目录</span><br><span class="line">cd /home/xxx  </span><br></pre></td></tr></table></figure>
+
+<p>5.gedit 记事本</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">gedit main.c</span><br></pre></td></tr></table></figure>
+
+<p>6.查看文件</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cat main.c #查看文件内容并输出到shell终端</span><br><span class="line">cat -A 文件名  #隐藏的字符也可以查看</span><br></pre></td></tr></table></figure>
+
+<p>7.复制</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cp -r 源文件 目标文件 #可以复制目录的所有文件</span><br></pre></td></tr></table></figure>
+
+<p>8.移动或重命名</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">mv [选项] 源文件 目标文件</span><br><span class="line">mv old.txt new.txt #重命名单个文件</span><br><span class="line">mv old_folder new_folder #重命名目录</span><br><span class="line">mv file.txt /home/user/documents/newfile.txt #移动文件到其他目录并重命名</span><br></pre></td></tr></table></figure>
+
+<p>9.查看当前路径</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">pwd</span><br></pre></td></tr></table></figure>
+
+<p>10.查看当前目录文件</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">ls [option]</span><br><span class="line">ls -a #查看所有文件，包括隐藏的</span><br></pre></td></tr></table></figure>
+
+<p>11 解压缩</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">tar -zxvf xx.tar.gz # 解压缩tar.gz文件</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>linux</category>
+        <category>shell命令</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>遍历排序与分治排序</title>
+    <url>/2025/02/27/Algo_Sort/</url>
+    <content><![CDATA[<p><strong>排序算法性质</strong>：</p>
+<p><strong>自适应性</strong>：自适应排序能够利用输入已有的顺序信息来减少计算量，达到更优的时间效率</p>
+<p><strong>稳定性</strong>：排序完成后，相等元素在数组中的顺序不发生改变</p>
+<span id="more"></span>
+
+<h2 id="遍历排序"><a href="#遍历排序" class="headerlink" title="遍历排序"></a>遍历排序</h2><h3 id="选择排序"><a href="#选择排序" class="headerlink" title="选择排序"></a>选择排序</h3><p>思路：每次查找未排序区间的最小值，并与排序区间的尾部(实际这个位置是每轮外循环未排序区间的第一个位置)交换位置</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">selectSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums)</span> </span>&#123;</span><br><span class="line">	<span class="comment">//外循环，未排序区间为[i,n-1],每轮未排序区间长度减1</span></span><br><span class="line">    <span class="type">int</span> n = nums.<span class="built_in">size</span>();</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; n<span class="number">-1</span>; i++) &#123;<span class="comment">//最后一个不用排了</span></span><br><span class="line">    	<span class="type">int</span> k = i; <span class="comment">//未排序区间最小元素索引</span></span><br><span class="line">        <span class="comment">//内循环找未排序区间最小值</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> j = i<span class="number">+1</span>; j &lt; n; j++) &#123;</span><br><span class="line">            <span class="keyword">if</span> (nums[k] &lt; nums[j]) &#123;</span><br><span class="line">                k = j;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">swap</span>(nums[i], nums[k]); <span class="comment">//将最小元素与未排序区间最小值交换</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>时间复杂度o(n^2),空间复杂度o(1)，非稳定性排序</li>
+</ul>
+<h3 id="冒泡排序"><a href="#冒泡排序" class="headerlink" title="冒泡排序"></a>冒泡排序</h3><p>思路：每次冒泡都得到未排序区间的最大值，并交换至未排序区间的尾部，n个数冒泡n-1次即可(外循环次数),</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">bubbleSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> n = nums.<span class="built_in">size</span>();</span><br><span class="line">    <span class="comment">//外循环，未排序区间[0,i]</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = n<span class="number">-1</span>; i &gt; <span class="number">0</span>; i--) &#123;</span><br><span class="line">        <span class="type">bool</span> flag = <span class="literal">false</span>; <span class="comment">//标志</span></span><br><span class="line">   		<span class="comment">//内循环，交换最大值至未排序区间的末尾</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> j = <span class="number">0</span>; j &lt; i; j++) &#123;</span><br><span class="line">            <span class="keyword">if</span> (nums[j<span class="number">+1</span>] &lt; nums[j]) &#123;</span><br><span class="line">                <span class="built_in">swap</span>(nums[j],numss[j<span class="number">+1</span>]);</span><br><span class="line">                flage = <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//本轮没有交换说明已经有序了，直接推出即可</span></span><br><span class="line">        <span class="keyword">if</span> (!flag) &#123;<span class="keyword">break</span>;&#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>时间复杂度o(n^2), 有flag的情况下最佳时间复杂度o(n), 空间复杂度o(1)，稳定排序</li>
+</ul>
+<h3 id="插入排序"><a href="#插入排序" class="headerlink" title="插入排序"></a>插入排序</h3><p>思路：在未排序区间选择一个基准元素，将其与左边的已排序区间比较，一直到左边元素不大于基准元素为止</p>
+<style>.uczoxemyhakb{zoom:33%;}</style><img src="/2025/02/27/Algo_Sort/image-20250227120737150.png" class="uczoxemyhakb" alt="image-20250227120737150">
+
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">insertionSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums)</span> </span>&#123;</span><br><span class="line">	<span class="comment">//外循环，已排序区间为[0,i-1]</span></span><br><span class="line">    <span class="comment">//初始状态，第一个元素已完成排序</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt; nums.<span class="built_in">size</span>(); i++) &#123;</span><br><span class="line">        <span class="type">int</span> base = nums[i], j = i<span class="number">-1</span>; </span><br><span class="line">    	<span class="comment">//内循环，将base插入到已排序区间</span></span><br><span class="line">		<span class="keyword">while</span> (j &gt;= <span class="number">0</span> &amp;&amp; nums[j] &gt; base) &#123;</span><br><span class="line">            nums[j<span class="number">+1</span>] = nums[j]; <span class="comment">//右移一位</span></span><br><span class="line">            j--;</span><br><span class="line">        &#125;</span><br><span class="line">        nums[j<span class="number">+1</span>] = base; <span class="comment">//插入base</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>最差时间复杂度为o(n^2)，数据完全有序的情况下时间复杂度为o(n)，空间复杂度为o(1),稳定排序</p>
+<img src="/2025/02/27/Algo_Sort/image-20250227132530692.png" class="" title="image-20250227132530692">
+
+<hr>
+<h2 id="分治排序"><a href="#分治排序" class="headerlink" title="分治排序"></a>分治排序</h2><h3 id="快速排序"><a href="#快速排序" class="headerlink" title="快速排序"></a>快速排序</h3><p>思路：</p>
+<ul>
+<li><p>在未优化的情况下，快速排序的思路为先进行哨兵划分：即将数组最左边的元素nums[left]作为基准值，定义定义两个指针i,j,并分别初始化指向数组左边left和右边right，i从左往右找大于基准值的位置，j从右往左找小于基准值的位置，随后交换对应位置的值，并继续循环。  </p>
+</li>
+<li><p>进过哨兵划分之后，数组分成了两个子数组，接着递归这两个子数组即可。</p>
+</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//哨兵划分</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">partition</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> left, <span class="type">int</span> right)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> i = left, j = right;</span><br><span class="line">    <span class="comment">//以nums[left]为基准值</span></span><br><span class="line">    <span class="keyword">while</span> (i &lt; j) &#123;</span><br><span class="line">    	<span class="keyword">while</span> (i &lt; j &amp;&amp; nums[i] &lt;= nums[left]) &#123;</span><br><span class="line">            ++i;</span><br><span class="line">        &#125;  </span><br><span class="line">        <span class="keyword">while</span> (i &lt; j &amp;&amp; nums[j] &gt;= nums[left]) &#123;</span><br><span class="line">            --j;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">swap</span>(nums[i], nums[j]);   															 	   	 </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//i==j时，将基准值交换到i的位置</span></span><br><span class="line">    <span class="built_in">swap</span>(nums[left], nums[i]);</span><br><span class="line">    <span class="keyword">return</span> i; </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//快速排序</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">quickSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> left, <span class="type">int</span> right)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//终止条件</span></span><br><span class="line">    <span class="keyword">if</span> (left &gt;= right) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//哨兵划分</span></span><br><span class="line">    <span class="comment">//左闭右闭</span></span><br><span class="line">    <span class="type">int</span> pivot = <span class="built_in">partition</span>(nums, left, right);</span><br><span class="line">    <span class="built_in">quickSort</span>(nums, left, pivot<span class="number">-1</span>);</span><br><span class="line">    <span class="built_in">queickSort</span>(nums, pivot<span class="number">+1</span>, right);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>优化：</strong>在数组倒序的情况下，基准数左边或者右边数组长度为n-1，每次递归都会出现有一个子数组长度为0的情况，快速排序退化为类似冒泡排序，时间复杂度劣化为o(n^2)。同样正序的情况下，也会出现有一个子数组长度为0的情况，每次递归长度为n-1的数组都只减少一个元素，递归深度为n-1，需要占用o(n)的栈帧空间</p>
+<p>因此要对基准值和递归区间的选取进行优化：即选择数组左，中，右值的中位数作为基准值，选择对长度更短的子数组递归</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//选择基准数</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">medianThree</span><span class="params">(vector&lt;<span class="type">int</span>&gt; nums, <span class="type">int</span> left, <span class="type">int</span> mid, <span class="type">int</span> right)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> l = nums[left], m = nums[mid], r = nums[right];</span><br><span class="line">    <span class="keyword">if</span> ((l &lt;= m &amp;&amp; m &lt;= r) || (r &lt;= m &amp;&amp; m &lt;= l)) &#123;</span><br><span class="line">   		<span class="keyword">return</span> m;		     </span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> ((m &lt;= l &amp;&amp; l &lt;= r) || (r &lt;= l &amp;&amp; l &lt;= m)) &#123;</span><br><span class="line">        <span class="keyword">return</span> l;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> r;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//哨兵划分</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">partition</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> left, <span class="type">int</span> right)</span> </span>&#123;</span><br><span class="line">	<span class="type">int</span> median = <span class="built_in">medianThree</span>(nums, left, left+(right-left)/<span class="number">2</span> ,right); 	 </span><br><span class="line"> 	<span class="comment">//将数组交换至数组最左端</span></span><br><span class="line">    <span class="built_in">swap</span>(median, nums[left]);</span><br><span class="line">   	<span class="comment">//后面一样，省略</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//快速排序</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">quickSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> left, <span class="type">int</span> right)</span> </span>&#123;</span><br><span class="line">	<span class="comment">// 子数组长度为1 时终止</span></span><br><span class="line">    <span class="keyword">while</span> (left &lt; right) &#123;</span><br><span class="line">        <span class="comment">// 哨兵划分操作</span></span><br><span class="line">        <span class="type">int</span> pivot = <span class="built_in">partition</span>(nums, left, right);</span><br><span class="line">        <span class="comment">// 对两个子数组中较短的那个执行快速排序</span></span><br><span class="line">        <span class="keyword">if</span> (pivot - left &lt; right - pivot) &#123;</span><br><span class="line">            <span class="built_in">quickSort</span>(nums, left, pivot - <span class="number">1</span>); <span class="comment">// 递归排序左子数组</span></span><br><span class="line">            left = pivot + <span class="number">1</span>; <span class="comment">// 剩余未排序区间为[pivot + 1, right]</span></span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="built_in">quickSort</span>(nums, pivot + <span class="number">1</span>, right); <span class="comment">// 递归排序右子数组</span></span><br><span class="line">            right = pivot - <span class="number">1</span>; <span class="comment">// 剩余未排序区间为[left, pivot - 1]  </span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<img src="/2025/02/27/Algo_Sort/image-20250227153337619.png" class="" title="image-20250227153337619">
+
+<h3 id="归并排序"><a href="#归并排序" class="headerlink" title="归并排序"></a>归并排序</h3><p>归并排序的递归顺序和二叉树的后序遍历是一样的，即先递归左数组，再递归右数组，最后合并，注意合并时的子数组是有序的。一图总结如下：</p>
+<style>.nwnullzphodu{zoom: 67%;}</style><img src="/2025/02/27/Algo_Sort/image-20250227153030239.png" class="nwnullzphodu" alt="image-20250227153030239">
+
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//合并左右子数组,左数组[left, mid], 右数组[mid+1, right]</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">merge</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> left, <span class="type">int</span> mid, <span class="type">int</span> right)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> i = left, j = mid + <span class="number">1</span>, k = <span class="number">0</span>;</span><br><span class="line">    <span class="comment">//创建临时数组存放合并后数组</span></span><br><span class="line">    <span class="function">vector&lt;<span class="type">int</span>&gt; <span class="title">tmp</span><span class="params">(right- left <span class="number">+1</span>)</span></span>;</span><br><span class="line">    <span class="comment">//左右数组都还有元素时进行比较</span></span><br><span class="line">    <span class="keyword">while</span> (i &lt;= mid &amp;&amp; j &lt;= right) &#123;</span><br><span class="line">        <span class="comment">//将较小元素放入tmp</span></span><br><span class="line">        <span class="keyword">if</span> (nums[i] &lt;= nums[j]) &#123;</span><br><span class="line">            tmp[k++] = nums[i++]</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            tmp[k++] = nums[j++];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//将剩下元素放入tmp,注意i,j往后移动</span></span><br><span class="line">    <span class="keyword">while</span> (i &lt;= mid) &#123;</span><br><span class="line">        tmp[k++] = nums[i++]; </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> (j &lt;= right) &#123;</span><br><span class="line">        tmp[k++] = nums[j++]</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//将合并后放回到原数组对应位置</span></span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; tmp.<span class="built_in">size</span>(); i++) &#123;</span><br><span class="line">        nums[left+i] = tmp[i]; </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//归并排序</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">mergeSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> left, <span class="type">int</span> right)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//子数组长度为1时终止</span></span><br><span class="line">	<span class="keyword">if</span> (left &gt;= right) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;    </span><br><span class="line">    <span class="comment">//子数组划分</span></span><br><span class="line">    <span class="type">int</span> mid = left + (right - left) / <span class="number">2</span>;</span><br><span class="line">    <span class="built_in">mergeSort</span>(nums, left, mid); <span class="comment">//左</span></span><br><span class="line">    <span class="built_in">mergeSort</span>(nums, mid<span class="number">+1</span>, right); <span class="comment">//右</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">//对子数组进行合并</span></span><br><span class="line">    <span class="built_in">merge</span>(nums, left, mid, right);  <span class="comment">//中</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>时间复杂度为o(n*logn)，递归深度logn,每层操作n次。  空间复杂度为o(n)，具体：栈帧空间占o(logn), 创建临时数组空间为o(n)</li>
+</ul>
+<p><font color='red'>归并排序特别适合链表排序</font>，在划分阶段可以使用迭代来代替递归，在合并阶段也不用创建额外的辅助数据，因为链表的合并只需要操作指针</p>
+<h4 id="148-排序链表"><a href="#148-排序链表" class="headerlink" title="148 排序链表"></a>148 排序链表</h4><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">//找到链表中点</span></span><br><span class="line">    <span class="function">ListNode* <span class="title">findListMid</span><span class="params">(ListNode* head)</span> </span>&#123;</span><br><span class="line">        ListNode* fast = head;</span><br><span class="line">        ListNode* slow = head;</span><br><span class="line">        <span class="keyword">while</span> (fast-&gt;next != <span class="literal">NULL</span> &amp;&amp; fast-&gt;next-&gt;next != <span class="literal">NULL</span>) &#123;</span><br><span class="line">            slow = slow-&gt;next;</span><br><span class="line">            fast = fast-&gt;next-&gt;next;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> slow;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//合并左右子链表</span></span><br><span class="line">    <span class="function">ListNode* <span class="title">merge</span><span class="params">(ListNode* left, ListNode* right)</span> </span>&#123;</span><br><span class="line">        ListNode* dummyNode = <span class="keyword">new</span> <span class="built_in">ListNode</span>();<span class="comment">//虚拟头节点用于链表合并</span></span><br><span class="line">        ListNode* cur = dummyNode;</span><br><span class="line">        <span class="keyword">while</span> (left &amp;&amp; right) &#123;</span><br><span class="line">            <span class="keyword">if</span> (left-&gt;val &lt;= right-&gt;val) &#123;</span><br><span class="line">                cur-&gt;next = left;</span><br><span class="line">                left = left-&gt;next;<span class="comment">//右移</span></span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                cur-&gt;next = right;</span><br><span class="line">                right = right-&gt;next;</span><br><span class="line">            &#125;  </span><br><span class="line">            cur = cur-&gt;next;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//链接剩下的节点</span></span><br><span class="line">        <span class="comment">//注意直接if链接就行，不用while</span></span><br><span class="line">        <span class="keyword">if</span> (left) cur-&gt;next = left;</span><br><span class="line">        <span class="keyword">if</span> (right) cur-&gt;next = right;</span><br><span class="line"></span><br><span class="line">        ListNode* result = dummyNode-&gt;next;</span><br><span class="line">        <span class="keyword">delete</span> dummyNode;</span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function">ListNode* <span class="title">sortList</span><span class="params">(ListNode* head)</span> </span>&#123;</span><br><span class="line">        <span class="comment">//归并排序</span></span><br><span class="line">        <span class="comment">//终止条件，空链表或者只有一个节点时终止</span></span><br><span class="line">        <span class="keyword">if</span> (head == <span class="literal">NULL</span> || head-&gt;next == <span class="literal">NULL</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> head;</span><br><span class="line">        &#125;</span><br><span class="line">        ListNode* mid = <span class="built_in">findListMid</span>(head);</span><br><span class="line">        ListNode* right = mid-&gt;next;</span><br><span class="line">        mid-&gt;next = <span class="literal">nullptr</span>;</span><br><span class="line"></span><br><span class="line">        ListNode* leftSortedList = <span class="built_in">sortList</span>(head); <span class="comment">//递归左链表</span></span><br><span class="line">        ListNode* righSortedtList = <span class="built_in">sortList</span>(right); <span class="comment">//递归右链表</span></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">merge</span>(leftSortedList, righSortedtList);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>时间复杂度为o(nlogn)，空间复杂度为栈帧空间o(logn)</p>
+<h3 id="堆排序"><a href="#堆排序" class="headerlink" title="堆排序"></a>堆排序</h3><p>思路：</p>
+<ul>
+<li>先建立一个大顶堆，对数组执行堆化处理</li>
+<li>交换堆顶元素和堆底元素,此时堆长度-1，已排序元素+1</li>
+<li>堆顶元素从顶向下堆化</li>
+<li>循环n-1次交换和堆化的过程</li>
+</ul>
+<style>.uxyupqrhmrwq{zoom: 50%;}</style><img src="/2025/02/27/Algo_Sort/image-20250227171531676.png" class="uxyupqrhmrwq" alt="image-20250227171531676">
+
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//堆的长度为n，从节点i开始，从顶至底执行堆化</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">siftDown</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> n, <span class="type">int</span> i)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">        <span class="type">int</span> l = <span class="number">2</span>i<span class="number">+1</span>, r = <span class="number">2</span>i<span class="number">+2</span>;</span><br><span class="line">        <span class="type">int</span> ma = i;</span><br><span class="line">        <span class="keyword">if</span> (l &lt; n &amp;&amp; nums[l] &gt;= nums[ma]) &#123;</span><br><span class="line">            ma = l;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (r &lt; n &amp;&amp; nums[r] &gt;= nums[ma]) &#123;</span><br><span class="line">           ma = r; </span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//如节点i最大或则l，r越界则无需继续堆化</span></span><br><span class="line">        <span class="keyword">if</span> (ma == i) &#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">swap</span>(nums[i], nums[ma]);</span><br><span class="line">        i = ma;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//堆排序</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">haepSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums)</span> </span>&#123;</span><br><span class="line">	<span class="comment">//建堆，堆化除叶子节点外所有节点</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = nums.<span class="built_in">size</span>() / <span class="number">2</span> - <span class="number">1</span>; i &gt;= <span class="number">0</span>; --i) &#123;</span><br><span class="line">    	<span class="built_in">siftDown</span>(nums, nums.<span class="built_in">size</span>(), i); 	   </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//循环n-1次</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = nums.<span class="built_in">size</span>() - <span class="number">1</span>; i &gt;<span class="number">0</span>; --i) &#123;</span><br><span class="line">        <span class="comment">//交换堆顶元素与堆底元素</span></span><br><span class="line">        <span class="built_in">swap</span>(nums[<span class="number">0</span>], nums[i]); <span class="comment">//堆长度减1</span></span><br><span class="line">        <span class="built_in">siftDown</span>(nums, i, <span class="number">0</span>); <span class="comment">//从堆顶开始堆化</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>时间复杂度o(nlogn),建堆操作使用o(n)时间。从堆中提取最大元素的时间复杂度为o(nlogn)。 原地排序，空间复杂度为o(1)</li>
+</ul>
+]]></content>
+      <categories>
+        <category>数据结构与算法</category>
+        <category>排序</category>
+      </categories>
   </entry>
 </search>
