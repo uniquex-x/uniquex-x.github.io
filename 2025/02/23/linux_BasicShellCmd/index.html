@@ -22,15 +22,15 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":{"valine":{"order":-1}},"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="一些常用shell命令的总结。">
+  <meta name="description" content="z一些常用shell命令的总结。 总结了一些linux中常用的基本命令和项目中常用的命令">
 <meta property="og:type" content="article">
 <meta property="og:title" content="linux常用命令总结">
 <meta property="og:url" content="http://example.com/2025/02/23/linux_BasicShellCmd/index.html">
 <meta property="og:site_name" content="liujiahua&#39;s personalBlog">
-<meta property="og:description" content="一些常用shell命令的总结。">
+<meta property="og:description" content="z一些常用shell命令的总结。 总结了一些linux中常用的基本命令和项目中常用的命令">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-02-23T13:57:08.000Z">
-<meta property="article:modified_time" content="2025-02-25T10:17:25.219Z">
+<meta property="article:modified_time" content="2025-02-28T11:53:00.796Z">
 <meta property="article:author" content="Liu Jiahua">
 <meta name="twitter:card" content="summary">
 
@@ -220,7 +220,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-02-25 18:17:25" itemprop="dateModified" datetime="2025-02-25T18:17:25+08:00">2025-02-25</time>
+                <time title="修改时间：2025-02-28 19:53:00" itemprop="dateModified" datetime="2025-02-28T19:53:00+08:00">2025-02-28</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -263,14 +263,14 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>685</span>
+              <span>1.9k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="far fa-clock"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>1 分钟</span>
+              <span>2 分钟</span>
             </span>
 
         </div>
@@ -282,7 +282,8 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>一些常用shell命令的总结。</p>
+        <p>z一些常用shell命令的总结。</p>
+<p>总结了一些linux中常用的基本命令和项目中常用的命令</p>
 <span id="more"></span>
 
 <h2 id="基础概念"><a href="#基础概念" class="headerlink" title="基础概念"></a>基础概念</h2><ul>
@@ -291,8 +292,22 @@
 <p>​	shell命令的基本格式为</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">命令 [option] 参数 </span><br></pre></td></tr></table></figure>
 <p>​	其中加”[]”符号表示可以不输入这个选项</p>
-<p><strong>tips</strong>: 对于不熟悉的命令可以使用<code>man 1 命令</code>或者<code>命令 --help</code>来查看说明</p>
-<h2 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h2><ol>
+<p><strong>tips</strong>: </p>
+<ul>
+<li><p>对于不熟悉的命令可以使用<code>man 1 命令</code>或者<code>命令 --help</code>来查看说明</p>
+</li>
+<li><p>注意如果想要在windows复制并粘贴到linux虚拟机中，就要安装open-vm-tools，而vm-tools是老版的，重复安装这两个就会冲突，所以只安装open-vm-tools即可。对应命令为：</p>
+</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apt-get install open-vm-tools-desktop</span><br></pre></td></tr></table></figure>
+
+<p>​	以下给出几个vm-tools的区别</p>
+<blockquote>
+<p><strong>open-vm-tools</strong>：开源工具集，主要用于 Linux 虚拟机。</p>
+<p><strong>vm-tools</strong>：VMware 提供的专有工具集，通常用于 VMware 产品。</p>
+<p><strong>open-vm-tools-desktop</strong>：<code>open-vm-tools</code> 的桌面扩展版，专为桌面环境（有图形界面的 Linux）优化，提供更多图形相关的功能。</p>
+</blockquote>
+<h2 id="基本常用命令"><a href="#基本常用命令" class="headerlink" title="基本常用命令"></a>基本常用命令</h2><ol>
 <li>切换用户权限组</li>
 </ol>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo su //切换为管理员</span><br><span class="line">exit //推出管理员权限</span><br></pre></td></tr></table></figure>
@@ -327,9 +342,51 @@
 <p>10.查看当前目录文件</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ls [option]</span><br><span class="line">ls -a #查看所有文件，包括隐藏的</span><br></pre></td></tr></table></figure>
 
-<p>11 解压缩</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tar -zxvf xx.tar.gz # 解压缩tar.gz文件</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="项目常用命令"><a href="#项目常用命令" class="headerlink" title="项目常用命令"></a>项目常用命令</h2><ul>
+<li>解压缩</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tar -zxvf xx.tar.gz # 解压缩tar.gz文件，x为提取，v为详细信息，f即file</span><br></pre></td></tr></table></figure>
 
+<ul>
+<li>查看进程</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ps au #查看所有进程</span><br><span class="line">ps aux|grep xx*</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查找文件</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">基本语法：find 搜索路径 选项 表达式</span></span><br><span class="line">find /path/to/search -name &quot;filename&quot;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">在当前目录及子目录查找名为<span class="string">&quot;example.txt&quot;</span>的文件</span></span><br><span class="line">find . -name &quot;example.txt&quot;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">使用通配符查找所有.<span class="built_in">log</span>文件</span></span><br><span class="line">find /var/log -name &quot;*.log&quot;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">查找指定用户拥有的文件</span></span><br><span class="line">find /home -user username</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">查找过去7天内修改的文件</span></span><br><span class="line">find /home/user -mtime -7</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">使用 find 命令查找最近修改的文件</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">如果你刚刚安装了软件，可以查找系统中最近被修改的文件：</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">查找过去30分钟内修改的文件</span></span><br><span class="line">sudo find / -type f -mmin -30 2&gt;/dev/null</span><br></pre></td></tr></table></figure>
+
+<p>查找文件还可以使用</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">whereis xx</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>安装软件</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sudo dpkg -i 文件名.deb #安装的默认路径为：/opt</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">查看 dpkg 日志找出最近安装的包</span></span><br><span class="line">bashCopygrep &quot;install &quot; /var/log/dpkg.log | tail</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>挂载共享文件夹</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo mount -t fuse.vmhgfs-fuse .host:/ /mnt/hgfs -o allow_other</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>安装和卸载</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">apt-get install </span><br><span class="line">apt-get autoremove </span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>编译和链接</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">编译c源码,以创建线程为例</span></span><br><span class="line">gcc thread1.c -o trl -lphread</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><code>gcc</code>: GNU编译器集合(GNU Compiler Collection)，这是一个常用的C&#x2F;C++编译器</p>
+<p><code>thread1.c</code>: 源代码文件名，这是要被编译的C语言源文件</p>
+<p><code>-o tr1</code>: 输出选项，指定编译后生成的可执行文件名为”tr1”</p>
+<p><code>-lpthread</code>: 链接选项，告诉编译器链接POSIX线程库(pthread库)</p>
+</blockquote>
 
     </div>
 
@@ -411,7 +468,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5"><span class="nav-number">1.</span> <span class="nav-text">基础概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="nav-number">2.</span> <span class="nav-text">常用命令</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5"><span class="nav-number">1.</span> <span class="nav-text">基础概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="nav-number">2.</span> <span class="nav-text">基本常用命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A1%B9%E7%9B%AE%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="nav-number">3.</span> <span class="nav-text">项目常用命令</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
