@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon16.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.lug.ustc.edu.cn/css?family=Lato:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-corner-indicator.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":{"valine":{"order":-1}},"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="基础c++11之后引入智能指针的目的：动态分配的内存空间如果不进行释放，就会导致内存泄露。智能指针是一个模板类，其离开作用域时就会销毁，这时就会调用其析构函数来释放所指向的动态分配对象的空间。即智能指针就是用来解决内存泄露问题的。 本文重在实现简化版的智能指针的模板类，其它概念不多介绍。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="智能指针">
+<meta property="og:url" content="http://example.com/2025/03/10/Cpp11__inteligent_ptr/index.html">
+<meta property="og:site_name" content="liujiahua&#39;s personalBlog">
+<meta property="og:description" content="基础c++11之后引入智能指针的目的：动态分配的内存空间如果不进行释放，就会导致内存泄露。智能指针是一个模板类，其离开作用域时就会销毁，这时就会调用其析构函数来释放所指向的动态分配对象的空间。即智能指针就是用来解决内存泄露问题的。 本文重在实现简化版的智能指针的模板类，其它概念不多介绍。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2025/03/10/Cpp11__inteligent_ptr/image-20250310211607484.png">
+<meta property="og:image" content="http://example.com/2025/03/10/Cpp11__inteligent_ptr/image-20250310221101442.png">
+<meta property="og:image" content="http://example.com/2025/03/10/Cpp11__inteligent_ptr/image-20250310230603480.png">
+<meta property="article:published_time" content="2025-03-10T14:57:08.000Z">
+<meta property="article:modified_time" content="2025-03-10T15:11:01.106Z">
+<meta property="article:author" content="Liu Jiahua">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2025/03/10/Cpp11__inteligent_ptr/image-20250310211607484.png">
+
+<link rel="canonical" href="http://example.com/2025/03/10/Cpp11__inteligent_ptr/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>智能指针 | liujiahua's personalBlog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">liujiahua's personalBlog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2025/03/10/Cpp11__inteligent_ptr/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="Liu Jiahua">
+      <meta itemprop="description" content="无限进步">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="liujiahua's personalBlog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          智能指针
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2025-03-10 22:57:08 / 修改时间：23:11:01" itemprop="dateCreated datePublished" datetime="2025-03-10T22:57:08+08:00">2025-03-10</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/c-11/" itemprop="url" rel="index"><span itemprop="name">c++11</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/c-11/%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/" itemprop="url" rel="index"><span itemprop="name">智能指针</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2025/03/10/Cpp11__inteligent_ptr/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2025/03/10/Cpp11__inteligent_ptr/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>9.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>8 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="基础"><a href="#基础" class="headerlink" title="基础"></a>基础</h3><p><strong>c++11之后引入智能指针的目的</strong>：动态分配的内存空间如果不进行释放，就会导致内存泄露。智能指针是一个模板类，其离开作用域时就会销毁，这时就会调用其析构函数来释放所指向的动态分配对象的空间。<font color='red'>即智能指针就是用来解决内存泄露问题的。</font></p>
+<p>本文重在实现简化版的智能指针的模板类，其它概念不多介绍。</p>
+<span id="more"></span>
+
+<h3 id="shared-ptr"><a href="#shared-ptr" class="headerlink" title="shared_ptr"></a>shared_ptr</h3><p><strong>shared_ptr和其指向的动态分配对象可以实现多对一，即可以多个shared_ptr指向同一个动态分配的对象。</strong></p>
+<p>​	<strong>首先需要列出实现的内容：</strong></p>
+<ul>
+<li>构造函数(默认构造函数，有参构造函数，拷贝构造函数)</li>
+<li>析构函数</li>
+<li>赋值运算符”&#x3D;”的重载</li>
+<li>operator * 的重载</li>
+<li>operator -&gt; 的重载</li>
+<li>指向动态分配对象的原始指针<code>m_ptr</code></li>
+<li>引用计数指针<code>m_count</code></li>
+<li>成员函数get(), reset(), use_count()</li>
+<li>make_shared函数模板</li>
+</ul>
+<style>.chlpbpjqdhid{zoom:50%;}</style><img src="/2025/03/10/Cpp11__inteligent_ptr/image-20250310211607484.png" class="chlpbpjqdhid" alt="image-20250310211607484">
+
+<blockquote>
+<p><strong>为什么图中使用<code>int* m_count</code>而不是<code>int m_count</code>?</strong></p>
+<p><strong>答：为了共享引用计数值</strong></p>
+<p><strong>更具体的</strong>：使用指针m_count而不是整型m_count保证了不同的shared_ptr可以指向同一个引用计数值(因为m_count的地址值是一样的)。如果每个<code>shared_ptr</code>实例都有自己的<code>int m_count</code>成员变量，那么当一个实例增加或减少计数时，其他实例不会知道这个变化。</p>
+</blockquote>
+<h4 id="具体代码实现"><a href="#具体代码实现" class="headerlink" title="具体代码实现"></a>具体代码实现</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*	</span></span><br><span class="line"><span class="comment">	shared_ptr.h</span></span><br><span class="line"><span class="comment">	实现一个简化版的shared_ptr模板类</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="meta">#<span class="keyword">ifndef</span> SHARED_PTR_H</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> SHARED_PTR_H</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;utility&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;  </span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MySharedPtr</span> &#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">	<span class="comment">//指向动态分配对象的原始指针</span></span><br><span class="line">	T* m_ptr;	</span><br><span class="line">	<span class="comment">//共享的引用计数指针</span></span><br><span class="line">	<span class="type">int</span>* m_count;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//释放函数</span></span><br><span class="line">	<span class="function"><span class="type">void</span> <span class="title">release</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		<span class="comment">//注意要保证已经指向了动态对象，即m_count不为空</span></span><br><span class="line">		<span class="keyword">if</span> (m_count) &#123;</span><br><span class="line">			--(*m_count);</span><br><span class="line">			<span class="comment">//只有引用计数为0，才释放管理的对象内存空间</span></span><br><span class="line">			<span class="keyword">if</span> ((*m_count) == <span class="number">0</span>) &#123;</span><br><span class="line">				<span class="keyword">delete</span> m_ptr;</span><br><span class="line">				<span class="keyword">delete</span> m_count;</span><br><span class="line">				m_ptr = <span class="literal">nullptr</span>;</span><br><span class="line">				m_count = <span class="literal">nullptr</span>;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">	<span class="comment">//默认构造函数</span></span><br><span class="line">	<span class="built_in">MySharedPtr</span>(): <span class="built_in">m_ptr</span>(<span class="literal">nullptr</span>), <span class="built_in">m_count</span>(<span class="literal">nullptr</span>) &#123;&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//有参构造函数,最好使用显式构造，避免出现在栈区隐式调用智能指针构造函数，导致智能指针提前销毁</span></span><br><span class="line">	<span class="function"><span class="keyword">explicit</span> <span class="title">MySharedPtr</span><span class="params">(T* ptr)</span>: m_ptr(ptr), m_count(new int(<span class="number">1</span>)) &#123;</span>&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//拷贝构造函数</span></span><br><span class="line">	<span class="comment">//MySharedptr&lt;T&gt; p2(p1);</span></span><br><span class="line">	<span class="built_in">MySharedPtr</span>(<span class="type">const</span> MySharedPtr &amp;other): <span class="built_in">m_ptr</span>(other.m_ptr), <span class="built_in">m_count</span>(other.m_count) &#123;</span><br><span class="line">		<span class="comment">//引用计数加1</span></span><br><span class="line">		<span class="keyword">if</span> (m_count) &#123;</span><br><span class="line">			++(*m_count);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="comment">//析构函数</span></span><br><span class="line">	~<span class="built_in">MySharedPtr</span>() &#123;</span><br><span class="line">		<span class="built_in">release</span>();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//赋值运算符&quot;=&quot;重载</span></span><br><span class="line">	<span class="comment">//MySharedptr&lt;T&gt; p2 = p1; 不能给shared_ptr赋裸指针的原因</span></span><br><span class="line">	MySharedPtr&amp; <span class="keyword">operator</span>=(<span class="type">const</span> MySharedPtr &amp;other) &#123;</span><br><span class="line">		<span class="comment">//other这里是个实例,而this是指向p2的指针，所以要加个&quot;&amp;&quot;</span></span><br><span class="line">		<span class="keyword">if</span> (<span class="keyword">this</span> != &amp;other) &#123;</span><br><span class="line">			<span class="built_in">release</span>();</span><br><span class="line">			m_ptr = other.m_ptr;</span><br><span class="line">			m_count = other.m_count;</span><br><span class="line">			<span class="keyword">if</span> (m_count) &#123;</span><br><span class="line">				++(*m_count);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">	&#125;</span><br><span class="line">		</span><br><span class="line">	<span class="comment">//解引用&quot;*&quot;的重载</span></span><br><span class="line">	T&amp; <span class="keyword">operator</span>*() &#123;</span><br><span class="line">		<span class="keyword">return</span> *m_ptr; <span class="comment">//返回管理的对象</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//&quot;-&gt;&quot;的重载</span></span><br><span class="line">	T* <span class="keyword">operator</span>-&gt;() &#123;</span><br><span class="line">		<span class="keyword">return</span> m_ptr; </span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//reset函数</span></span><br><span class="line">	<span class="comment">//重置指针，如果调用该函数的shared_ptr对象没有初始化且ptr不为空则让裸指针指向动态对象，并将引用计数加1</span></span><br><span class="line">	<span class="comment">//如果shared_ptr对象已经初始化，则根据reset是否传参：即ptr有值则重新指向该对象；ptr为空，则让引用计数减1</span></span><br><span class="line">	<span class="function"><span class="type">void</span> <span class="title">reset</span><span class="params">(T* ptr = <span class="literal">nullptr</span>)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">if</span> (m_ptr != ptr) &#123;</span><br><span class="line">			<span class="built_in">release</span>();</span><br><span class="line">			<span class="keyword">if</span> (ptr) &#123;</span><br><span class="line">				m_ptr = ptr;</span><br><span class="line">				++(*m_count);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//get函数,获取原始指针</span></span><br><span class="line">	<span class="function">T* <span class="title">get</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> m_ptr;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//use_count函数，返回引用计数的值</span></span><br><span class="line">	<span class="function"><span class="type">int</span> <span class="title">use_count</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		<span class="comment">//注意管理对象可以已经销毁再调用use_count查看的</span></span><br><span class="line">		<span class="keyword">return</span> m_count ? *m_count : <span class="number">0</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">//make_shared&lt;T&gt;() 函数模板</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keyword">typename</span>... Args&gt;</span><br><span class="line"><span class="function">MySharedPtr&lt;T&gt; <span class="title">make_shared</span><span class="params">(Args&amp;&amp;... args)</span> </span>&#123;</span><br><span class="line">	<span class="comment">//std::forward&lt;&gt; 在模板代码中用于完美转发</span></span><br><span class="line">	<span class="keyword">return</span> <span class="built_in">MySharedPtr</span>&lt;T&gt;(<span class="keyword">new</span> <span class="built_in">T</span>(std::forward&lt;Args&gt;(args)...)); <span class="comment">//有参构造</span></span><br><span class="line">&#125;</span><br><span class="line">	</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span> </span></span><br></pre></td></tr></table></figure>
+
+<p>测试函数如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;shared_ptr.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line"><span class="comment">/****************shared_ptr的测试*******************************/</span></span><br><span class="line">	<span class="comment">/*测试简化版的shared_ptr模板类*/</span></span><br><span class="line">	<span class="function">MySharedPtr&lt;<span class="type">int</span>&gt; <span class="title">sp1</span><span class="params">(<span class="keyword">new</span> <span class="type">int</span>(<span class="number">50</span>))</span></span>;</span><br><span class="line">	std::cout &lt;&lt; <span class="string">&quot;the use_count: &quot;</span> &lt;&lt; sp<span class="number">1.</span><span class="built_in">use_count</span>() &lt;&lt; std::endl;</span><br><span class="line">	std::cout &lt;&lt; <span class="string">&quot;sp1: &quot;</span> &lt;&lt; *sp1 &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//测试赋值运算重载</span></span><br><span class="line">	MySharedPtr&lt;<span class="type">int</span>&gt; sp2 = sp1; </span><br><span class="line">	std::cout &lt;&lt; <span class="string">&quot;After copy, use_count(): &quot;</span> &lt;&lt; sp<span class="number">2.</span><span class="built_in">use_count</span>() &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 修改值</span></span><br><span class="line">	*sp1 = <span class="number">100</span>;</span><br><span class="line">	std::cout &lt;&lt; <span class="string">&quot;*the value of sp2: &quot;</span> &lt;&lt; *sp2 &lt;&lt; std::endl;  <span class="comment">// sp2也会看到更改</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// 使用make_shared</span></span><br><span class="line">	<span class="keyword">auto</span> sp3 = <span class="built_in">make_shared</span>&lt;<span class="type">int</span>&gt;(<span class="number">200</span>);</span><br><span class="line">	std::cout &lt;&lt; <span class="string">&quot;*sp3: &quot;</span> &lt;&lt; *sp3 &lt;&lt; std::endl;</span><br><span class="line">	std::cout &lt;&lt; <span class="string">&quot;after sp3,  use_count of sp3 &quot;</span> &lt;&lt; sp<span class="number">3.</span><span class="built_in">use_count</span>() &lt;&lt; std::endl;</span><br><span class="line">	std::cout &lt;&lt; <span class="string">&quot;after sp3, use_count of sp2,sp1 &quot;</span> &lt;&lt; sp<span class="number">2.</span><span class="built_in">use_count</span>() &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">	<span class="comment">// 重置指针</span></span><br><span class="line">	sp<span class="number">1.</span><span class="built_in">reset</span>();</span><br><span class="line">	std::cout &lt;&lt; <span class="string">&quot;After sp1.reset(), sp2.use_count(): &quot;</span> &lt;&lt; sp<span class="number">2.</span><span class="built_in">use_count</span>() &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line"><span class="comment">/****************shared_ptr测试函数到此结束***********************/</span></span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出结果</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">the use_count: 1</span><br><span class="line">sp1: 50</span><br><span class="line">After copy, use_count(): 2</span><br><span class="line">*the value of sp2: 100</span><br><span class="line">*sp3: 200</span><br><span class="line">after sp3,  use_count of sp3 1</span><br><span class="line">after sp3, use_count of sp2,sp1 2</span><br><span class="line">After sp1.reset(), sp2.use_count(): 1</span><br></pre></td></tr></table></figure>
+
+<h4 id="难点以及“坑”解析"><a href="#难点以及“坑”解析" class="headerlink" title="难点以及“坑”解析"></a>难点以及“坑”解析</h4><ul>
+<li><p>一、<strong>释放函数release必须要先判断引用计数指针m_count是否为空！</strong></p>
+</li>
+<li><p>二、<strong>赋值运算符重载这里需要考虑如下情况</strong></p>
+<ul>
+<li>1.<font color='mediumseagreen'>如果不加this !&#x3D; &amp;other</font></li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">SharedPtr&lt;<span class="type">int</span>&gt; <span class="title">p1</span><span class="params">(<span class="keyword">new</span> <span class="type">int</span>(<span class="number">10</span>))</span></span>;</span><br><span class="line">p1 = p1;  <span class="comment">// ❌ 如果没有 this != &amp;other，p1 可能释放掉自己正在管理的资源</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>2.<font color='mediumseagreen'>为什么先release()减少引用计数，而不是直接给赋值，并增加引用计数</font></p>
+<p>如下假如不先执行release()</p>
+</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span> != &amp;other) &#123;</span><br><span class="line">    m_ptr = other.m_ptr;</span><br><span class="line">    m_count = other.m_count;</span><br><span class="line">    <span class="keyword">if</span> (m_count) &#123;</span><br><span class="line">        ++(*m_count);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​	那么如果测试函数中出现如下情况，<font color='red'>则会导致p2原来指向的动态对象空间int(20)永远不会被释放，导致内存泄露</font></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">MySharedPtr&lt;<span class="type">int</span>&gt; <span class="title">p1</span><span class="params">(<span class="keyword">new</span> <span class="type">int</span>(<span class="number">10</span>))</span></span>;  <span class="comment">// p1: *m_count = 1</span></span><br><span class="line"><span class="function">MySharedPtr&lt;<span class="type">int</span>&gt; <span class="title">p2</span><span class="params">(<span class="keyword">new</span> <span class="type">int</span>(<span class="number">20</span>))</span></span>;  <span class="comment">// p2: *m_count = 1</span></span><br><span class="line">p2 = p1;  <span class="comment">// p2 放弃原来的对象，指向 p1 的对象</span></span><br></pre></td></tr></table></figure>
+
+<p>​	正常的MySharedPtr赋值如下：</p>
+<blockquote>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">MySharedPtr&lt;<span class="type">int</span>&gt; <span class="title">p1</span><span class="params">(<span class="keyword">new</span> <span class="type">int</span>(<span class="number">10</span>))</span></span>;  <span class="comment">// p1: *m_count = 1</span></span><br><span class="line">MySharedPtr&lt;<span class="type">int</span>&gt; p2;  <span class="comment">// p2 为空，m_count = nullptr</span></span><br><span class="line">p2 = p1;  <span class="comment">// p2 变成 p1 的拷贝</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>步骤解析：</strong></p>
+<p><code>p2.release();</code> <strong>不会释放任何东西</strong>（因为 <code>p2</code> 为空）。</p>
+<p><code>p2.m_ptr = p1.m_ptr;</code>（指向相同对象）</p>
+<p><code>p2.m_count = p1.m_count;</code>（共享相同引用计数）</p>
+<p><code>++(*p2.m_count);</code>  引用计数 <code>1 → 2</code>。</p>
+</blockquote>
+<ul>
+<li><ol start="3">
+<li><font color='mediumseagreen'>返回类型为该模板类<code>*this</code>的引用</font></li>
+</ol>
+</li>
+</ul>
+<blockquote>
+<p>这里这么做的作用主要是如果函数返回类型不加引用，那么实际上返回值是一个拷贝了原对象<code>*this</code>的新智能指针p2’，在需要<strong>链式编程</strong>的场景下就不可行了，所以我们直接加引用“&amp;”返回原对象即可。</p>
+</blockquote>
+</li>
+<li><p>三、<strong>有参构造函数要加explicit关键字，保证是显式构造</strong></p>
+<blockquote>
+<p>如果没有 <code>explicit</code> 关键字，以下代码将被允许：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(SharedPtr&lt;<span class="type">int</span>&gt; ptr)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 使用 ptr</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span>* rawPtr = <span class="keyword">new</span> <span class="built_in">int</span>(<span class="number">10</span>);</span><br><span class="line">    <span class="built_in">func</span>(rawPtr);  <span class="comment">// 编译器会隐式地将 rawPtr 转换为 SharedPtr&lt;int&gt;</span></span><br><span class="line">    <span class="comment">// 可能导致内存泄漏，因为 func 结束后，临时创建的 SharedPtr 被销毁，会释放 rawPtr</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></blockquote>
+</li>
+</ul>
+<p>补充：</p>
+<blockquote>
+<p>在 C++ 中，<code>const</code> 限定符有几个重要的用途：</p>
+<ol>
+<li><strong>保证接口安全</strong>：当函数声明为 <code>const</code> 时（例如 <code>T* get() const</code>），它承诺不会修改对象的状态。这使调用者知道调用该函数是安全的，不会改变对象的内部数据。</li>
+<li><strong>编译时检查</strong>：编译器会检查并阻止在 <code>const</code> 方法中对对象成员变量的修改，这有助于防止意外的数据修改。</li>
+<li><strong>更广泛的使用场景</strong>：<code>const</code> 方法可以被 <code>const</code> 对象和非 <code>const</code> 对象调用，而非 <code>const</code> 方法只能被非 <code>const</code> 对象调用。这增加了类的灵活性。</li>
+<li><strong>代码自文档化</strong>：<code>const</code> 关键字明确告诉其他开发者哪些操作不会修改对象状态，增强了代码的可读性和可维护性。</li>
+<li><strong>编译器优化</strong>：编译器可以对 <code>const</code> 方法进行更积极的优化，因为它知道这些方法不会修改对象状态。</li>
+</ol>
+</blockquote>
+<h4 id="线程安全的引用计数"><a href="#线程安全的引用计数" class="headerlink" title="线程安全的引用计数"></a>线程安全的引用计数</h4><p><strong>注意在shared_ptr中引用计数是线程安全的，但是管理的数据不是线程安全的</strong>。我们上面的实现并不能保证引用计数是线程安全的，因为多个线程可能同时操作引用计数指针<code>m_count</code>，导致动态对象被提前释放或永远不被释放。</p>
+<p>下面将采用互斥锁来实现引用计数线程安全（可以参考下图实现，这里我们就不考虑waek_count了）</p>
+<style>.fsmvykabljrq{zoom:50%;}</style><img src="/2025/03/10/Cpp11__inteligent_ptr/image-20250310221101442.png" class="fsmvykabljrq" alt="image-20250310221101442">
+
+<p>具体代码如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">* shared_ptr.h</span></span><br><span class="line"><span class="comment">* 实现一个线程安全的shared_ptr模板类，不考虑weak_ptr</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="meta">#<span class="keyword">ifndef</span> SHARED_PTR_H</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> SHARED_PTR_H</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;utility&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;mutex&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MySharedPtr</span> &#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="comment">// 控制块结构</span></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">ControlBlock</span> &#123;</span><br><span class="line">        <span class="type">int</span> ref_count; <span class="comment">// 引用计数</span></span><br><span class="line">        std::mutex mutex; <span class="comment">// 互斥锁，保证线程安全</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 构造函数</span></span><br><span class="line">        <span class="built_in">ControlBlock</span>() : <span class="built_in">ref_count</span>(<span class="number">1</span>) &#123;&#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 指向管理对象的原始指针</span></span><br><span class="line">    T* raw_ptr;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 指向控制块的指针</span></span><br><span class="line">    ControlBlock* control_block;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 增加引用计数</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">add_count</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (control_block) &#123;</span><br><span class="line">            <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(control_block-&gt;mutex)</span></span>;</span><br><span class="line">            ++(control_block-&gt;ref_count);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 减少引用计数</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">sub_count</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (control_block) &#123;</span><br><span class="line">            <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(control_block-&gt;mutex)</span></span>;</span><br><span class="line">            --(control_block-&gt;ref_count);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 释放资源</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">release</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (control_block) &#123;</span><br><span class="line">            <span class="built_in">sub_count</span>();</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 检查是否为最后一个引用</span></span><br><span class="line">            <span class="type">bool</span> delete_resources = <span class="literal">false</span>;</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(control_block-&gt;mutex)</span></span>;</span><br><span class="line">                delete_resources = (control_block-&gt;ref_count == <span class="number">0</span>);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 只有当引用计数为零时才删除资源</span></span><br><span class="line">            <span class="keyword">if</span> (delete_resources) &#123;</span><br><span class="line">                <span class="keyword">delete</span> raw_ptr;</span><br><span class="line">                <span class="keyword">delete</span> control_block;</span><br><span class="line">                raw_ptr = <span class="literal">nullptr</span>;</span><br><span class="line">                control_block = <span class="literal">nullptr</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// 默认构造函数</span></span><br><span class="line">    <span class="built_in">MySharedPtr</span>() : <span class="built_in">raw_ptr</span>(<span class="literal">nullptr</span>), <span class="built_in">control_block</span>(<span class="literal">nullptr</span>) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 有参构造，从原始指针构造</span></span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="title">MySharedPtr</span><span class="params">(T* ptr)</span>: raw_ptr(ptr), control_block(ptr ? new ControlBlock() : nullptr) &#123;</span>&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 拷贝构造函数</span></span><br><span class="line">    <span class="built_in">MySharedPtr</span>(<span class="type">const</span> MySharedPtr&amp; other): <span class="built_in">raw_ptr</span>(other.raw_ptr), <span class="built_in">control_block</span>(other.control_block) &#123;</span><br><span class="line">        <span class="built_in">add_count</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 移动构造函数</span></span><br><span class="line">    <span class="built_in">MySharedPtr</span>(MySharedPtr&amp;&amp; other) <span class="keyword">noexcept</span>: <span class="built_in">raw_ptr</span>(other.raw_ptr), <span class="built_in">control_block</span>(other.control_block) &#123;</span><br><span class="line">        other.raw_ptr = <span class="literal">nullptr</span>;</span><br><span class="line">        other.control_block = <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 析构函数</span></span><br><span class="line">    ~<span class="built_in">MySharedPtr</span>() &#123;</span><br><span class="line">        <span class="built_in">release</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 拷贝赋值运算符重载</span></span><br><span class="line">    <span class="comment">//这里不能给shared_ptr赋裸指针</span></span><br><span class="line">    MySharedPtr&amp; <span class="keyword">operator</span>=(<span class="type">const</span> MySharedPtr&amp; other) &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">this</span> != &amp;other) &#123;</span><br><span class="line">            <span class="built_in">release</span>();</span><br><span class="line">            raw_ptr = other.raw_ptr;</span><br><span class="line">            control_block = other.control_block;</span><br><span class="line">            <span class="built_in">add_count</span>();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 移动赋值运算符重载</span></span><br><span class="line">    MySharedPtr&amp; <span class="keyword">operator</span>=(MySharedPtr&amp;&amp; other) <span class="keyword">noexcept</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">this</span> != &amp;other) &#123;</span><br><span class="line">            <span class="built_in">release</span>();</span><br><span class="line">            raw_ptr = other.raw_ptr;</span><br><span class="line">            control_block = other.control_block;</span><br><span class="line">            other.raw_ptr = <span class="literal">nullptr</span>;</span><br><span class="line">            other.control_block = <span class="literal">nullptr</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 解引用运算符重载</span></span><br><span class="line">    T&amp; <span class="keyword">operator</span>*() <span class="type">const</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> *raw_ptr;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 箭头运算符重载</span></span><br><span class="line">    T* <span class="keyword">operator</span>-&gt;() <span class="type">const</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> raw_ptr;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 重置函数</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">reset</span><span class="params">(T* ptr = <span class="literal">nullptr</span>)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (raw_ptr != ptr) &#123;</span><br><span class="line">            <span class="built_in">release</span>();</span><br><span class="line">            <span class="keyword">if</span> (ptr) &#123;</span><br><span class="line">                raw_ptr = ptr;</span><br><span class="line">                control_block = <span class="keyword">new</span> <span class="built_in">ControlBlock</span>();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取原始指针</span></span><br><span class="line">    <span class="function">T* <span class="title">get</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> raw_ptr;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取引用计数</span></span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">use_count</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (control_block) &#123;</span><br><span class="line">            <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(control_block-&gt;mutex)</span></span>;</span><br><span class="line">            <span class="keyword">return</span> control_block-&gt;ref_count;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 检查指针是否是唯一拥有者（只有一个引用）</span></span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">unique</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">use_count</span>() == <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// make_shared函数模板</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keyword">typename</span>... Args&gt;</span><br><span class="line"><span class="function">MySharedPtr&lt;T&gt; <span class="title">make_shared</span><span class="params">(Args&amp;&amp;... args)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">MySharedPtr</span>&lt;T&gt;(<span class="keyword">new</span> <span class="built_in">T</span>(std::forward&lt;Args&gt;(args)...));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+
+<p>同样的测试用例下，代码无误</p>
+<p>再加了weak_ptr之后的实现可以参考下图，具体代码省略</p>
+<style>.yubwkumgbidt{zoom:50%;}</style><img src="/2025/03/10/Cpp11__inteligent_ptr/image-20250310230603480.png" class="yubwkumgbidt" alt="image-20250310230603480">
+
+<h3 id="unique-ptr"><a href="#unique-ptr" class="headerlink" title="unique_ptr"></a>unique_ptr</h3><p><strong>unique_ptr和其管理的动态分配对象必须一对一。</strong></p>
+<h3 id="weak-ptr"><a href="#weak-ptr" class="headerlink" title="weak_ptr"></a>weak_ptr</h3><p><strong>weak_ptr主要用来观测shared_ptr所管理的动态分配对象，其不会导致引用计数变化。</strong></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/03/07/thread__comsumer&producer/" rel="prev" title="生产者-消费者模式">
+      <i class="fa fa-chevron-left"></i> 生产者-消费者模式
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80"><span class="nav-number">1.</span> <span class="nav-text">基础</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#shared-ptr"><span class="nav-number">2.</span> <span class="nav-text">shared_ptr</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%B7%E4%BD%93%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.1.</span> <span class="nav-text">具体代码实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%9A%BE%E7%82%B9%E4%BB%A5%E5%8F%8A%E2%80%9C%E5%9D%91%E2%80%9D%E8%A7%A3%E6%9E%90"><span class="nav-number">2.2.</span> <span class="nav-text">难点以及“坑”解析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E7%9A%84%E5%BC%95%E7%94%A8%E8%AE%A1%E6%95%B0"><span class="nav-number">2.3.</span> <span class="nav-text">线程安全的引用计数</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#unique-ptr"><span class="nav-number">3.</span> <span class="nav-text">unique_ptr</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#weak-ptr"><span class="nav-number">4.</span> <span class="nav-text">weak_ptr</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Liu Jiahua"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Liu Jiahua</p>
+  <div class="site-description" itemprop="description">无限进步</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">8</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Liu Jiahua</span>
+</div>
+
+<!-- 隐藏网页底部 -->
+<!--
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+-->
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : true,
+      appId      : 'dCP6GAJDyowRBa9GJQvHV1DP-gzGzoHsz',
+      appKey     : 'X5yKePRt6xj4dR7tuVhlsZXL',
+      placeholder: "留下一个评论吧",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>
