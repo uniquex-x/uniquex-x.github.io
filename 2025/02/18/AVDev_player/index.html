@@ -320,7 +320,7 @@
 <img src="/2025/02/18/AVDev_player/image-20250220210418225.png" class="" title="image-20250220210418225">
 
 <p>上面循环机制中牵涉到了状态的转换，而播放器状态的检查主要在ijkplayer的<code>ijkmp_prepare_async_l</code>和<code>ikjmp_chkst_start_l</code>函数中，即如果状态为错误状态，那么就会释放内存并结束，下面这张状态机图，描述了播放器状态转换的流程。</p>
-<style>.ynivfjgsnjod{zoom: 50%;}</style><img src="/2025/02/18/AVDev_player/image-20250220210507008.png" class="ynivfjgsnjod" alt="image-20250220210507008">
+<style>.erisyckgowji{zoom: 50%;}</style><img src="/2025/02/18/AVDev_player/image-20250220210507008.png" class="erisyckgowji" alt="image-20250220210507008">
 
 <p>qt环境中，消息队列中的消息在message中被取出来，并通知上层ui主界面 ，而ijkplayer也需要通知上层的app处理消息，因此这里也给出添加注释后ijkplayer中的消息循环函数，以便读者区分。</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//相当于主界面的消息循环函数</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">media_AVDev_player_msg_loop</span><span class="params">(<span class="type">void</span>* arg)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    @autoreleasepool &#123;<span class="comment">// 创建自动释放池以管理内存</span></span><br><span class="line">        IjkMediaAVDev_player *mp = (IjkMediaAVDev_player*)arg; </span><br><span class="line">        <span class="comment">// 创建一个弱引用的播放器控制器，避免循环引用</span></span><br><span class="line">        __weak IJKFFMovieAVDev_playerController *ffpController = <span class="built_in">ffplayerRetain</span>(<span class="built_in">ijkmp_set_weak_thiz</span>(mp, <span class="literal">NULL</span>));</span><br><span class="line">        <span class="comment">// 消息循环主体，当控制器存在时持续运行</span></span><br><span class="line">        <span class="keyword">while</span> (ffpController) &#123;</span><br><span class="line">            @autoreleasepool &#123;<span class="comment">// 为每次循环创建独立的自动释放池</span></span><br><span class="line">                <span class="comment">// 获取一个新的消息对象</span></span><br><span class="line">                IJKFFMovieAVDev_playerMessage *msg = [ffpController obtainMessage];</span><br><span class="line">                <span class="keyword">if</span> (!msg)</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                </span><br><span class="line">			   <span class="comment">// 从消息队列中获取消息，timeout为1</span></span><br><span class="line">                <span class="type">int</span> retval = <span class="built_in">ijkmp_get_msg</span>(mp, &amp;msg-&gt;_msg, <span class="number">1</span>);</span><br><span class="line">                <span class="keyword">if</span> (retval &lt; <span class="number">0</span>)</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">                <span class="comment">// block-get should never return 0</span></span><br><span class="line">                <span class="built_in">assert</span>(retval &gt; <span class="number">0</span>);	<span class="comment">// 确保消息获取成功</span></span><br><span class="line">                <span class="comment">// 通知app上层处理消息. 在主线程上异步处理消息事件</span></span><br><span class="line">                [ffpController performSelectorOnMainThread:@<span class="built_in">selector</span>(postEvent:) withObject:msg waitUntilDone:NO];</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">		<span class="comment">// 减少播放器引用计数并释放资源</span></span><br><span class="line">        <span class="comment">// retained in prepare_async, before SDL_CreateThreadEx</span></span><br><span class="line">        <span class="built_in">ijkmp_dec_ref_p</span>(&amp;mp);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -363,7 +363,7 @@
 
 <p>重复6、7步，即可不断获取待播放的数据。</p>
 </blockquote>
-<h2 id="3-解码"><a href="#3-解码" class="headerlink" title="3. 解码"></a>3. 解码</h2><style>.veluuxubivra{zoom: 67%;}</style><img src="/2025/02/18/AVDev_player/image-20250220224325219.png" class="veluuxubivra" alt="image-20250220224325219">
+<h2 id="3-解码"><a href="#3-解码" class="headerlink" title="3. 解码"></a>3. 解码</h2><style>.jwqlwneqvjzk{zoom: 67%;}</style><img src="/2025/02/18/AVDev_player/image-20250220224325219.png" class="jwqlwneqvjzk" alt="image-20250220224325219">
 
 <ul>
 <li>解码定义：<strong>将压缩的视频&#x2F;音频数据转换回原始的未压缩格式</strong></li>
@@ -566,11 +566,11 @@
 <li>video_refresh</li>
 </ul>
 <p>该函数图解如下</p>
-<style>.ygdtirilwdgk{zoom: 67%;}</style><img src="/2025/02/18/AVDev_player/image-20250221174757834.png" class="ygdtirilwdgk" alt="image-20250221174757834">
+<style>.okulsfqracrr{zoom: 67%;}</style><img src="/2025/02/18/AVDev_player/image-20250221174757834.png" class="okulsfqracrr" alt="image-20250221174757834">
 
 <p>几个时间戳关系如下：</p>
 <p>(<strong>注意丢帧之前一定要保证下一帧存在</strong>)</p>
-<style>.khfituasbflx{zoom:50%;}</style><img src="/2025/02/18/AVDev_player/image-20250221174324289.png" class="khfituasbflx" alt="image-20250221174324289">
+<style>.ljdwlrkjsumf{zoom:50%;}</style><img src="/2025/02/18/AVDev_player/image-20250221174324289.png" class="ljdwlrkjsumf" alt="image-20250221174324289">
 
 <ul>
 <li>video_display</li>
@@ -588,7 +588,7 @@
 </ul>
 <hr>
 <p>下面也给出了参考ijkplayer，画面刷新逻辑的流程图</p>
-<style>.kkxijvxmxhen{zoom: 50%;}</style><img src="/2025/02/18/AVDev_player/image-20250221210703870.png" class="kkxijvxmxhen" alt="image-20250221210703870">
+<style>.ivuinoilfkhn{zoom: 50%;}</style><img src="/2025/02/18/AVDev_player/image-20250221210703870.png" class="ivuinoilfkhn" alt="image-20250221210703870">
 
 <h2 id="5-AVDev-同步"><a href="#5-AVDev-同步" class="headerlink" title="5. AVDev_同步"></a>5. AVDev_同步</h2><p>同步方式主要分为：</p>
 <ul>
