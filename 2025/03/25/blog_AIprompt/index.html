@@ -22,19 +22,20 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":{"valine":{"order":-1}},"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="从零开始写一个CMakeLists.txt文件从零开始写CMakeLists.txt的基本步骤和结构：  第一步：基础设置12345# 指定CMake最低版本cmake_minimum_required(VERSION 3.10)# 项目名称project(你的项目名称)">
+  <meta name="description" content="提示词基本结构即：角色+指令+上下文+输入问题+约束+例子+输出格式 。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="cmake">
-<meta property="og:url" content="http://example.com/2025/03/10/DevTools__cmake/index.html">
+<meta property="og:title" content="AI提示词">
+<meta property="og:url" content="http://example.com/2025/03/25/blog_AIprompt/index.html">
 <meta property="og:site_name" content="liujiahua&#39;s personalBlog">
-<meta property="og:description" content="从零开始写一个CMakeLists.txt文件从零开始写CMakeLists.txt的基本步骤和结构：  第一步：基础设置12345# 指定CMake最低版本cmake_minimum_required(VERSION 3.10)# 项目名称project(你的项目名称)">
+<meta property="og:description" content="提示词基本结构即：角色+指令+上下文+输入问题+约束+例子+输出格式 。">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2025-03-10T14:57:08.000Z">
-<meta property="article:modified_time" content="2025-03-22T09:27:27.176Z">
+<meta property="article:published_time" content="2025-03-25T09:57:08.000Z">
+<meta property="article:modified_time" content="2025-03-25T09:25:55.588Z">
 <meta property="article:author" content="Liu Jiahua">
+<meta property="article:tag" content="AI prompt">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="http://example.com/2025/03/10/DevTools__cmake/">
+<link rel="canonical" href="http://example.com/2025/03/25/blog_AIprompt/">
 
 
 <script id="page-configurations">
@@ -47,7 +48,7 @@
   };
 </script>
 
-  <title>cmake | liujiahua's personalBlog</title>
+  <title>AI提示词 | liujiahua's personalBlog</title>
   
 
 
@@ -190,7 +191,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2025/03/10/DevTools__cmake/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2025/03/25/blog_AIprompt/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -203,7 +204,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          cmake
+          AI提示词
         </h1>
 
         <div class="post-meta">
@@ -212,27 +213,17 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
+              
 
-              <time title="创建时间：2025-03-10 22:57:08" itemprop="dateCreated datePublished" datetime="2025-03-10T22:57:08+08:00">2025-03-10</time>
+              <time title="创建时间：2025-03-25 17:57:08 / 修改时间：17:25:55" itemprop="dateCreated datePublished" datetime="2025-03-25T17:57:08+08:00">2025-03-25</time>
             </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-03-22 17:27:27" itemprop="dateModified" datetime="2025-03-22T17:27:27+08:00">2025-03-22</time>
-              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">开发工具</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7/%E6%9E%84%E5%BB%BA/" itemprop="url" rel="index"><span itemprop="name">构建</span></a>
+                  <a href="/categories/%E6%9D%82%E9%A1%B9/" itemprop="url" rel="index"><span itemprop="name">杂项</span></a>
                 </span>
             </span>
 
@@ -252,8 +243,8 @@
       </span>
       <span class="post-meta-item-text">Valine：</span>
     
-    <a title="valine" href="/2025/03/10/DevTools__cmake/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2025/03/10/DevTools__cmake/" itemprop="commentCount"></span>
+    <a title="valine" href="/2025/03/25/blog_AIprompt/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2025/03/25/blog_AIprompt/" itemprop="commentCount"></span>
     </a>
   </span>
   
@@ -263,7 +254,7 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>892</span>
+              <span>1.4k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -282,37 +273,54 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h2 id="从零开始写一个CMakeLists-txt文件"><a href="#从零开始写一个CMakeLists-txt文件" class="headerlink" title="从零开始写一个CMakeLists.txt文件"></a>从零开始写一个CMakeLists.txt文件</h2><p>从零开始写CMakeLists.txt的基本步骤和结构：</p>
-<ol>
-<li><strong>第一步：基础设置</strong><figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 指定CMake最低版本</span></span><br><span class="line"><span class="keyword">cmake_minimum_required</span>(VERSION <span class="number">3.10</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 项目名称</span></span><br><span class="line"><span class="keyword">project</span>(你的项目名称)</span><br></pre></td></tr></table></figure></li>
-</ol>
+        <h2 id="提示词基本结构"><a href="#提示词基本结构" class="headerlink" title="提示词基本结构"></a>提示词基本结构</h2><p>即：角色+指令+上下文+输入问题+约束+例子+输出格式 。</p>
 <span id="more"></span>
 
-<ol start="2">
-<li><strong>第二步：设置编译选项</strong></li>
-</ol>
-<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 设置C++标准</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_STANDARD <span class="number">11</span>)</span><br><span class="line"><span class="comment"># 或者</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS <span class="string">&quot;$&#123;CMAKE_CXX_FLAGS&#125; -std=c++11&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置编译类型（Debug/Release）</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_BUILD_TYPE Debug)</span><br></pre></td></tr></table></figure>
+<p>1.角色(role) </p>
+<blockquote>
+<p>交互时通过给AI大模型设定某种角色，根据经验可以获得意想不到的效果，可以使大模型的输出更加具有个性化，专业化，同时能够增加模型输出的准确性。</p>
+</blockquote>
+<p>2.指示或者指令</p>
+<blockquote>
+<p> 是指示AI大模型需要完成的任务。</p>
+</blockquote>
+<p>3.上下文（context）</p>
+<blockquote>
+<p> 当你给出与任务相关的背景或细节时，可以帮助AI大模型更好的理解任务的具体情况，使得输出更加精确。</p>
+</blockquote>
+<p>4.输入或者问题</p>
+<blockquote>
+<p> 需要大模型执行具体的任务，或者具体的问题, 有时候如果指令部分描述的是具体的任务时，则指令部分就是输入。</p>
+</blockquote>
+<p>5.约束</p>
+<blockquote>
+<p> 有时候需要限制AI大模型的输出范围，设定一些约束条件，可以对输出进行控制。</p>
+</blockquote>
+<p>6.输出格式：</p>
+<blockquote>
+<p>主要给大模型指明，输出特定内容时的格式。</p>
+</blockquote>
+<p>7.例子：</p>
+<blockquote>
+<p>提供例子可以供AI大模型进行参考，可以有效的提高输出的准确度</p>
+</blockquote>
+<h2 id="更好的建议"><a href="#更好的建议" class="headerlink" title="更好的建议"></a>更好的建议</h2><ul>
+<li><p>如果需求比较复杂，可以将其拆分为几个步骤，逐一提问。</p>
+</li>
+<li><p>开放式问题往往能够激发更多的想象空间和创造性答案。</p>
+</li>
+<li><p>在得到AI的回答后，如果不符合预期，可以给出反馈并修正提示词。(训练与测试的过程)</p>
+</li>
+</ul>
+<h2 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h2><h3 id="基本模板"><a href="#基本模板" class="headerlink" title="基本模板"></a>基本模板</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">## 角色设定</span><br><span class="line">你是一位资深流媒体架构师，精通视频传输协议（如HLS/DASH/WebRTC）、媒体编解码（H.264/HEVC/AV1）、CDN优化和实时通信技术。请用分步骤方案解决我的开发问题。</span><br><span class="line"></span><br><span class="line">## 开发背景</span><br><span class="line">当前项目使用[编程语言/框架，如Golang+FFmpeg]开发[具体功能，如低延迟直播系统]，运行在[部署环境，如AWS EC2 g4dn实例]。已实现[现有方案，如基于WebRTC的P2P传输]，但遇到[具体问题描述，如1080p视频在200ms延迟要求下出现5%的丢包率]。</span><br><span class="line"></span><br><span class="line">## 核心需求</span><br><span class="line">1. 优化[具体指标，如端到端延迟]到[目标值，如&lt;200ms]</span><br><span class="line">2. 提升[质量指标，如视频QoE]同时保持[约束条件，如带宽利用率&lt;8Mbps]</span><br><span class="line">3. 解决[具体异常现象，如iOS客户端首帧时间超过2s]</span><br><span class="line"></span><br><span class="line">## 请求格式</span><br><span class="line">请按以下结构给出建议：</span><br><span class="line">1. 诊断分析：可能导致问题的3个技术因素</span><br><span class="line">2. 优化方案：分网络传输、编解码、服务端三个层面的改进措施</span><br><span class="line">3. 配置示例：关键参数的推荐值（如WebRTC的sdp中设置a=goog-latency-experimental:100）</span><br><span class="line">4. 验证方法：建议的AB测试方案或监控指标</span><br><span class="line"></span><br><span class="line">## 补充信息</span><br><span class="line">[相关日志片段/抓包数据特征/硬件配置详情]</span><br></pre></td></tr></table></figure>
 
-<ol start="3">
-<li><p><strong>第三步：设置头文件和库文件路径</strong></p>
-<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 如果有额外的头文件目录</span></span><br><span class="line"><span class="keyword">include_directories</span>(<span class="keyword">include</span>)</span><br><span class="line"><span class="comment"># 如果有额外的库文件目录</span></span><br><span class="line"><span class="keyword">link_directories</span>(lib)</span><br></pre></td></tr></table></figure>
-</li>
-<li><p><strong>第四步：添加源文件</strong></p>
-<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 方法1：直接列出所有源文件</span></span><br><span class="line"><span class="keyword">add_executable</span>(项目名称 </span><br><span class="line">    src/main.cpp</span><br><span class="line">    src/other.cpp</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 方法2：使用变量收集源文件</span></span><br><span class="line"><span class="keyword">set</span>(SOURCES</span><br><span class="line">    src/main.cpp</span><br><span class="line">    src/other.cpp</span><br><span class="line">)</span><br><span class="line"><span class="keyword">add_executable</span>(项目名称 <span class="variable">$&#123;SOURCES&#125;</span>)</span><br></pre></td></tr></table></figure>
-</li>
-<li><p><strong>第五步：如果需要链接外部库</strong></p>
-<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 链接库</span></span><br><span class="line"><span class="keyword">target_link_libraries</span>(项目名称</span><br><span class="line">    库名称<span class="number">1</span></span><br><span class="line">    库名称<span class="number">2</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure></li>
+<h4 id="关键点"><a href="#关键点" class="headerlink" title="关键点"></a>关键点</h4><ol>
+<li><strong>技术参数具体化</strong>：避免模糊表述，将”提高画质”改为”在HLS分片时长2s约束下优化SSIM≥0.92”</li>
+<li><strong>上下文增强</strong>：附带关键代码段或网络拓扑图描述</li>
+<li><strong>渐进式提问</strong>：复杂问题拆分为”协议选型→架构设计→参数调优”多轮对话</li>
+<li><strong>验证驱动</strong>：要求AI给出可量化的验证方案（如：建议通过tc命令模拟20%丢包测试抗性）</li>
 </ol>
-<p>一些实用的建议：</p>
-<ol>
-<li>保持结构清晰，按照上述步骤组织你的CMakeLists.txt</li>
-<li>使用注释说明每个部分的作用</li>
-<li>对于大型项目，可以使用子目录的CMakeLists.txt</li>
-<li>养成良好的变量命名习惯</li>
-<li>建议使用现代CMake的命令和特性</li>
-</ol>
-<p>创建一个最简单的CMakeLists.txt，可以参考这个模板：</p>
-<figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 最低CMake版本要求</span></span><br><span class="line"><span class="keyword">cmake_minimum_required</span>(VERSION <span class="number">3.10</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 项目名称</span></span><br><span class="line"><span class="keyword">project</span>(MyProject)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将所有源文件添加到可执行文件</span></span><br><span class="line"><span class="keyword">add_executable</span>(MyProject main.cpp)</span><br></pre></td></tr></table></figure>
+<h3 id="示例一"><a href="#示例一" class="headerlink" title="示例一"></a>示例一</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">场景：直播卡顿优化（核心需求）</span><br><span class="line">请分析基于NGINX-RTMP的直播系统在万人并发时出现的卡顿问题。当前配置： </span><br><span class="line">- 服务器：8核16G带宽1Gbps</span><br><span class="line">- 客户端观测：20%用户缓冲时间&gt;2s</span><br><span class="line">- 当前CDN配置：静态分片+单源站架构</span><br><span class="line"></span><br><span class="line">期望输出：</span><br><span class="line">1. 瓶颈定位：从协议栈/服务器架构/分发策略角度列出可能瓶颈</span><br><span class="line">2. 扩容方案：推荐边缘节点部署策略及成本估算</span><br><span class="line">3. 自适应码率方案：提供HLS动态分片配置示例</span><br><span class="line">4. 监控建议：关键性能指标的埋点方案</span><br></pre></td></tr></table></figure>
 
 
     </div>
@@ -322,6 +330,10 @@
     
 
       <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/AI-prompt/" rel="tag"><i class="fa fa-tag"></i> AI prompt</a>
+          </div>
 
         
 
@@ -329,13 +341,10 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2025/03/10/Cpp11__inteligent_ptr/" rel="prev" title="智能指针">
-      <i class="fa fa-chevron-left"></i> 智能指针
+    <a href="/2025/03/10/DevTools__cmake/" rel="prev" title="cmake">
+      <i class="fa fa-chevron-left"></i> cmake
     </a></div>
-      <div class="post-nav-item">
-    <a href="/2025/03/25/blog_AIprompt/" rel="next" title="AI提示词">
-      AI提示词 <i class="fa fa-chevron-right"></i>
-    </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     
@@ -395,7 +404,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E5%86%99%E4%B8%80%E4%B8%AACMakeLists-txt%E6%96%87%E4%BB%B6"><span class="nav-number">1.</span> <span class="nav-text">从零开始写一个CMakeLists.txt文件</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8F%90%E7%A4%BA%E8%AF%8D%E5%9F%BA%E6%9C%AC%E7%BB%93%E6%9E%84"><span class="nav-number">1.</span> <span class="nav-text">提示词基本结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9B%B4%E5%A5%BD%E7%9A%84%E5%BB%BA%E8%AE%AE"><span class="nav-number">2.</span> <span class="nav-text">更好的建议</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B"><span class="nav-number">3.</span> <span class="nav-text">示例</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E6%A8%A1%E6%9D%BF"><span class="nav-number">3.1.</span> <span class="nav-text">基本模板</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%B3%E9%94%AE%E7%82%B9"><span class="nav-number">3.1.1.</span> <span class="nav-text">关键点</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%E4%B8%80"><span class="nav-number">3.2.</span> <span class="nav-text">示例一</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
