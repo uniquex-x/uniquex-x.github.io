@@ -1,6 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>cmake</title>
+    <url>/2025/03/10/DevTools__cmake/</url>
+    <content><![CDATA[<h2 id="从零开始写一个CMakeLists-txt文件"><a href="#从零开始写一个CMakeLists-txt文件" class="headerlink" title="从零开始写一个CMakeLists.txt文件"></a>从零开始写一个CMakeLists.txt文件</h2><p>从零开始写CMakeLists.txt的基本步骤和结构：</p>
+<ol>
+<li><strong>第一步：基础设置</strong><figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 指定CMake最低版本</span></span><br><span class="line"><span class="keyword">cmake_minimum_required</span>(VERSION <span class="number">3.10</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 项目名称</span></span><br><span class="line"><span class="keyword">project</span>(你的项目名称)</span><br></pre></td></tr></table></figure></li>
+</ol>
+<span id="more"></span>
+
+<ol start="2">
+<li><strong>第二步：设置编译选项</strong></li>
+</ol>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 设置C++标准</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_STANDARD <span class="number">11</span>)</span><br><span class="line"><span class="comment"># 或者</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS <span class="string">&quot;$&#123;CMAKE_CXX_FLAGS&#125; -std=c++11&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置编译类型（Debug/Release）</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_BUILD_TYPE Debug)</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li><p><strong>第三步：设置头文件和库文件路径</strong></p>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 如果有额外的头文件目录</span></span><br><span class="line"><span class="keyword">include_directories</span>(<span class="keyword">include</span>)</span><br><span class="line"><span class="comment"># 如果有额外的库文件目录</span></span><br><span class="line"><span class="keyword">link_directories</span>(lib)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>第四步：添加源文件</strong></p>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 方法1：直接列出所有源文件</span></span><br><span class="line"><span class="keyword">add_executable</span>(项目名称 </span><br><span class="line">    src/main.cpp</span><br><span class="line">    src/other.cpp</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 方法2：使用变量收集源文件</span></span><br><span class="line"><span class="keyword">set</span>(SOURCES</span><br><span class="line">    src/main.cpp</span><br><span class="line">    src/other.cpp</span><br><span class="line">)</span><br><span class="line"><span class="keyword">add_executable</span>(项目名称 <span class="variable">$&#123;SOURCES&#125;</span>)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>第五步：如果需要链接外部库</strong></p>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 链接库</span></span><br><span class="line"><span class="keyword">target_link_libraries</span>(项目名称</span><br><span class="line">    库名称<span class="number">1</span></span><br><span class="line">    库名称<span class="number">2</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure></li>
+</ol>
+<p>一些实用的建议：</p>
+<ol>
+<li>保持结构清晰，按照上述步骤组织你的CMakeLists.txt</li>
+<li>使用注释说明每个部分的作用</li>
+<li>对于大型项目，可以使用子目录的CMakeLists.txt</li>
+<li>养成良好的变量命名习惯</li>
+<li>建议使用现代CMake的命令和特性</li>
+</ol>
+<p>创建一个最简单的CMakeLists.txt，可以参考这个模板：</p>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 最低CMake版本要求</span></span><br><span class="line"><span class="keyword">cmake_minimum_required</span>(VERSION <span class="number">3.10</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 项目名称</span></span><br><span class="line"><span class="keyword">project</span>(MyProject)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将所有源文件添加到可执行文件</span></span><br><span class="line"><span class="keyword">add_executable</span>(MyProject main.cpp)</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>开发工具</category>
+        <category>构建</category>
+      </categories>
+  </entry>
+  <entry>
     <title>遍历排序与分治排序</title>
     <url>/2025/02/27/Algo_Sort/</url>
     <content><![CDATA[<p>总结了3种遍历排序与三种分治排序算法</p>
@@ -22,7 +63,7 @@
 <li>时间复杂度o(n^2), 有flag的情况下最佳时间复杂度o(n), 空间复杂度o(1)，稳定排序</li>
 </ul>
 <h3 id="插入排序"><a href="#插入排序" class="headerlink" title="插入排序"></a>插入排序</h3><p>思路：在未排序区间选择一个基准元素，将其与左边的已排序区间比较，一直到左边元素不大于基准元素为止</p>
-<style>.eyrrgpwrfxkf{zoom:33%;}</style><img src="/2025/02/27/Algo_Sort/image-20250227120737150.png" class="eyrrgpwrfxkf" alt="image-20250227120737150">
+<style>.tyhlkcglydio{zoom:33%;}</style><img src="/2025/02/27/Algo_Sort/image-20250227120737150.png" class="tyhlkcglydio" alt="image-20250227120737150">
 
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">insertionSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums)</span> </span>&#123;</span><br><span class="line">	<span class="comment">//外循环，已排序区间为[0,i-1]</span></span><br><span class="line">    <span class="comment">//初始状态，第一个元素已完成排序</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt; nums.<span class="built_in">size</span>(); i++) &#123;</span><br><span class="line">        <span class="type">int</span> base = nums[i], j = i<span class="number">-1</span>; </span><br><span class="line">    	<span class="comment">//内循环，将base插入到已排序区间</span></span><br><span class="line">		<span class="keyword">while</span> (j &gt;= <span class="number">0</span> &amp;&amp; nums[j] &gt; base) &#123;</span><br><span class="line">            nums[j<span class="number">+1</span>] = nums[j]; <span class="comment">//右移一位</span></span><br><span class="line">            j--;</span><br><span class="line">        &#125;</span><br><span class="line">        nums[j<span class="number">+1</span>] = base; <span class="comment">//插入base</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -39,8 +80,7 @@
 </ul>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//哨兵划分</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">partition</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> left, <span class="type">int</span> right)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> i = left, j = right;</span><br><span class="line">    <span class="comment">//以nums[left]为基准值</span></span><br><span class="line">    <span class="keyword">while</span> (i &lt; j) &#123;</span><br><span class="line">        <span class="keyword">while</span> (i &lt; j &amp;&amp; nums[j] &gt;= nums[left]) &#123; <span class="comment">//注意等于时也要移动</span></span><br><span class="line">            --j;</span><br><span class="line">        &#125;</span><br><span class="line">    	<span class="keyword">while</span> (i &lt; j &amp;&amp; nums[i] &lt;= nums[left]) &#123;</span><br><span class="line">            ++i;</span><br><span class="line">        &#125;  </span><br><span class="line">        <span class="built_in">swap</span>(nums[i], nums[j]);   															</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//i==j时，将基准值交换到i的位置</span></span><br><span class="line">    <span class="built_in">swap</span>(nums[left], nums[i]);</span><br><span class="line">    <span class="keyword">return</span> i; </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//快速排序</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">quickSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> left, <span class="type">int</span> right)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//终止条件</span></span><br><span class="line">    <span class="keyword">if</span> (left &gt;= right) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//哨兵划分</span></span><br><span class="line">    <span class="comment">//左闭右闭</span></span><br><span class="line">    <span class="type">int</span> pivot = <span class="built_in">partition</span>(nums, left, right);</span><br><span class="line">    <span class="built_in">quickSort</span>(nums, left, pivot<span class="number">-1</span>);</span><br><span class="line">    <span class="built_in">queickSort</span>(nums, pivot<span class="number">+1</span>, right);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p><font color='red'>注意</font>：</p>
-<blockquote>
+<h4 id="易错点"><a href="#易错点" class="headerlink" title="易错点"></a>易错点</h4><blockquote>
 <p>哨兵划分中，以下代码是错误的(即不能先从左往右搜索大于基准值的元素)</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">while</span> (i &lt; j) &#123;</span><br><span class="line">    <span class="keyword">while</span> (i &lt; j &amp;&amp; nums[i] &lt;= nums[left]) &#123;</span><br><span class="line">        ++i;</span><br><span class="line">    &#125;  </span><br><span class="line">    <span class="keyword">while</span> (i &lt; j &amp;&amp; nums[j] &gt;= nums[left]) &#123;</span><br><span class="line">        --j;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">swap</span>(nums[i], nums[j]);   															</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -63,7 +103,7 @@
 <li>交换 基准值nums[left] 和 nums[i]：i &#x3D; 1，所以交换 nums[0] 和 nums[1]： <code>[7, 5, 8, 9, 6]</code></li>
 <li>返回 pivot 位置 1</li>
 </ol>
-<p>7 &gt; 5，但 7 被放到了 pivot 的左边，破坏了快速排序的分区性质！这会导致排序结果错误。</p>
+<p>7 &gt; 5，但 7 被放到了 pivot 的左边，破坏了快速排序的分区性质，导致排序结果错误。</p>
 </blockquote>
 <h4 id="优化"><a href="#优化" class="headerlink" title="优化"></a>优化</h4><p>在数组倒序的情况下，基准数左边或者右边数组长度为n-1，每次递归都会出现有一个子数组长度为0的情况，快速排序退化为类似冒泡排序，时间复杂度劣化为o(n^2)。</p>
 <p>同样正序的情况下，也会出现有一个子数组长度为0的情况，每次递归长度为n-1的数组都只减少一个元素，递归深度为n-1，需要占用o(n)的栈帧空间</p>
@@ -73,7 +113,7 @@
 <p><font color='red'>注意</font>：</p>
 <blockquote>
 <p><font color='cornflowerblue'>1.得到中位数后，交换中位数与数组最左边元素的值之后，可以使用一个变量存储这个值再进行循环比较。</font></p>
-<p>每次循环比较时，如果直接使用<code>nums[left]</code>，编译器需要每次都访问数组并计算偏移量。<strong>而存储在局部变量<code>pivotValue</code>中只需读取一次，可以减少内存访问，提高性能</strong>。在数组很大且循环次数多的情况下，这种优化是有意义的。（<strong>力扣912通过这个优化不会超时</strong>）</p>
+<p>每次循环比较时，如果直接使用<code>nums[left]</code>，<font color='red'>编译器需要每次都访问数组并计算偏移量</font>。<strong>而存储在局部变量<code>pivotValue</code>中只需读取一次，可以减少内存访问，提高性能</strong>。在数组很大且循环次数多的情况下，这种优化是有意义的。（<strong>力扣912通过这个优化不会超时</strong>）</p>
 <p><font color='cornflowerblue'>2.以下代码是错误的</font></p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">partition</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> left, <span class="type">int</span> right)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 三数取中选择枢轴</span></span><br><span class="line">    <span class="type">int</span> mid = left + (right - left) / <span class="number">2</span>;</span><br><span class="line">    <span class="type">int</span> pivotIndex = <span class="built_in">medianThree</span>(nums, left, mid, right);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将枢轴值移到最左边</span></span><br><span class="line">    <span class="built_in">swap</span>(nums[left], nums[pivotIndex]);</span><br><span class="line">    <span class="type">int</span> pivotValue = nums[left];</span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> i = left, j = right;</span><br><span class="line">    <span class="keyword">while</span> (i &lt; j) &#123;</span><br><span class="line">        <span class="comment">// 从右向左找第一个小于枢轴的元素</span></span><br><span class="line">        <span class="keyword">while</span> (i &lt; j &amp;&amp; nums[j] &gt;= pivotValue) &#123;</span><br><span class="line">            j--;</span><br><span class="line">        &#125;    </span><br><span class="line">        <span class="comment">// 从左向右找第一个大于枢轴的元素</span></span><br><span class="line">        <span class="keyword">while</span> (i &lt; j &amp;&amp; nums[i] &lt;= pivotValue) &#123;</span><br><span class="line">            i++;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 交换这两个元素</span></span><br><span class="line">        <span class="keyword">if</span> (i &lt; j) &#123;</span><br><span class="line">            <span class="built_in">swap</span>(nums[i], nums[j]);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 将枢轴值放到正确的位置</span></span><br><span class="line">    <span class="built_in">swap</span>(pivotValue, nums[i]);  <span class="comment">//错误！！应该是nums[left]和nums[i]交换</span></span><br><span class="line">    <span class="keyword">return</span> i;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -99,7 +139,7 @@
 
 
 <h3 id="归并排序"><a href="#归并排序" class="headerlink" title="归并排序"></a>归并排序</h3><p>归并排序的递归顺序和二叉树的后序遍历是一样的，即先递归左数组，再递归右数组，最后合并，注意合并时的子数组是有序的。一图总结如下：</p>
-<style>.lwwddvokcdmy{zoom: 67%;}</style><img src="/2025/02/27/Algo_Sort/image-20250227153030239.png" class="lwwddvokcdmy" alt="image-20250227153030239">
+<style>.gpodmkvqzvdk{zoom: 67%;}</style><img src="/2025/02/27/Algo_Sort/image-20250227153030239.png" class="gpodmkvqzvdk" alt="image-20250227153030239">
 
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//合并左右子数组,左数组[left, mid], 右数组[mid+1, right]</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">merge</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> left, <span class="type">int</span> mid, <span class="type">int</span> right)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> i = left, j = mid + <span class="number">1</span>, k = <span class="number">0</span>;</span><br><span class="line">    <span class="comment">//创建临时数组存放合并后数组</span></span><br><span class="line">    <span class="function">vector&lt;<span class="type">int</span>&gt; <span class="title">tmp</span><span class="params">(right- left <span class="number">+1</span>)</span></span>;</span><br><span class="line">    <span class="comment">//左右数组都还有元素时进行比较</span></span><br><span class="line">    <span class="keyword">while</span> (i &lt;= mid &amp;&amp; j &lt;= right) &#123;</span><br><span class="line">        <span class="comment">//将较小元素放入tmp</span></span><br><span class="line">        <span class="keyword">if</span> (nums[i] &lt;= nums[j]) &#123;</span><br><span class="line">            tmp[k++] = nums[i++]</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            tmp[k++] = nums[j++];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//将剩下元素放入tmp,注意i,j往后移动</span></span><br><span class="line">    <span class="keyword">while</span> (i &lt;= mid) &#123;</span><br><span class="line">        tmp[k++] = nums[i++]; </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> (j &lt;= right) &#123;</span><br><span class="line">        tmp[k++] = nums[j++]</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//将合并后放回到原数组对应位置</span></span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; tmp.<span class="built_in">size</span>(); i++) &#123;</span><br><span class="line">        nums[left+i] = tmp[i]; </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//归并排序</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">mergeSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> left, <span class="type">int</span> right)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//子数组长度为1时终止</span></span><br><span class="line">	<span class="keyword">if</span> (left &gt;= right) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;    </span><br><span class="line">    <span class="comment">//子数组划分</span></span><br><span class="line">    <span class="type">int</span> mid = left + (right - left) / <span class="number">2</span>;</span><br><span class="line">    <span class="built_in">mergeSort</span>(nums, left, mid); <span class="comment">//左</span></span><br><span class="line">    <span class="built_in">mergeSort</span>(nums, mid<span class="number">+1</span>, right); <span class="comment">//右</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">//对子数组进行合并</span></span><br><span class="line">    <span class="built_in">merge</span>(nums, left, mid, right);  <span class="comment">//中</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -121,7 +161,7 @@
 <li>循环<strong>n-1</strong>次交换和堆化的过程</li>
 </ul>
 <p><strong>完全二叉树非常适合使用数组来表示</strong>，而堆就是一种特殊的完全二叉树，所以其底层实现就是数组。</p>
-<style>.lnevwpxshyem{zoom: 50%;}</style><img src="/2025/02/27/Algo_Sort/image-20250227171531676.png" class="lnevwpxshyem" alt="image-20250227171531676">
+<style>.qywjfotbqjnv{zoom: 50%;}</style><img src="/2025/02/27/Algo_Sort/image-20250227171531676.png" class="qywjfotbqjnv" alt="image-20250227171531676">
 
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//堆的长度为n，从节点i开始，从顶至底执行堆化</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">siftDown</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> n, <span class="type">int</span> i)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">        <span class="comment">//索引i的左子节点为2i+1,右子节点为2i+2, 父节点索引为(i-1)/2</span></span><br><span class="line">        <span class="type">int</span> l = <span class="number">2</span>i<span class="number">+1</span>, r = <span class="number">2</span>i<span class="number">+2</span>;</span><br><span class="line">        <span class="type">int</span> ma = i; <span class="comment">//ma为i,l,r中值最大的节点索引</span></span><br><span class="line">        <span class="keyword">if</span> (l &lt; n &amp;&amp; nums[l] &gt;= nums[ma]) &#123;</span><br><span class="line">            ma = l;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (r &lt; n &amp;&amp; nums[r] &gt;= nums[ma]) &#123;</span><br><span class="line">           ma = r; </span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//如节点i最大或l，r越界则无需继续堆化</span></span><br><span class="line">        <span class="keyword">if</span> (ma == i) &#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">swap</span>(nums[i], nums[ma]);</span><br><span class="line">        i = ma; <span class="comment">//循环进行堆化</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//堆排序</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">haepSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums)</span> </span>&#123;</span><br><span class="line">	<span class="comment">//建堆，堆化除叶子节点外所有节点</span></span><br><span class="line">    <span class="comment">//建堆的循环语句还可以从最后一个节点的父节点开始，即for (int i = (nums.size()- 1 - 1) / 2; i &gt;= 0; --i) &#123;&#125;</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = nums.<span class="built_in">size</span>() / <span class="number">2</span> - <span class="number">1</span>; i &gt;= <span class="number">0</span>; --i) &#123;</span><br><span class="line">        <span class="comment">//从索引i开始从顶至底的执行堆化</span></span><br><span class="line">    	<span class="built_in">siftDown</span>(nums, nums.<span class="built_in">size</span>(), i); 	   </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//循环n-1次</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = nums.<span class="built_in">size</span>() - <span class="number">1</span>; i &gt;<span class="number">0</span>; --i) &#123;</span><br><span class="line">        <span class="comment">//交换堆顶元素与堆底元素</span></span><br><span class="line">        <span class="built_in">swap</span>(nums[<span class="number">0</span>], nums[i]); <span class="comment">//堆长度减1</span></span><br><span class="line">        <span class="built_in">siftDown</span>(nums, i, <span class="number">0</span>); <span class="comment">//从堆顶开始堆化</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -152,6 +192,104 @@
       </categories>
   </entry>
   <entry>
+    <title>typora+hexo-asset-img插入文章图片</title>
+    <url>/2025/02/18/blog_typora&amp;hexo-asset-img/</url>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>在使用hexo部署博客文章时，发现hexo默认的上传文件方式不太方便(如下)</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;% asset_img image.png name %&#125;</span><br></pre></td></tr></table></figure>
+
+<p>于是上网搜索方案，发现typora配合其它转图片路径的插件的方案很方便，但是在试过<code>hexo-asset-image</code>和<code>hexo-renderer-marked</code>之后，发现直接在typora中粘贴图片(即markdown格式)还是无法在网页上显示图片。</p>
+<p>以下是遇到的主要问题及解决方法</p>
+<span id="more"></span>
+
+<h2 id="问题1："><a href="#问题1：" class="headerlink" title="问题1："></a>问题1：</h2><p><strong>_post目录下如果在生成的.md目录插入图片就会生成两个同名的文件夹(实际上有一个后面多了一个空格)，导致默认的图片上传方式都出问题</strong></p>
+<p><strong>原因及解决方案</strong>：在修改_config.yml文件中的<strong>post_asset_folder为true</strong>之后，如果使用<code>hexo new xxx</code>的方式生成.md文件和同名文件夹，且同时还将typora的偏好设置为<code>./$&#123;filename&#125;</code>，那么就会出现这样的问题，解决办法就是直接手动创建一个.md文件，只要插入图片，typora就自动会生成一个同名文件夹，并加图片放入。（<font color='red'>注意不要将post_asset_folder又设回false了</font>）</p>
+<h2 id="问题2："><a href="#问题2：" class="headerlink" title="问题2："></a>问题2：</h2><p><strong>按照网上许多方法仍然无法直接使用<code>![](xx.png)</code>这种markdown格式插入图片</strong></p>
+<p><strong>原因分析</strong>：<font color='red'>该问题的主要原因在于插件版本和hexo版本不一致</font>。在本地生成的静态网页中我们可以按”F12”查看图片路径是否转换成功。</p>
+<img src="/2025/02/18/blog_typora&hexo-asset-img/image-20250218221232758.png" class="" title="F12查看图片路径">
+
+<p>如图所示，&#x2F;2025&#x2F;02&#x2F;18&#x2F;player&#x2F;xx这个目录就是<code>hexo g</code>执行后生成到public目录下的。</p>
+<ul>
+<li>从文件中查看，如果该目录下没有我们文章中出现的图片，则说明图片上传失败；</li>
+<li>而从网页端查看则如图所示，即图片源路径指向了对应的目录。</li>
+</ul>
+<p>上面两种方式都可以用来判断图片是否上传成功</p>
+<p><strong>解决办法:</strong></p>
+<p>由于我们使用的是hexo6.3.0版本，<code>hexo-asset-image</code>插件已经无法适配，所以这里直接下载另外一个<code>hexo-asset-img</code>插件即可。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">npm install hexo-asset-img --save</span><br></pre></td></tr></table></figure>
+
+<p>随后，按照问题1的方式创建.md文件，直接在typora中粘贴图片，即可实现图片和文章一起上传至博客网站.</p>
+<p>在typora中图片插入的具体的格式如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">![命名](与.md同名文件夹/logo.png)</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>杂项</category>
+      </categories>
+      <tags>
+        <tag>博客</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>AI提示词</title>
+    <url>/2025/03/25/blog_AIprompt/</url>
+    <content><![CDATA[<h2 id="提示词基本结构"><a href="#提示词基本结构" class="headerlink" title="提示词基本结构"></a>提示词基本结构</h2><p>即：角色+指令+上下文+输入问题+约束+例子+输出格式 。</p>
+<span id="more"></span>
+
+<p>1.角色(role) </p>
+<blockquote>
+<p>交互时通过给AI大模型设定某种角色，根据经验可以获得意想不到的效果，可以使大模型的输出更加具有个性化，专业化，同时能够增加模型输出的准确性。</p>
+</blockquote>
+<p>2.指示或者指令</p>
+<blockquote>
+<p> 是指示AI大模型需要完成的任务。</p>
+</blockquote>
+<p>3.上下文（context）</p>
+<blockquote>
+<p> 当你给出与任务相关的背景或细节时，可以帮助AI大模型更好的理解任务的具体情况，使得输出更加精确。</p>
+</blockquote>
+<p>4.输入或者问题</p>
+<blockquote>
+<p> 需要大模型执行具体的任务，或者具体的问题, 有时候如果指令部分描述的是具体的任务时，则指令部分就是输入。</p>
+</blockquote>
+<p>5.约束</p>
+<blockquote>
+<p> 有时候需要限制AI大模型的输出范围，设定一些约束条件，可以对输出进行控制。</p>
+</blockquote>
+<p>6.输出格式：</p>
+<blockquote>
+<p>主要给大模型指明，输出特定内容时的格式。</p>
+</blockquote>
+<p>7.例子：</p>
+<blockquote>
+<p>提供例子可以供AI大模型进行参考，可以有效的提高输出的准确度</p>
+</blockquote>
+<h2 id="更好的建议"><a href="#更好的建议" class="headerlink" title="更好的建议"></a>更好的建议</h2><ul>
+<li><p>如果需求比较复杂，可以将其拆分为几个步骤，逐一提问。</p>
+</li>
+<li><p>开放式问题往往能够激发更多的想象空间和创造性答案。</p>
+</li>
+<li><p>在得到AI的回答后，如果不符合预期，可以给出反馈并修正提示词。(训练与测试的过程)</p>
+</li>
+</ul>
+<h2 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h2><h3 id="基本模板"><a href="#基本模板" class="headerlink" title="基本模板"></a>基本模板</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">## 角色设定</span><br><span class="line">你是一位资深流媒体架构师，精通视频传输协议（如HLS/DASH/WebRTC）、媒体编解码（H.264/HEVC/AV1）、CDN优化和实时通信技术。请用分步骤方案解决我的开发问题。</span><br><span class="line"></span><br><span class="line">## 开发背景</span><br><span class="line">当前项目使用[编程语言/框架，如Golang+FFmpeg]开发[具体功能，如低延迟直播系统]，运行在[部署环境，如AWS EC2 g4dn实例]。已实现[现有方案，如基于WebRTC的P2P传输]，但遇到[具体问题描述，如1080p视频在200ms延迟要求下出现5%的丢包率]。</span><br><span class="line"></span><br><span class="line">## 核心需求</span><br><span class="line">1. 优化[具体指标，如端到端延迟]到[目标值，如&lt;200ms]</span><br><span class="line">2. 提升[质量指标，如视频QoE]同时保持[约束条件，如带宽利用率&lt;8Mbps]</span><br><span class="line">3. 解决[具体异常现象，如iOS客户端首帧时间超过2s]</span><br><span class="line"></span><br><span class="line">## 请求格式</span><br><span class="line">请按以下结构给出建议：</span><br><span class="line">1. 诊断分析：可能导致问题的3个技术因素</span><br><span class="line">2. 优化方案：分网络传输、编解码、服务端三个层面的改进措施</span><br><span class="line">3. 配置示例：关键参数的推荐值（如WebRTC的sdp中设置a=goog-latency-experimental:100）</span><br><span class="line">4. 验证方法：建议的AB测试方案或监控指标</span><br><span class="line"></span><br><span class="line">## 补充信息</span><br><span class="line">[相关日志片段/抓包数据特征/硬件配置详情]</span><br></pre></td></tr></table></figure>
+
+<h4 id="关键点"><a href="#关键点" class="headerlink" title="关键点"></a>关键点</h4><ol>
+<li><strong>技术参数具体化</strong>：避免模糊表述，将”提高画质”改为”在HLS分片时长2s约束下优化SSIM≥0.92”</li>
+<li><strong>上下文增强</strong>：附带关键代码段或网络拓扑图描述</li>
+<li><strong>渐进式提问</strong>：复杂问题拆分为”协议选型→架构设计→参数调优”多轮对话</li>
+<li><strong>验证驱动</strong>：要求AI给出可量化的验证方案（如：建议通过tc命令模拟20%丢包测试抗性）</li>
+</ol>
+<h3 id="示例一"><a href="#示例一" class="headerlink" title="示例一"></a>示例一</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">场景：直播卡顿优化（核心需求）</span><br><span class="line">请分析基于NGINX-RTMP的直播系统在万人并发时出现的卡顿问题。当前配置： </span><br><span class="line">- 服务器：8核16G带宽1Gbps</span><br><span class="line">- 客户端观测：20%用户缓冲时间&gt;2s</span><br><span class="line">- 当前CDN配置：静态分片+单源站架构</span><br><span class="line"></span><br><span class="line">期望输出：</span><br><span class="line">1. 瓶颈定位：从协议栈/服务器架构/分发策略角度列出可能瓶颈</span><br><span class="line">2. 扩容方案：推荐边缘节点部署策略及成本估算</span><br><span class="line">3. 自适应码率方案：提供HLS动态分片配置示例</span><br><span class="line">4. 监控建议：关键性能指标的埋点方案</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>杂项</category>
+      </categories>
+      <tags>
+        <tag>AI prompt</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>智能指针</title>
     <url>/2025/03/10/Cpp11__inteligent_ptr/</url>
     <content><![CDATA[<h3 id="基础"><a href="#基础" class="headerlink" title="基础"></a>基础</h3><p><strong>c++11之后引入智能指针的目的</strong>：动态分配的内存空间如果不进行释放，就会导致内存泄露。智能指针是一个模板类，其离开作用域时就会销毁，这时就会调用其析构函数来释放所指向的动态分配对象的空间。<font color='red'>即智能指针就是用来解决内存泄露问题的。</font></p>
@@ -172,7 +310,7 @@
 <li>成员函数get(), reset(), use_count()</li>
 <li>make_shared函数模板</li>
 </ul>
-<style>.bktdbkbsljbn{zoom:50%;}</style><img src="/2025/03/10/Cpp11__inteligent_ptr/image-20250310211607484.png" class="bktdbkbsljbn" alt="image-20250310211607484">
+<style>.pmmnlmvuwjcz{zoom:50%;}</style><img src="/2025/03/10/Cpp11__inteligent_ptr/image-20250310211607484.png" class="pmmnlmvuwjcz" alt="image-20250310211607484">
 
 <blockquote>
 <p><strong>为什么图中使用<code>int* m_count</code>而不是<code>int m_count</code>?</strong></p>
@@ -243,7 +381,7 @@
 <p>此外，<font color='red'>还需注意标准库中的shared_ptr的reset函数在智能指针对象指向了动态分配对象的前提下使用且不传参，引用计数减1的同时，还会销毁该对象</font></p>
 <h4 id="线程安全的引用计数"><a href="#线程安全的引用计数" class="headerlink" title="线程安全的引用计数"></a>线程安全的引用计数</h4><p><strong>注意在shared_ptr中引用计数是线程安全的，但是管理的数据不是线程安全的</strong>。我们上面的实现并不能保证引用计数是线程安全的，因为多个线程可能同时操作引用计数指针<code>m_count</code>，导致动态对象被提前释放或永远不被释放。</p>
 <p>下面将采用互斥锁来实现引用计数线程安全（可以参考下图实现，这里我们就不考虑weak_count了）</p>
-<style>.cdbtluupxixn{zoom:50%;}</style><img src="/2025/03/10/Cpp11__inteligent_ptr/image-20250310221101442.png" class="cdbtluupxixn" alt="image-20250310221101442">
+<style>.byuyaldgtrrv{zoom:50%;}</style><img src="/2025/03/10/Cpp11__inteligent_ptr/image-20250310221101442.png" class="byuyaldgtrrv" alt="image-20250310221101442">
 
 <p>具体代码如下：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">* shared_ptr.h</span></span><br><span class="line"><span class="comment">* 实现一个线程安全的shared_ptr模板类，不考虑weak_ptr</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="meta">#<span class="keyword">ifndef</span> SHARED_PTR_H</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> SHARED_PTR_H</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;utility&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;mutex&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MySharedPtr</span> &#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="comment">// 控制块结构</span></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">ControlBlock</span> &#123;</span><br><span class="line">        <span class="type">int</span> ref_count; <span class="comment">// 引用计数</span></span><br><span class="line">        std::mutex mutex; <span class="comment">// 互斥锁，保证线程安全</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 构造函数</span></span><br><span class="line">        <span class="built_in">ControlBlock</span>() : <span class="built_in">ref_count</span>(<span class="number">1</span>) &#123;&#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 指向管理对象的原始指针</span></span><br><span class="line">    T* raw_ptr;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 指向控制块的指针</span></span><br><span class="line">    ControlBlock* control_block;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 增加引用计数</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">add_count</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (control_block) &#123;</span><br><span class="line">            <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(control_block-&gt;mutex)</span></span>;</span><br><span class="line">            ++(control_block-&gt;ref_count);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 减少引用计数</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">sub_count</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (control_block) &#123;</span><br><span class="line">            <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(control_block-&gt;mutex)</span></span>;</span><br><span class="line">            --(control_block-&gt;ref_count);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 释放资源</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">release</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (control_block) &#123;</span><br><span class="line">            <span class="built_in">sub_count</span>();</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 检查是否为最后一个引用</span></span><br><span class="line">            <span class="type">bool</span> delete_resources = <span class="literal">false</span>;</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(control_block-&gt;mutex)</span></span>;</span><br><span class="line">                delete_resources = (control_block-&gt;ref_count == <span class="number">0</span>);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 只有当引用计数为零时才删除资源</span></span><br><span class="line">            <span class="keyword">if</span> (delete_resources) &#123;</span><br><span class="line">                <span class="keyword">delete</span> raw_ptr;</span><br><span class="line">                <span class="keyword">delete</span> control_block;</span><br><span class="line">                raw_ptr = <span class="literal">nullptr</span>;</span><br><span class="line">                control_block = <span class="literal">nullptr</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// 默认构造函数</span></span><br><span class="line">    <span class="built_in">MySharedPtr</span>() : <span class="built_in">raw_ptr</span>(<span class="literal">nullptr</span>), <span class="built_in">control_block</span>(<span class="literal">nullptr</span>) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 有参构造，从原始指针构造</span></span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="title">MySharedPtr</span><span class="params">(T* ptr)</span>: raw_ptr(ptr), control_block(ptr ? new ControlBlock() : nullptr) &#123;</span>&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 拷贝构造函数</span></span><br><span class="line">    <span class="built_in">MySharedPtr</span>(<span class="type">const</span> MySharedPtr&amp; other): <span class="built_in">raw_ptr</span>(other.raw_ptr), <span class="built_in">control_block</span>(other.control_block) &#123;</span><br><span class="line">        <span class="built_in">add_count</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 移动构造函数</span></span><br><span class="line">    <span class="built_in">MySharedPtr</span>(MySharedPtr&amp;&amp; other) <span class="keyword">noexcept</span>: <span class="built_in">raw_ptr</span>(other.raw_ptr), <span class="built_in">control_block</span>(other.control_block) &#123;</span><br><span class="line">        other.raw_ptr = <span class="literal">nullptr</span>;</span><br><span class="line">        other.control_block = <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 析构函数</span></span><br><span class="line">    ~<span class="built_in">MySharedPtr</span>() &#123;</span><br><span class="line">        <span class="built_in">release</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 拷贝赋值运算符重载</span></span><br><span class="line">    <span class="comment">//这里不能给shared_ptr赋裸指针</span></span><br><span class="line">    MySharedPtr&amp; <span class="keyword">operator</span>=(<span class="type">const</span> MySharedPtr&amp; other) &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">this</span> != &amp;other) &#123;</span><br><span class="line">            <span class="built_in">release</span>();</span><br><span class="line">            raw_ptr = other.raw_ptr;</span><br><span class="line">            control_block = other.control_block;</span><br><span class="line">            <span class="built_in">add_count</span>();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 移动赋值运算符重载</span></span><br><span class="line">    MySharedPtr&amp; <span class="keyword">operator</span>=(MySharedPtr&amp;&amp; other) <span class="keyword">noexcept</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">this</span> != &amp;other) &#123;</span><br><span class="line">            <span class="built_in">release</span>();</span><br><span class="line">            raw_ptr = other.raw_ptr;</span><br><span class="line">            control_block = other.control_block;</span><br><span class="line">            other.raw_ptr = <span class="literal">nullptr</span>;</span><br><span class="line">            other.control_block = <span class="literal">nullptr</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 解引用运算符重载</span></span><br><span class="line">    T&amp; <span class="keyword">operator</span>*() <span class="type">const</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> *raw_ptr;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 箭头运算符重载</span></span><br><span class="line">    T* <span class="keyword">operator</span>-&gt;() <span class="type">const</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> raw_ptr;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 重置函数</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">reset</span><span class="params">(T* ptr = <span class="literal">nullptr</span>)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (raw_ptr != ptr) &#123;</span><br><span class="line">            <span class="built_in">release</span>();</span><br><span class="line">            <span class="keyword">if</span> (ptr) &#123;</span><br><span class="line">                raw_ptr = ptr;</span><br><span class="line">                control_block = <span class="keyword">new</span> <span class="built_in">ControlBlock</span>();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取原始指针</span></span><br><span class="line">    <span class="function">T* <span class="title">get</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> raw_ptr;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取引用计数</span></span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">use_count</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (control_block) &#123;</span><br><span class="line">            <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(control_block-&gt;mutex)</span></span>;</span><br><span class="line">            <span class="keyword">return</span> control_block-&gt;ref_count;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 检查指针是否是唯一拥有者（只有一个引用）</span></span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">unique</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">use_count</span>() == <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// make_shared函数模板</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keyword">typename</span>... Args&gt;</span><br><span class="line"><span class="function">MySharedPtr&lt;T&gt; <span class="title">make_shared</span><span class="params">(Args&amp;&amp;... args)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">MySharedPtr</span>&lt;T&gt;(<span class="keyword">new</span> <span class="built_in">T</span>(std::forward&lt;Args&gt;(args)...));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
@@ -268,7 +406,8 @@
 </blockquote>
 <h5 id="2-完美转发std-forward"><a href="#2-完美转发std-forward" class="headerlink" title="2.完美转发std::forward"></a>2.完美转发<code>std::forward</code></h5><blockquote>
 <p>完美转发是C++11引入的一个重要概念，它允许我们在不损失任何参数信息（包括值类别、const修饰等）的情况下，将参数从一个函数传递到另一个函数。这在编写模板代码和通用包装函数时特别有用。</p>
-<h2 id="为什么需要完美转发？"><a href="#为什么需要完美转发？" class="headerlink" title="为什么需要完美转发？"></a>为什么需要完美转发？</h2><p>在没有完美转发之前，我们面临一个困境：</p>
+<p><font color='cornflowerblue'>为什么需要完美转发？</font></p>
+<p>在没有完美转发之前，我们面临一个困境：</p>
 <ol>
 <li>如果函数参数用值传递，会产生不必要的拷贝</li>
 <li>如果使用const引用，无法传递可修改的引用</li>
@@ -278,7 +417,8 @@
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">wrapper</span><span class="params">(T&amp; param)</span> </span>&#123;  <span class="comment">// 非const引用</span></span><br><span class="line">    <span class="built_in">f</span>(param);  <span class="comment">// 调用目标函数</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>这个<code>wrapper</code>函数无法接受右值（如临时对象）。而如果我们改为<code>const T&amp;</code>，又无法传递需要被修改的参数。</p>
-<h2 id="完美转发的解决方案"><a href="#完美转发的解决方案" class="headerlink" title="完美转发的解决方案"></a>完美转发的解决方案</h2><p>C++11引入了两个关键组件来解决这个问题：</p>
+<p><font color='cornflowerblue'>完美转发的解决方案</font>:</p>
+<p>C++11引入了两个关键组件来解决这个问题：</p>
 <ol>
 <li><strong>右值引用</strong>：<code>T&amp;&amp;</code></li>
 <li><strong>引用折叠规则</strong>和<strong>万能引用(universal reference)</strong></li>
@@ -287,12 +427,20 @@
 <p>正确的完美转发包装函数是这样的：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">wrapper</span><span class="params">(T&amp;&amp; param)</span> </span>&#123;  <span class="comment">// 这里的T&amp;&amp;是万能引用，不是右值引用</span></span><br><span class="line">    <span class="built_in">f</span>(std::forward&lt;T&gt;(param));  <span class="comment">// 完美转发</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<h2 id="关键组件详解"><a href="#关键组件详解" class="headerlink" title="关键组件详解"></a>关键组件详解</h2><h3 id="万能引用-Universal-Reference"><a href="#万能引用-Universal-Reference" class="headerlink" title="万能引用(Universal Reference)"></a>万能引用(Universal Reference)</h3><p>当<code>T&amp;&amp;</code>出现在模板参数推导的上下文中时，它不是普通的右值引用，而是”万能引用”，可以绑定到任何值类别的对象上：</p>
+<p><font color='cornflowerblue'>关键组件详解</font>:</p>
 <ul>
-<li>当传入左值时，<code>T</code>被推导为左值引用类型</li>
-<li>当传入右值时，<code>T</code>被推导为非引用类型</li>
+<li><strong>万能引用(Universal Reference)</strong></li>
 </ul>
-<h3 id="引用折叠规则"><a href="#引用折叠规则" class="headerlink" title="引用折叠规则"></a>引用折叠规则</h3><p>C++11引入了”引用折叠”规则，对于类型<code>T</code>:</p>
+<p>当<code>T&amp;&amp;</code>出现在模板参数推导的上下文中时，它不是普通的右值引用，而是”万能引用”，可以绑定到任何值类别的对象上：</p>
+<ul>
+<li><p>当传入左值时，<code>T</code>被推导为左值引用类型</p>
+</li>
+<li><p>当传入右值时，<code>T</code>被推导为非引用类型</p>
+</li>
+<li><p><strong>引用折叠规则</strong></p>
+</li>
+</ul>
+<p>C++11引入了”引用折叠”规则，对于类型<code>T</code>:</p>
 <ul>
 <li><code>T&amp; &amp;</code> 折叠为 <code>T&amp;</code></li>
 <li><code>T&amp; &amp;&amp;</code> 折叠为 <code>T&amp;</code></li>
@@ -300,7 +448,10 @@
 <li><code>T&amp;&amp; &amp;&amp;</code> 折叠为 <code>T&amp;&amp;</code></li>
 </ul>
 <p>简单说：**只要有一个&amp;，结果就是&amp;**。</p>
-<h3 id="std-forward的原理"><a href="#std-forward的原理" class="headerlink" title="std::forward的原理"></a>std::forward的原理</h3><p><code>std::forward</code>是完美转发的核心，其简化实现大致如下：</p>
+<ul>
+<li><strong>std::forward的原理</strong></li>
+</ul>
+<p><code>std::forward</code>是完美转发的核心，其简化实现大致如下：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span></span><br><span class="line"><span class="function">T&amp;&amp; <span class="title">forward</span><span class="params">(<span class="keyword">typename</span> remove_reference&lt;T&gt;::type&amp; param)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">static_cast</span>&lt;T&amp;&amp;&gt;(param);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>它利用引用折叠规则，确保：</p>
@@ -308,11 +459,13 @@
 <li>如果原始参数是左值，通过<code>forward</code>后仍然是左值</li>
 <li>如果原始参数是右值，通过<code>forward</code>后仍然是右值</li>
 </ul>
-<h2 id="实际例子"><a href="#实际例子" class="headerlink" title="实际例子"></a>实际例子</h2><p>假设我们要实现一个工厂函数，用于创建对象并转发构造函数的所有参数：</p>
+<p><font color='cornflowerblue'>实际例子</font></p>
+<p>假设我们要实现一个工厂函数，用于创建对象并转发构造函数的所有参数：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T, <span class="keyword">typename</span>... Args&gt;</span></span><br><span class="line"><span class="function">std::unique_ptr&lt;T&gt; <span class="title">make_unique</span><span class="params">(Args&amp;&amp;... args)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> std::<span class="built_in">unique_ptr</span>&lt;T&gt;(<span class="keyword">new</span> <span class="built_in">T</span>(std::forward&lt;Args&gt;(args)...));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>这个实现允许我们完美地转发任何参数到<code>T</code>的构造函数。</p>
-<h2 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h2><ol>
+<p><font color='cornflowerblue'>注意事项</font></p>
+<ol>
 <li><p>完美转发</p>
 <p>只转发引用类型和值类别</p>
 <p>，不转发以下内容：</p>
@@ -329,7 +482,7 @@
 </blockquote>
 <p>​	</p>
 <p>加了weak_ptr之后的实现可以参考下图，具体代码省略</p>
-<style>.btskfduakrvu{zoom:50%;}</style><img src="/2025/03/10/Cpp11__inteligent_ptr/image-20250310230603480.png" class="btskfduakrvu" alt="image-20250310230603480">
+<style>.eiiqfrechocn{zoom:50%;}</style><img src="/2025/03/10/Cpp11__inteligent_ptr/image-20250310230603480.png" class="eiiqfrechocn" alt="image-20250310230603480">
 
 
 
@@ -397,66 +550,6 @@
         <category>c++11</category>
         <category>智能指针</category>
       </categories>
-  </entry>
-  <entry>
-    <title>AI提示词</title>
-    <url>/2025/03/25/blog_AIprompt/</url>
-    <content><![CDATA[<h2 id="提示词基本结构"><a href="#提示词基本结构" class="headerlink" title="提示词基本结构"></a>提示词基本结构</h2><p>即：角色+指令+上下文+输入问题+约束+例子+输出格式 。</p>
-<span id="more"></span>
-
-<p>1.角色(role) </p>
-<blockquote>
-<p>交互时通过给AI大模型设定某种角色，根据经验可以获得意想不到的效果，可以使大模型的输出更加具有个性化，专业化，同时能够增加模型输出的准确性。</p>
-</blockquote>
-<p>2.指示或者指令</p>
-<blockquote>
-<p> 是指示AI大模型需要完成的任务。</p>
-</blockquote>
-<p>3.上下文（context）</p>
-<blockquote>
-<p> 当你给出与任务相关的背景或细节时，可以帮助AI大模型更好的理解任务的具体情况，使得输出更加精确。</p>
-</blockquote>
-<p>4.输入或者问题</p>
-<blockquote>
-<p> 需要大模型执行具体的任务，或者具体的问题, 有时候如果指令部分描述的是具体的任务时，则指令部分就是输入。</p>
-</blockquote>
-<p>5.约束</p>
-<blockquote>
-<p> 有时候需要限制AI大模型的输出范围，设定一些约束条件，可以对输出进行控制。</p>
-</blockquote>
-<p>6.输出格式：</p>
-<blockquote>
-<p>主要给大模型指明，输出特定内容时的格式。</p>
-</blockquote>
-<p>7.例子：</p>
-<blockquote>
-<p>提供例子可以供AI大模型进行参考，可以有效的提高输出的准确度</p>
-</blockquote>
-<h2 id="更好的建议"><a href="#更好的建议" class="headerlink" title="更好的建议"></a>更好的建议</h2><ul>
-<li><p>如果需求比较复杂，可以将其拆分为几个步骤，逐一提问。</p>
-</li>
-<li><p>开放式问题往往能够激发更多的想象空间和创造性答案。</p>
-</li>
-<li><p>在得到AI的回答后，如果不符合预期，可以给出反馈并修正提示词。(训练与测试的过程)</p>
-</li>
-</ul>
-<h2 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h2><h3 id="基本模板"><a href="#基本模板" class="headerlink" title="基本模板"></a>基本模板</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">## 角色设定</span><br><span class="line">你是一位资深流媒体架构师，精通视频传输协议（如HLS/DASH/WebRTC）、媒体编解码（H.264/HEVC/AV1）、CDN优化和实时通信技术。请用分步骤方案解决我的开发问题。</span><br><span class="line"></span><br><span class="line">## 开发背景</span><br><span class="line">当前项目使用[编程语言/框架，如Golang+FFmpeg]开发[具体功能，如低延迟直播系统]，运行在[部署环境，如AWS EC2 g4dn实例]。已实现[现有方案，如基于WebRTC的P2P传输]，但遇到[具体问题描述，如1080p视频在200ms延迟要求下出现5%的丢包率]。</span><br><span class="line"></span><br><span class="line">## 核心需求</span><br><span class="line">1. 优化[具体指标，如端到端延迟]到[目标值，如&lt;200ms]</span><br><span class="line">2. 提升[质量指标，如视频QoE]同时保持[约束条件，如带宽利用率&lt;8Mbps]</span><br><span class="line">3. 解决[具体异常现象，如iOS客户端首帧时间超过2s]</span><br><span class="line"></span><br><span class="line">## 请求格式</span><br><span class="line">请按以下结构给出建议：</span><br><span class="line">1. 诊断分析：可能导致问题的3个技术因素</span><br><span class="line">2. 优化方案：分网络传输、编解码、服务端三个层面的改进措施</span><br><span class="line">3. 配置示例：关键参数的推荐值（如WebRTC的sdp中设置a=goog-latency-experimental:100）</span><br><span class="line">4. 验证方法：建议的AB测试方案或监控指标</span><br><span class="line"></span><br><span class="line">## 补充信息</span><br><span class="line">[相关日志片段/抓包数据特征/硬件配置详情]</span><br></pre></td></tr></table></figure>
-
-<h4 id="关键点"><a href="#关键点" class="headerlink" title="关键点"></a>关键点</h4><ol>
-<li><strong>技术参数具体化</strong>：避免模糊表述，将”提高画质”改为”在HLS分片时长2s约束下优化SSIM≥0.92”</li>
-<li><strong>上下文增强</strong>：附带关键代码段或网络拓扑图描述</li>
-<li><strong>渐进式提问</strong>：复杂问题拆分为”协议选型→架构设计→参数调优”多轮对话</li>
-<li><strong>验证驱动</strong>：要求AI给出可量化的验证方案（如：建议通过tc命令模拟20%丢包测试抗性）</li>
-</ol>
-<h3 id="示例一"><a href="#示例一" class="headerlink" title="示例一"></a>示例一</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">场景：直播卡顿优化（核心需求）</span><br><span class="line">请分析基于NGINX-RTMP的直播系统在万人并发时出现的卡顿问题。当前配置： </span><br><span class="line">- 服务器：8核16G带宽1Gbps</span><br><span class="line">- 客户端观测：20%用户缓冲时间&gt;2s</span><br><span class="line">- 当前CDN配置：静态分片+单源站架构</span><br><span class="line"></span><br><span class="line">期望输出：</span><br><span class="line">1. 瓶颈定位：从协议栈/服务器架构/分发策略角度列出可能瓶颈</span><br><span class="line">2. 扩容方案：推荐边缘节点部署策略及成本估算</span><br><span class="line">3. 自适应码率方案：提供HLS动态分片配置示例</span><br><span class="line">4. 监控建议：关键性能指标的埋点方案</span><br></pre></td></tr></table></figure>
-
-]]></content>
-      <categories>
-        <category>杂项</category>
-      </categories>
-      <tags>
-        <tag>AI prompt</tag>
-      </tags>
   </entry>
   <entry>
     <title></title>
@@ -579,85 +672,6 @@
 </ul>
 </blockquote>
 ]]></content>
-  </entry>
-  <entry>
-    <title>cmake</title>
-    <url>/2025/03/10/DevTools__cmake/</url>
-    <content><![CDATA[<h2 id="从零开始写一个CMakeLists-txt文件"><a href="#从零开始写一个CMakeLists-txt文件" class="headerlink" title="从零开始写一个CMakeLists.txt文件"></a>从零开始写一个CMakeLists.txt文件</h2><p>从零开始写CMakeLists.txt的基本步骤和结构：</p>
-<ol>
-<li><strong>第一步：基础设置</strong><figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 指定CMake最低版本</span></span><br><span class="line"><span class="keyword">cmake_minimum_required</span>(VERSION <span class="number">3.10</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 项目名称</span></span><br><span class="line"><span class="keyword">project</span>(你的项目名称)</span><br></pre></td></tr></table></figure></li>
-</ol>
-<span id="more"></span>
-
-<ol start="2">
-<li><strong>第二步：设置编译选项</strong></li>
-</ol>
-<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 设置C++标准</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_STANDARD <span class="number">11</span>)</span><br><span class="line"><span class="comment"># 或者</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS <span class="string">&quot;$&#123;CMAKE_CXX_FLAGS&#125; -std=c++11&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置编译类型（Debug/Release）</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_BUILD_TYPE Debug)</span><br></pre></td></tr></table></figure>
-
-<ol start="3">
-<li><p><strong>第三步：设置头文件和库文件路径</strong></p>
-<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 如果有额外的头文件目录</span></span><br><span class="line"><span class="keyword">include_directories</span>(<span class="keyword">include</span>)</span><br><span class="line"><span class="comment"># 如果有额外的库文件目录</span></span><br><span class="line"><span class="keyword">link_directories</span>(lib)</span><br></pre></td></tr></table></figure>
-</li>
-<li><p><strong>第四步：添加源文件</strong></p>
-<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 方法1：直接列出所有源文件</span></span><br><span class="line"><span class="keyword">add_executable</span>(项目名称 </span><br><span class="line">    src/main.cpp</span><br><span class="line">    src/other.cpp</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 方法2：使用变量收集源文件</span></span><br><span class="line"><span class="keyword">set</span>(SOURCES</span><br><span class="line">    src/main.cpp</span><br><span class="line">    src/other.cpp</span><br><span class="line">)</span><br><span class="line"><span class="keyword">add_executable</span>(项目名称 <span class="variable">$&#123;SOURCES&#125;</span>)</span><br></pre></td></tr></table></figure>
-</li>
-<li><p><strong>第五步：如果需要链接外部库</strong></p>
-<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 链接库</span></span><br><span class="line"><span class="keyword">target_link_libraries</span>(项目名称</span><br><span class="line">    库名称<span class="number">1</span></span><br><span class="line">    库名称<span class="number">2</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure></li>
-</ol>
-<p>一些实用的建议：</p>
-<ol>
-<li>保持结构清晰，按照上述步骤组织你的CMakeLists.txt</li>
-<li>使用注释说明每个部分的作用</li>
-<li>对于大型项目，可以使用子目录的CMakeLists.txt</li>
-<li>养成良好的变量命名习惯</li>
-<li>建议使用现代CMake的命令和特性</li>
-</ol>
-<p>创建一个最简单的CMakeLists.txt，可以参考这个模板：</p>
-<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 最低CMake版本要求</span></span><br><span class="line"><span class="keyword">cmake_minimum_required</span>(VERSION <span class="number">3.10</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 项目名称</span></span><br><span class="line"><span class="keyword">project</span>(MyProject)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将所有源文件添加到可执行文件</span></span><br><span class="line"><span class="keyword">add_executable</span>(MyProject main.cpp)</span><br></pre></td></tr></table></figure>
-
-]]></content>
-      <categories>
-        <category>开发工具</category>
-        <category>构建</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>typora+hexo-asset-img插入文章图片</title>
-    <url>/2025/02/18/blog_typora&amp;hexo-asset-img/</url>
-    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>在使用hexo部署博客文章时，发现hexo默认的上传文件方式不太方便(如下)</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;% asset_img image.png name %&#125;</span><br></pre></td></tr></table></figure>
-
-<p>于是上网搜索方案，发现typora配合其它转图片路径的插件的方案很方便，但是在试过<code>hexo-asset-image</code>和<code>hexo-renderer-marked</code>之后，发现直接在typora中粘贴图片(即markdown格式)还是无法在网页上显示图片。</p>
-<p>以下是遇到的主要问题及解决方法</p>
-<span id="more"></span>
-
-<h2 id="问题1："><a href="#问题1：" class="headerlink" title="问题1："></a>问题1：</h2><p><strong>_post目录下如果在生成的.md目录插入图片就会生成两个同名的文件夹(实际上有一个后面多了一个空格)，导致默认的图片上传方式都出问题</strong></p>
-<p><strong>原因及解决方案</strong>：在修改_config.yml文件中的<strong>post_asset_folder为true</strong>之后，如果使用<code>hexo new xxx</code>的方式生成.md文件和同名文件夹，且同时还将typora的偏好设置为<code>./$&#123;filename&#125;</code>，那么就会出现这样的问题，解决办法就是直接手动创建一个.md文件，只要插入图片，typora就自动会生成一个同名文件夹，并加图片放入。（<font color='red'>注意不要将post_asset_folder又设回false了</font>）</p>
-<h2 id="问题2："><a href="#问题2：" class="headerlink" title="问题2："></a>问题2：</h2><p><strong>按照网上许多方法仍然无法直接使用<code>![](xx.png)</code>这种markdown格式插入图片</strong></p>
-<p><strong>原因分析</strong>：<font color='red'>该问题的主要原因在于插件版本和hexo版本不一致</font>。在本地生成的静态网页中我们可以按”F12”查看图片路径是否转换成功。</p>
-<img src="/2025/02/18/blog_typora&hexo-asset-img/image-20250218221232758.png" class="" title="F12查看图片路径">
-
-<p>如图所示，&#x2F;2025&#x2F;02&#x2F;18&#x2F;player&#x2F;xx这个目录就是<code>hexo g</code>执行后生成到public目录下的。</p>
-<ul>
-<li>从文件中查看，如果该目录下没有我们文章中出现的图片，则说明图片上传失败；</li>
-<li>而从网页端查看则如图所示，即图片源路径指向了对应的目录。</li>
-</ul>
-<p>上面两种方式都可以用来判断图片是否上传成功</p>
-<p><strong>解决办法:</strong></p>
-<p>由于我们使用的是hexo6.3.0版本，<code>hexo-asset-image</code>插件已经无法适配，所以这里直接下载另外一个<code>hexo-asset-img</code>插件即可。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">npm install hexo-asset-img --save</span><br></pre></td></tr></table></figure>
-
-<p>随后，按照问题1的方式创建.md文件，直接在typora中粘贴图片，即可实现图片和文章一起上传至博客网站.</p>
-<p>在typora中图片插入的具体的格式如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">![命名](与.md同名文件夹/logo.png)</span><br></pre></td></tr></table></figure>
-
-]]></content>
-      <categories>
-        <category>杂项</category>
-      </categories>
-      <tags>
-        <tag>博客</tag>
-      </tags>
   </entry>
   <entry>
     <title>linux常用命令总结</title>
