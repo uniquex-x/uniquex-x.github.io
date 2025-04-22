@@ -22,21 +22,22 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":{"valine":{"order":-1}},"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="总结了一些linux中常用的基本命令和项目中常用的命令">
+  <meta name="description" content="总结了一些linux中常用的基本命令和项目中常用的命令 基础概念 shell ：即命令解释器，是用户和linux内核交互的桥梁，通过在shell终端输入命令让linux内核相应部分识别用户命令并处理。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="linux常用命令总结">
-<meta property="og:url" content="http://example.com/2025/02/23/linux_BasicShellCmd/index.html">
+<meta property="og:url" content="http://example.com/2025/02/23/linux_bashCmd01/index.html">
 <meta property="og:site_name" content="liujiahua&#39;s personalBlog">
-<meta property="og:description" content="总结了一些linux中常用的基本命令和项目中常用的命令">
+<meta property="og:description" content="总结了一些linux中常用的基本命令和项目中常用的命令 基础概念 shell ：即命令解释器，是用户和linux内核交互的桥梁，通过在shell终端输入命令让linux内核相应部分识别用户命令并处理。">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://example.com/2025/02/23/linux_BasicShellCmd/image-20250302110137834.png">
+<meta property="og:image" content="http://example.com/linux_BasicShellCmd/image-20250422133735308.png">
+<meta property="og:image" content="http://example.com/linux_BasicShellCmd/image-20250302110137834.png">
 <meta property="article:published_time" content="2025-02-23T13:57:08.000Z">
-<meta property="article:modified_time" content="2025-03-26T11:53:22.793Z">
+<meta property="article:modified_time" content="2025-04-22T05:50:45.441Z">
 <meta property="article:author" content="Liu Jiahua">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://example.com/2025/02/23/linux_BasicShellCmd/image-20250302110137834.png">
+<meta name="twitter:image" content="http://example.com/linux_BasicShellCmd/image-20250422133735308.png">
 
-<link rel="canonical" href="http://example.com/2025/02/23/linux_BasicShellCmd/">
+<link rel="canonical" href="http://example.com/2025/02/23/linux_bashCmd01/">
 
 
 <script id="page-configurations">
@@ -192,7 +193,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2025/02/23/linux_BasicShellCmd/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2025/02/23/linux_bashCmd01/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -222,7 +223,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-03-26 19:53:22" itemprop="dateModified" datetime="2025-03-26T19:53:22+08:00">2025-03-26</time>
+                <time title="修改时间：2025-04-22 13:50:45" itemprop="dateModified" datetime="2025-04-22T13:50:45+08:00">2025-04-22</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -254,8 +255,8 @@
       </span>
       <span class="post-meta-item-text">Valine：</span>
     
-    <a title="valine" href="/2025/02/23/linux_BasicShellCmd/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2025/02/23/linux_BasicShellCmd/" itemprop="commentCount"></span>
+    <a title="valine" href="/2025/02/23/linux_bashCmd01/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2025/02/23/linux_bashCmd01/" itemprop="commentCount"></span>
     </a>
   </span>
   
@@ -265,7 +266,7 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>2.8k</span>
+              <span>3.1k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -285,17 +286,24 @@
 
       
         <p>总结了一些linux中常用的基本命令和项目中常用的命令</p>
-<span id="more"></span>
-
 <h2 id="基础概念"><a href="#基础概念" class="headerlink" title="基础概念"></a>基础概念</h2><ul>
 <li>shell ：即命令解释器，是用户和linux内核交互的桥梁，通过在shell终端输入命令让linux内核相应部分识别用户命令并处理。</li>
 </ul>
-<p>​	shell命令的基本格式为</p>
+<span id="more"></span>
+
+<p><img src="/linux_BasicShellCmd/image-20250422133735308.png" alt="image-20250422133735308"></p>
+<blockquote>
+<p><strong>bash与shell的关系</strong></p>
+<p><strong>Shell就是终端程序的统称</strong>，它充当了人与内核（硬件）之间的翻译官，用户把一些命令“告诉”终端程序，它就会调用相应的程序服务去完成某些工作。许多主流Linux系统默认使用的<strong>终端是Bash（Bourne-Again SHell）解释器。</strong></p>
+<p><strong>Shell与Bash是包含与被包含的关系</strong>。举例来说，在社会中有翻译官这个职业，它是由许多从业者共同组成的职业名称，而Bash则是其中一个出色的成员，是Shell终端程序中的一份子。</p>
+</blockquote>
+<p>shell命令的基本格式为</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">命令 [option] 参数 </span><br></pre></td></tr></table></figure>
 <p>​	其中加”[]”符号表示可以不输入这个选项</p>
 <p><strong>tips</strong>: </p>
 <ul>
 <li><p>对于不熟悉的命令可以使用<code>man 1 命令</code>或者<code>命令 --help</code>来查看说明</p>
+
 </li>
 <li><p>注意如果想要在windows复制并粘贴到linux虚拟机中，就要安装open-vm-tools，而vm-tools是老版的，重复安装这两个就会冲突，所以只安装open-vm-tools即可。对应命令为：</p>
 </li>
@@ -379,8 +387,7 @@
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo mount -t fuse.vmhgfs-fuse .host:/ /mnt/hgfs -o allow_other</span><br></pre></td></tr></table></figure>
 
 <p>开机自动挂载共享文件夹参考下图：</p>
-<img src="/2025/02/23/linux_BasicShellCmd/image-20250302110137834.png" class="" title="image-20250302110137834">
-
+<p><img src="/linux_BasicShellCmd/image-20250302110137834.png" alt="image-20250302110137834"></p>
 <ul>
 <li>安装和卸载</li>
 </ul>
@@ -540,14 +547,14 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-count">11</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-count">15</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">

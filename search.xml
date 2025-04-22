@@ -308,6 +308,7 @@
 </ul>
 <span id="more"></span>
 
+<p>以下基于网络io复用模型的服务端均基于tcp连接</p>
 <h2 id="select"><a href="#select" class="headerlink" title="select"></a>select</h2><p><strong>优点</strong>：兼容性强，linux和windows均可</p>
 <p><strong>缺点</strong>：需要轮询监视的文件描述符集合，且文件描述符的变化监视本质还是内核完成，因此发生变化时还需要将事件拷贝到用户态（即存在用户态-内核态-用户态的切换过程），比较消耗资源。</p>
 <blockquote>
@@ -320,10 +321,18 @@
 <p>关键函数：<code>select()</code>函数。select只有在监视的文件描述符发生变化时才会返回，如果未发生变化，就会进入阻塞状态。select判断文件描述符是否发生变化的过程如下，即需要比较变化前后文件描述符对应的值</p>
 
 
-<p>一个简单的<code>select</code>服务端</p>
+<p>一个简单的<code>select</code>服务端（linux中）</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span>     <span class="comment">// 标准输入输出</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span>    <span class="comment">// 标准库函数</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span>    <span class="comment">// 字符串处理函数</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span>    <span class="comment">// UNIX标准函数</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;arpa/inet.h&gt;</span> <span class="comment">// 网络地址转换函数</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/socket.h&gt;</span> <span class="comment">// Socket API</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/time.h&gt;</span>  <span class="comment">// 时间相关函数和结构</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/select.h&gt;</span> <span class="comment">// select函数和相关宏定义</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> BUF_SIZE 100   <span class="comment">// 定义缓冲区大小</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 错误处理函数声明</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">error_handling</span><span class="params">(<span class="type">char</span> *buf)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> serv_sock, clnt_sock;       <span class="comment">// 服务器和客户端socket文件描述符</span></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">sockaddr_in</span> serv_adr, clnt_adr; <span class="comment">// 服务器和客户端地址结构</span></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">timeval</span> timeout;         <span class="comment">// select超时结构</span></span><br><span class="line">    fd_set reads, cpy_reads;        <span class="comment">// 文件描述符集合，用于select</span></span><br><span class="line">    </span><br><span class="line">    <span class="type">socklen_t</span> adr_sz;               <span class="comment">// 地址结构大小</span></span><br><span class="line">    <span class="type">int</span> fd_max, str_len, fd_num, i; <span class="comment">// 最大fd，字符串长度，select返回值，循环变量</span></span><br><span class="line">    <span class="type">char</span> buf[BUF_SIZE];             <span class="comment">// 数据缓冲区</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 检查命令行参数</span></span><br><span class="line">    <span class="keyword">if</span>(argc!=<span class="number">2</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Usage : %s &lt;port&gt;\n&quot;</span>, argv[<span class="number">0</span>]);</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 创建服务器TCP套接字</span></span><br><span class="line">    serv_sock=<span class="built_in">socket</span>(PF_INET, SOCK_STREAM, <span class="number">0</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 初始化服务器地址结构</span></span><br><span class="line">    <span class="built_in">memset</span>(&amp;serv_adr, <span class="number">0</span>, <span class="built_in">sizeof</span>(serv_adr));</span><br><span class="line">    serv_adr.sin_family=AF_INET;</span><br><span class="line">    serv_adr.sin_addr.s_addr=<span class="built_in">htonl</span>(INADDR_ANY); <span class="comment">// 接受任意IP地址的连接</span></span><br><span class="line">    serv_adr.sin_port=<span class="built_in">htons</span>(<span class="built_in">atoi</span>(argv[<span class="number">1</span>]));     <span class="comment">// 设置端口号为命令行参数提供的值</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 绑定socket到指定地址和端口</span></span><br><span class="line">    <span class="keyword">if</span>(<span class="built_in">bind</span>(serv_sock, (<span class="keyword">struct</span> sockaddr*) &amp;serv_adr, <span class="built_in">sizeof</span>(serv_adr))==<span class="number">-1</span>)</span><br><span class="line">        <span class="built_in">error_handling</span>(<span class="string">&quot;bind() error&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 开始监听连接请求，队列长度为5</span></span><br><span class="line">    <span class="keyword">if</span>(<span class="built_in">listen</span>(serv_sock, <span class="number">5</span>)==<span class="number">-1</span>)</span><br><span class="line">        <span class="built_in">error_handling</span>(<span class="string">&quot;listen() error&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 初始化fd_set</span></span><br><span class="line">    <span class="built_in">FD_ZERO</span>(&amp;reads);</span><br><span class="line">    <span class="comment">// 将服务器socket添加到监视列表</span></span><br><span class="line">    <span class="built_in">FD_SET</span>(serv_sock, &amp;reads);</span><br><span class="line">    <span class="comment">// 初始化最大文件描述符</span></span><br><span class="line">    fd_max=serv_sock;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 服务器主循环</span></span><br><span class="line">    <span class="keyword">while</span>(<span class="number">1</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 每次select前复制fd_set，因为select会修改传入的fd_set</span></span><br><span class="line">        cpy_reads=reads;</span><br><span class="line">        <span class="comment">// 设置select超时时间为5.5秒</span></span><br><span class="line">        timeout.tv_sec=<span class="number">5</span>;</span><br><span class="line">        timeout.tv_usec=<span class="number">5000</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 调用select监视读取事件</span></span><br><span class="line">        <span class="keyword">if</span>((fd_num=<span class="built_in">select</span>(fd_max<span class="number">+1</span>, &amp;cpy_reads, <span class="number">0</span>, <span class="number">0</span>, &amp;timeout))==<span class="number">-1</span>)</span><br><span class="line">            <span class="keyword">break</span>;  <span class="comment">// select出错，退出循环</span></span><br><span class="line">            </span><br><span class="line">        <span class="comment">// 如果超时且没有活动事件，继续下一轮循环</span></span><br><span class="line">        <span class="keyword">if</span>(fd_num==<span class="number">0</span>)</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">            </span><br><span class="line">        <span class="comment">// 遍历所有可能的文件描述符，检查哪些有事件发生</span></span><br><span class="line">        <span class="keyword">for</span>(i=<span class="number">0</span>; i&lt;fd_max<span class="number">+1</span>; i++)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 检查当前文件描述符是否有事件</span></span><br><span class="line">            <span class="keyword">if</span>(<span class="built_in">FD_ISSET</span>(i, &amp;cpy_reads))</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="comment">// 如果是服务器socket有事件，说明有新的连接请求</span></span><br><span class="line">                <span class="keyword">if</span>(i==serv_sock)    <span class="comment">// 连接请求事件</span></span><br><span class="line">                &#123;</span><br><span class="line">                    adr_sz=<span class="built_in">sizeof</span>(clnt_adr);</span><br><span class="line">                    <span class="comment">// 接受新连接</span></span><br><span class="line">                    clnt_sock=</span><br><span class="line">                        <span class="built_in">accept</span>(serv_sock, (<span class="keyword">struct</span> sockaddr*)&amp;clnt_adr, &amp;adr_sz);</span><br><span class="line">                    <span class="comment">// 将新客户端socket添加到监视列表</span></span><br><span class="line">                    <span class="built_in">FD_SET</span>(clnt_sock, &amp;reads);</span><br><span class="line">                    <span class="comment">// 更新最大文件描述符</span></span><br><span class="line">                    <span class="keyword">if</span>(fd_max&lt;clnt_sock)</span><br><span class="line">                        fd_max=clnt_sock;</span><br><span class="line">                    <span class="built_in">printf</span>(<span class="string">&quot;connected client: %d \n&quot;</span>, clnt_sock);</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">else</span>    <span class="comment">// 客户端发送数据事件</span></span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="comment">// 读取客户端发送的数据</span></span><br><span class="line">                    str_len=<span class="built_in">read</span>(i, buf, BUF_SIZE);</span><br><span class="line">                    <span class="keyword">if</span>(str_len==<span class="number">0</span>)  <span class="comment">// EOF，客户端关闭连接</span></span><br><span class="line">                    &#123;</span><br><span class="line">                        <span class="comment">// 从监视列表中移除客户端socket</span></span><br><span class="line">                        <span class="built_in">FD_CLR</span>(i, &amp;reads);</span><br><span class="line">                        <span class="comment">// 关闭客户端socket</span></span><br><span class="line">                        <span class="built_in">close</span>(i);</span><br><span class="line">                        <span class="built_in">printf</span>(<span class="string">&quot;closed client: %d \n&quot;</span>, i);</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="keyword">else</span></span><br><span class="line">                    &#123;</span><br><span class="line">                        <span class="comment">// 将收到的数据回显给客户端（echo服务）</span></span><br><span class="line">                        <span class="built_in">write</span>(i, buf, str_len);  <span class="comment">// echo!</span></span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 关闭服务器socket（实际上这里很少会执行，因为服务器通常是通过信号终止的）</span></span><br><span class="line">    <span class="built_in">close</span>(serv_sock);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 错误处理函数，输出错误信息并终止程序</span></span><br><span class="line"><span class="comment"> * @param buf 错误信息字符串</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">error_handling</span><span class="params">(<span class="type">char</span> *buf)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">fputs</span>(buf, stderr);    <span class="comment">// 输出错误信息到标准错误</span></span><br><span class="line">    <span class="built_in">fputc</span>(<span class="string">&#x27;\n&#x27;</span>, stderr);   <span class="comment">// 添加换行符</span></span><br><span class="line">    <span class="built_in">exit</span>(<span class="number">1</span>);               <span class="comment">// 终止程序，返回状态码1表示错误</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 
+
+<p>回声客户端实现（linux）</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span>      <span class="comment">// 标准输入输出</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span>     <span class="comment">// 标准库函数</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span>     <span class="comment">// 字符串处理函数</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span>     <span class="comment">// UNIX标准函数</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;arpa/inet.h&gt;</span>  <span class="comment">// 网络地址转换函数</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/socket.h&gt;</span> <span class="comment">// Socket API</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span>    <span class="comment">// POSIX线程库</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> BUF_SIZE 100    <span class="comment">// 定义缓冲区大小</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> NAME_SIZE 20    <span class="comment">// 用户名大小</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 错误处理函数声明</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">error_handling</span><span class="params">(<span class="type">char</span> *msg)</span></span>;</span><br><span class="line"><span class="comment">// 线程函数声明</span></span><br><span class="line"><span class="function"><span class="type">void</span>* <span class="title">send_msg</span><span class="params">(<span class="type">void</span> *arg)</span></span>;    <span class="comment">// 发送消息线程</span></span><br><span class="line"><span class="function"><span class="type">void</span>* <span class="title">recv_msg</span><span class="params">(<span class="type">void</span> *arg)</span></span>;    <span class="comment">// 接收消息线程</span></span><br><span class="line"></span><br><span class="line"><span class="type">char</span> name[NAME_SIZE] = <span class="string">&quot;[DEFAULT]&quot;</span>;  <span class="comment">// 用户名</span></span><br><span class="line"><span class="type">char</span> msg[BUF_SIZE];                  <span class="comment">// 消息缓冲区</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> sock;                        <span class="comment">// 客户端socket</span></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">sockaddr_in</span> serv_addr;    <span class="comment">// 服务器地址结构</span></span><br><span class="line">    <span class="type">pthread_t</span> snd_thread, rcv_thread;<span class="comment">// 线程ID</span></span><br><span class="line">    <span class="type">void</span> *thread_return;             <span class="comment">// 线程返回值</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 验证命令行参数</span></span><br><span class="line">    <span class="keyword">if</span>(argc != <span class="number">4</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Usage : %s &lt;IP&gt; &lt;port&gt; &lt;name&gt;\n&quot;</span>, argv[<span class="number">0</span>]);</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 设置用户名</span></span><br><span class="line">    <span class="built_in">sprintf</span>(name, <span class="string">&quot;[%s]&quot;</span>, argv[<span class="number">3</span>]);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 创建客户端TCP套接字</span></span><br><span class="line">    sock = <span class="built_in">socket</span>(PF_INET, SOCK_STREAM, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span>(sock == <span class="number">-1</span>)</span><br><span class="line">        <span class="built_in">error_handling</span>(<span class="string">&quot;socket() error&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 初始化服务器地址结构</span></span><br><span class="line">    <span class="built_in">memset</span>(&amp;serv_addr, <span class="number">0</span>, <span class="built_in">sizeof</span>(serv_addr));</span><br><span class="line">    serv_addr.sin_family = AF_INET;</span><br><span class="line">    serv_addr.sin_addr.s_addr = <span class="built_in">inet_addr</span>(argv[<span class="number">1</span>]);  <span class="comment">// 服务器IP地址</span></span><br><span class="line">    serv_addr.sin_port = <span class="built_in">htons</span>(<span class="built_in">atoi</span>(argv[<span class="number">2</span>]));       <span class="comment">// 服务器端口</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 连接到服务器</span></span><br><span class="line">    <span class="keyword">if</span>(<span class="built_in">connect</span>(sock, (<span class="keyword">struct</span> sockaddr*)&amp;serv_addr, <span class="built_in">sizeof</span>(serv_addr)) == <span class="number">-1</span>)</span><br><span class="line">        <span class="built_in">error_handling</span>(<span class="string">&quot;connect() error&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 创建发送消息线程</span></span><br><span class="line">    <span class="keyword">if</span>(<span class="built_in">pthread_create</span>(&amp;snd_thread, <span class="literal">NULL</span>, send_msg, (<span class="type">void</span>*)&amp;sock) != <span class="number">0</span>)</span><br><span class="line">        <span class="built_in">error_handling</span>(<span class="string">&quot;pthread_create() error&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 创建接收消息线程</span></span><br><span class="line">    <span class="keyword">if</span>(<span class="built_in">pthread_create</span>(&amp;rcv_thread, <span class="literal">NULL</span>, recv_msg, (<span class="type">void</span>*)&amp;sock) != <span class="number">0</span>)</span><br><span class="line">        <span class="built_in">error_handling</span>(<span class="string">&quot;pthread_create() error&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 等待发送线程结束</span></span><br><span class="line">    <span class="keyword">if</span>(<span class="built_in">pthread_join</span>(snd_thread, &amp;thread_return) != <span class="number">0</span>)</span><br><span class="line">        <span class="built_in">error_handling</span>(<span class="string">&quot;pthread_join() error&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 等待接收线程结束</span></span><br><span class="line">    <span class="keyword">if</span>(<span class="built_in">pthread_join</span>(rcv_thread, &amp;thread_return) != <span class="number">0</span>)</span><br><span class="line">        <span class="built_in">error_handling</span>(<span class="string">&quot;pthread_join() error&quot;</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 关闭套接字</span></span><br><span class="line">    <span class="built_in">close</span>(sock);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 发送消息线程函数</span></span><br><span class="line"><span class="comment"> * @param arg 指向套接字的指针</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="type">void</span>* <span class="title">send_msg</span><span class="params">(<span class="type">void</span> *arg)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> sock = *((<span class="type">int</span>*)arg);    <span class="comment">// 解引用获取套接字描述符</span></span><br><span class="line">    <span class="type">char</span> name_msg[NAME_SIZE + BUF_SIZE];  <span class="comment">// 带用户名的消息</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">while</span>(<span class="number">1</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 从标准输入读取消息</span></span><br><span class="line">        <span class="built_in">fgets</span>(msg, BUF_SIZE, stdin);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 如果输入&quot;q&quot;或&quot;Q&quot;，发送退出消息并结束线程</span></span><br><span class="line">        <span class="keyword">if</span>(!<span class="built_in">strcmp</span>(msg, <span class="string">&quot;q\n&quot;</span>) || !<span class="built_in">strcmp</span>(msg, <span class="string">&quot;Q\n&quot;</span>))</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">close</span>(sock);  <span class="comment">// 关闭套接字</span></span><br><span class="line">            <span class="built_in">exit</span>(<span class="number">0</span>);      <span class="comment">// 退出程序</span></span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 将用户名和消息组合</span></span><br><span class="line">        <span class="built_in">sprintf</span>(name_msg, <span class="string">&quot;%s %s&quot;</span>, name, msg);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 发送消息到服务器</span></span><br><span class="line">        <span class="built_in">write</span>(sock, name_msg, <span class="built_in">strlen</span>(name_msg));</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 接收消息线程函数</span></span><br><span class="line"><span class="comment"> * @param arg 指向套接字的指针</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="type">void</span>* <span class="title">recv_msg</span><span class="params">(<span class="type">void</span> *arg)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> sock = *((<span class="type">int</span>*)arg);    <span class="comment">// 解引用获取套接字描述符</span></span><br><span class="line">    <span class="type">char</span> name_msg[NAME_SIZE + BUF_SIZE];  <span class="comment">// 接收缓冲区</span></span><br><span class="line">    <span class="type">int</span> str_len;                          <span class="comment">// 接收到的字节数</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">while</span>(<span class="number">1</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 从服务器接收消息</span></span><br><span class="line">        str_len = <span class="built_in">read</span>(sock, name_msg, NAME_SIZE + BUF_SIZE - <span class="number">1</span>);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 如果连接关闭或发生错误</span></span><br><span class="line">        <span class="keyword">if</span>(str_len &lt;= <span class="number">0</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">return</span> (<span class="type">void</span>*)<span class="number">-1</span>;  <span class="comment">// 退出线程</span></span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 添加字符串结束符</span></span><br><span class="line">        name_msg[str_len] = <span class="number">0</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 打印接收到的消息</span></span><br><span class="line">        <span class="built_in">fputs</span>(name_msg, stdout);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 错误处理函数，输出错误信息并终止程序</span></span><br><span class="line"><span class="comment"> * @param msg 错误信息字符串</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">error_handling</span><span class="params">(<span class="type">char</span> *msg)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">fputs</span>(msg, stderr);    <span class="comment">// 输出错误信息到标准错误</span></span><br><span class="line">    <span class="built_in">fputc</span>(<span class="string">&#x27;\n&#x27;</span>, stderr);   <span class="comment">// 添加换行符</span></span><br><span class="line">    <span class="built_in">exit</span>(<span class="number">1</span>);               <span class="comment">// 终止程序，返回状态码1表示错误</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在终端输入<code>./client 127.0.0.1 9190 Username</code>即可启动	</p>
+<h3 id="htonl-INADDR-ANY-和-inet-addr-192-168-0-1-的区别"><a href="#htonl-INADDR-ANY-和-inet-addr-192-168-0-1-的区别" class="headerlink" title="htonl(INADDR_ANY)和 inet_addr(&quot;192.168.0.1&quot;)的区别"></a><code>htonl(INADDR_ANY)</code>和 <code>inet_addr(&quot;192.168.0.1&quot;)</code>的区别</h3>
+
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">//使用 inet_addr() 将点分十进制的ip转换为网络字节序整数：</span></span><br><span class="line"><span class="type">const</span> <span class="type">char</span> *ip_str = <span class="string">&quot;192.168.0.1&quot;</span>;</span><br><span class="line"><span class="type">unsigned</span> <span class="type">long</span> ip = inet_addr(ip_str);  <span class="comment">// 转换为网络字节序的整数</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//使用 htonl() 将主机字节序的整数转换为网络字节序（大端序）</span></span><br><span class="line"><span class="type">unsigned</span> <span class="type">long</span> host_ip = <span class="number">0xC0A80001</span>;  <span class="comment">// 192.168.0.1 in hexadecimal (host byte order)</span></span><br><span class="line"><span class="type">unsigned</span> <span class="type">long</span> network_ip = htonl(host_ip);  <span class="comment">// 转换为网络字节序</span></span><br></pre></td></tr></table></figure>
 
 
 
@@ -354,176 +363,8 @@
 
 ]]></content>
       <categories>
-        <category>高并发</category>
+        <category>并发</category>
         <category>网络IO复用</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>linux常用命令总结</title>
-    <url>/2025/02/23/linux_BasicShellCmd/</url>
-    <content><![CDATA[<p>总结了一些linux中常用的基本命令和项目中常用的命令</p>
-<span id="more"></span>
-
-<h2 id="基础概念"><a href="#基础概念" class="headerlink" title="基础概念"></a>基础概念</h2><ul>
-<li>shell ：即命令解释器，是用户和linux内核交互的桥梁，通过在shell终端输入命令让linux内核相应部分识别用户命令并处理。</li>
-</ul>
-<p>​	shell命令的基本格式为</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">命令 [option] 参数 </span><br></pre></td></tr></table></figure>
-<p>​	其中加”[]”符号表示可以不输入这个选项</p>
-<p><strong>tips</strong>: </p>
-<ul>
-<li><p>对于不熟悉的命令可以使用<code>man 1 命令</code>或者<code>命令 --help</code>来查看说明</p>
-</li>
-<li><p>注意如果想要在windows复制并粘贴到linux虚拟机中，就要安装open-vm-tools，而vm-tools是老版的，重复安装这两个就会冲突，所以只安装open-vm-tools即可。对应命令为：</p>
-</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">apt-get install open-vm-tools-desktop</span><br></pre></td></tr></table></figure>
-
-<p>​	以下给出几个vm-tools的区别</p>
-<blockquote>
-<p><strong>open-vm-tools</strong>：开源工具集，主要用于 Linux 虚拟机。</p>
-<p><strong>vm-tools</strong>：VMware 提供的专有工具集，通常用于 VMware 产品。</p>
-<p><strong>open-vm-tools-desktop</strong>：<code>open-vm-tools</code> 的桌面扩展版，专为桌面环境（有图形界面的 Linux）优化，提供更多图形相关的功能。</p>
-</blockquote>
-<p>linux磁盘相关文件系统，扩容等：<a href="https://blog.csdn.net/zhanhjxxx/article/details/123232402">Linux磁盘分区详解（新建分区，现有分区扩容，分区减容）_linux分区-CSDN博客</a></p>
-<h2 id="基本常用命令"><a href="#基本常用命令" class="headerlink" title="基本常用命令"></a>基本常用命令</h2><ol>
-<li>切换用户权限组</li>
-</ol>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">sudo su //切换为管理员</span><br><span class="line">exit //推出管理员权限</span><br></pre></td></tr></table></figure>
-
-<p>在命令前加<code>sudo</code>也可以使用管理员权限</p>
-<ol start="2">
-<li>创建目录</li>
-</ol>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">mkdir -m 目录名</span><br><span class="line">mkdir -r /home/hh # -r 可以递归的创建目录</span><br></pre></td></tr></table></figure>
-
-<p>3.删除目录或者文件</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">rm -i 文件名</span><br><span class="line">rm -r 目录名 #主要用来删除目录</span><br><span class="line">rm -f 文件名 #强制删除</span><br></pre></td></tr></table></figure>
-
-<p>4.切换路径</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cd /  #切换到根目录</span><br><span class="line">cd ~  #切换到家目录</span><br><span class="line">cd /home/xxx  </span><br></pre></td></tr></table></figure>
-
-<p>5.gedit 记事本</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">gedit main.c</span><br></pre></td></tr></table></figure>
-
-<p>6.查看文件</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cat main.c #查看文件内容并输出到shell终端</span><br><span class="line">cat -A 文件名  #隐藏的字符也可以查看</span><br></pre></td></tr></table></figure>
-
-<p>7.复制</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cp -r 源文件 目标文件 #可以复制目录的所有文件</span><br></pre></td></tr></table></figure>
-
-<p>8.移动或重命名</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">mv [选项] 源文件 目标文件</span><br><span class="line">mv old.txt new.txt #重命名单个文件</span><br><span class="line">mv old_folder new_folder #重命名目录</span><br><span class="line">mv file.txt /home/user/documents/newfile.txt #移动文件到其他目录并重命名</span><br></pre></td></tr></table></figure>
-
-<p>9.查看当前路径</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">pwd</span><br></pre></td></tr></table></figure>
-
-<p>10.查看当前目录文件</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">ls [option]</span><br><span class="line">ls -a #查看所有文件，包括隐藏的</span><br></pre></td></tr></table></figure>
-
-<ol start="11">
-<li>显示磁盘空间使用情况</li>
-</ol>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">df -h</span><br></pre></td></tr></table></figure>
-
-<hr>
-<h2 id="项目常用命令"><a href="#项目常用命令" class="headerlink" title="项目常用命令"></a>项目常用命令</h2><ul>
-<li>解压缩</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">tar -zxvf xx.tar.gz # 解压缩tar.gz文件，x为提取，v为详细信息，f即file</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>查看进程</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">ps au #查看所有进程</span><br><span class="line">ps aux|grep xx*</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>查找文件</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">基本语法：find 搜索路径 选项 表达式</span></span><br><span class="line">find /path/to/search -name &quot;filename&quot;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">在当前目录及子目录查找名为<span class="string">&quot;example.txt&quot;</span>的文件</span></span><br><span class="line">find . -name &quot;example.txt&quot;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">使用通配符查找所有.<span class="built_in">log</span>文件</span></span><br><span class="line">find /var/log -name &quot;*.log&quot;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">查找指定用户拥有的文件</span></span><br><span class="line">find /home -user username</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">查找过去7天内修改的文件</span></span><br><span class="line">find /home/user -mtime -7</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">使用 find 命令查找最近修改的文件</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">如果你刚刚安装了软件，可以查找系统中最近被修改的文件：</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">查找过去30分钟内修改的文件</span></span><br><span class="line">sudo find / -type f -mmin -30 2&gt;/dev/null</span><br></pre></td></tr></table></figure>
-
-<p>查找文件还可以使用</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">whereis xx</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>安装软件</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">sudo dpkg -i 文件名.deb #安装的默认路径为：/opt</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">查看 dpkg 日志找出最近安装的包</span></span><br><span class="line">grep &quot;install &quot; /var/log/dpkg.log | tail</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>挂载共享文件夹</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">sudo mount -t fuse.vmhgfs-fuse .host:/ /mnt/hgfs -o allow_other</span><br></pre></td></tr></table></figure>
-
-<p>开机自动挂载共享文件夹参考下图：</p>
-<img src="/2025/02/23/linux_BasicShellCmd/image-20250302110137834.png" class="" title="image-20250302110137834">
-
-<ul>
-<li>安装和卸载</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">apt-get install </span><br><span class="line">apt-get autoremove </span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>编译和链接</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">编译c源码,以创建线程为例</span></span><br><span class="line">gcc thread1.c -o trl -lphread</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><code>gcc</code>: GNU编译器集合(GNU Compiler Collection)，这是一个常用的C&#x2F;C++编译器</p>
-<p><code>thread1.c</code>: 源代码文件名，这是要被编译的C语言源文件</p>
-<p><code>-o tr1</code>: 输出选项，指定编译后生成的可执行文件名为”tr1”</p>
-<p><code>-lpthread</code>: 链接选项，告诉编译器链接POSIX线程库(pthread库)</p>
-<p><strong>为什么要链接</strong>：</p>
-<ul>
-<li>当编译器看到你的代码引用了 pthread 库中的函数时，它需要知道这些函数的实现在哪里</li>
-<li><code>-lpthread</code> 告诉链接器去寻找并链接 pthread 库</li>
-<li>如果不链接这个库，链接器会报”未定义的引用”(undefined reference)错误</li>
-</ul>
-<p><strong>具体作用</strong></p>
-<ul>
-<li><code>-l</code> 是链接库的标志</li>
-<li><code>pthread</code> 是库的名称（省略了前缀”lib”和后缀”.so”或”.a”）</li>
-<li>实际上链接器会寻找 <code>libpthread.so</code>（共享库）或 <code>libpthread.a</code>（静态库）文件</li>
-</ul>
-</blockquote>
-<ul>
-<li><p>软链接</p>
-<p>作用1：允许从不同位置访问同一个文件或目录，而不需要复制数据，相当于创建快捷方式</p>
-<p>作用2：，比如先转移文件到其它目录，再删除原路径的文件，这时创建一个软链接，确保依赖于旧路径的程序继续正常工作</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">如果已有Downloads目录且有内容，先移动</span></span><br><span class="line">mv ~/Downloads/* /data/Downloads/ # 仅当Downloads有内容时</span><br><span class="line">rm -rf ~/Downloads # 删除原Downloads目录</span><br><span class="line">ln -s /data/Downloads ~/Downloads # 创建软链接</span><br></pre></td></tr></table></figure>
-
-</li>
-<li><p>网络相关</p>
-<ul>
-<li>查看网络的配置和状态</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">ifconfig</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>查看 socket、网络协议栈、网口以及路由表的信息</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-n表示以数字方式显示ip和端口</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-l表示只显示listen状态的socket</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-p表示显示进程信息</span></span><br><span class="line">netstat -nlp</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash"><span class="comment">#######################################</span></span></span><br><span class="line">ss -ntlp</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-n表示以数字方式显示ip和端口</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-t表示只显示tcp连接</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-l表示只显示listen状态的socket</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-p表示显示进程信息</span></span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>查看协议栈的统计信息</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">netstat -s</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash"><span class="comment">##或者</span></span></span><br><span class="line">ss -s</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><p>查看网络吞吐率和pps</p>
-<blockquote>
-<p><strong>网络吞吐率</strong>：单位事件内成功传输的数据量</p>
-<p><strong>pps</strong>：packet per second</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">sar -n DEV  #显示网口的统计数据</span><br><span class="line">sar -n EDEV	#显示关于网络错误的统计数据</span><br><span class="line">sar -n TCP	#显示 TCP 的统计数据</span><br><span class="line">ethtool eth0 | grep Speed	#查看eth0网卡带宽，单位为Mb/s</span><br></pre></td></tr></table></figure></blockquote>
-</li>
-</ul>
-</li>
-</ul>
-<p>​	</p>
-]]></content>
-      <categories>
-        <category>linux</category>
-        <category>shell命令</category>
       </categories>
   </entry>
   <entry>
@@ -1034,11 +875,503 @@
       </tags>
   </entry>
   <entry>
-    <title>linux常用命令总结</title>
-    <url>/2025/04/21/linux_LearningNote01_/</url>
+    <title>linux之多进程编程</title>
+    <url>/2025/04/21/linux_LearningNote01_IPC/</url>
     <content><![CDATA[]]></content>
       <categories>
         <category>linux</category>
+        <category>多进程</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>linux常用命令总结</title>
+    <url>/2025/02/23/linux_bashCmd01/</url>
+    <content><![CDATA[<p>总结了一些linux中常用的基本命令和项目中常用的命令</p>
+<h2 id="基础概念"><a href="#基础概念" class="headerlink" title="基础概念"></a>基础概念</h2><ul>
+<li>shell ：即命令解释器，是用户和linux内核交互的桥梁，通过在shell终端输入命令让linux内核相应部分识别用户命令并处理。</li>
+</ul>
+<span id="more"></span>
+
+<p><img src="/linux_BasicShellCmd/image-20250422133735308.png" alt="image-20250422133735308"></p>
+<blockquote>
+<p><strong>bash与shell的关系</strong></p>
+<p><strong>Shell就是终端程序的统称</strong>，它充当了人与内核（硬件）之间的翻译官，用户把一些命令“告诉”终端程序，它就会调用相应的程序服务去完成某些工作。许多主流Linux系统默认使用的<strong>终端是Bash（Bourne-Again SHell）解释器。</strong></p>
+<p><strong>Shell与Bash是包含与被包含的关系</strong>。举例来说，在社会中有翻译官这个职业，它是由许多从业者共同组成的职业名称，而Bash则是其中一个出色的成员，是Shell终端程序中的一份子。</p>
+</blockquote>
+<p>shell命令的基本格式为</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">命令 [option] 参数 </span><br></pre></td></tr></table></figure>
+<p>​	其中加”[]”符号表示可以不输入这个选项</p>
+<p><strong>tips</strong>: </p>
+<ul>
+<li><p>对于不熟悉的命令可以使用<code>man 1 命令</code>或者<code>命令 --help</code>来查看说明</p>
+
+</li>
+<li><p>注意如果想要在windows复制并粘贴到linux虚拟机中，就要安装open-vm-tools，而vm-tools是老版的，重复安装这两个就会冲突，所以只安装open-vm-tools即可。对应命令为：</p>
+</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">apt-get install open-vm-tools-desktop</span><br></pre></td></tr></table></figure>
+
+<p>​	以下给出几个vm-tools的区别</p>
+<blockquote>
+<p><strong>open-vm-tools</strong>：开源工具集，主要用于 Linux 虚拟机。</p>
+<p><strong>vm-tools</strong>：VMware 提供的专有工具集，通常用于 VMware 产品。</p>
+<p><strong>open-vm-tools-desktop</strong>：<code>open-vm-tools</code> 的桌面扩展版，专为桌面环境（有图形界面的 Linux）优化，提供更多图形相关的功能。</p>
+</blockquote>
+<p>linux磁盘相关文件系统，扩容等：<a href="https://blog.csdn.net/zhanhjxxx/article/details/123232402">Linux磁盘分区详解（新建分区，现有分区扩容，分区减容）_linux分区-CSDN博客</a></p>
+<h2 id="基本常用命令"><a href="#基本常用命令" class="headerlink" title="基本常用命令"></a>基本常用命令</h2><ol>
+<li>切换用户权限组</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">sudo su //切换为管理员</span><br><span class="line">exit //推出管理员权限</span><br></pre></td></tr></table></figure>
+
+<p>在命令前加<code>sudo</code>也可以使用管理员权限</p>
+<ol start="2">
+<li>创建目录</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">mkdir -m 目录名</span><br><span class="line">mkdir -r /home/hh # -r 可以递归的创建目录</span><br></pre></td></tr></table></figure>
+
+<p>3.删除目录或者文件</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">rm -i 文件名</span><br><span class="line">rm -r 目录名 #主要用来删除目录</span><br><span class="line">rm -f 文件名 #强制删除</span><br></pre></td></tr></table></figure>
+
+<p>4.切换路径</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cd /  #切换到根目录</span><br><span class="line">cd ~  #切换到家目录</span><br><span class="line">cd /home/xxx  </span><br></pre></td></tr></table></figure>
+
+<p>5.gedit 记事本</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">gedit main.c</span><br></pre></td></tr></table></figure>
+
+<p>6.查看文件</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cat main.c #查看文件内容并输出到shell终端</span><br><span class="line">cat -A 文件名  #隐藏的字符也可以查看</span><br></pre></td></tr></table></figure>
+
+<p>7.复制</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cp -r 源文件 目标文件 #可以复制目录的所有文件</span><br></pre></td></tr></table></figure>
+
+<p>8.移动或重命名</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">mv [选项] 源文件 目标文件</span><br><span class="line">mv old.txt new.txt #重命名单个文件</span><br><span class="line">mv old_folder new_folder #重命名目录</span><br><span class="line">mv file.txt /home/user/documents/newfile.txt #移动文件到其他目录并重命名</span><br></pre></td></tr></table></figure>
+
+<p>9.查看当前路径</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">pwd</span><br></pre></td></tr></table></figure>
+
+<p>10.查看当前目录文件</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">ls [option]</span><br><span class="line">ls -a #查看所有文件，包括隐藏的</span><br></pre></td></tr></table></figure>
+
+<ol start="11">
+<li>显示磁盘空间使用情况</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">df -h</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="项目常用命令"><a href="#项目常用命令" class="headerlink" title="项目常用命令"></a>项目常用命令</h2><ul>
+<li>解压缩</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">tar -zxvf xx.tar.gz # 解压缩tar.gz文件，x为提取，v为详细信息，f即file</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查看进程</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">ps au #查看所有进程</span><br><span class="line">ps aux|grep xx*</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查找文件</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">基本语法：find 搜索路径 选项 表达式</span></span><br><span class="line">find /path/to/search -name &quot;filename&quot;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">在当前目录及子目录查找名为<span class="string">&quot;example.txt&quot;</span>的文件</span></span><br><span class="line">find . -name &quot;example.txt&quot;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">使用通配符查找所有.<span class="built_in">log</span>文件</span></span><br><span class="line">find /var/log -name &quot;*.log&quot;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">查找指定用户拥有的文件</span></span><br><span class="line">find /home -user username</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">查找过去7天内修改的文件</span></span><br><span class="line">find /home/user -mtime -7</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">使用 find 命令查找最近修改的文件</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">如果你刚刚安装了软件，可以查找系统中最近被修改的文件：</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">查找过去30分钟内修改的文件</span></span><br><span class="line">sudo find / -type f -mmin -30 2&gt;/dev/null</span><br></pre></td></tr></table></figure>
+
+<p>查找文件还可以使用</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">whereis xx</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>安装软件</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">sudo dpkg -i 文件名.deb #安装的默认路径为：/opt</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">查看 dpkg 日志找出最近安装的包</span></span><br><span class="line">grep &quot;install &quot; /var/log/dpkg.log | tail</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>挂载共享文件夹</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">sudo mount -t fuse.vmhgfs-fuse .host:/ /mnt/hgfs -o allow_other</span><br></pre></td></tr></table></figure>
+
+<p>开机自动挂载共享文件夹参考下图：</p>
+<p><img src="/linux_BasicShellCmd/image-20250302110137834.png" alt="image-20250302110137834"></p>
+<ul>
+<li>安装和卸载</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">apt-get install </span><br><span class="line">apt-get autoremove </span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>编译和链接</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">编译c源码,以创建线程为例</span></span><br><span class="line">gcc thread1.c -o trl -lphread</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><code>gcc</code>: GNU编译器集合(GNU Compiler Collection)，这是一个常用的C&#x2F;C++编译器</p>
+<p><code>thread1.c</code>: 源代码文件名，这是要被编译的C语言源文件</p>
+<p><code>-o tr1</code>: 输出选项，指定编译后生成的可执行文件名为”tr1”</p>
+<p><code>-lpthread</code>: 链接选项，告诉编译器链接POSIX线程库(pthread库)</p>
+<p><strong>为什么要链接</strong>：</p>
+<ul>
+<li>当编译器看到你的代码引用了 pthread 库中的函数时，它需要知道这些函数的实现在哪里</li>
+<li><code>-lpthread</code> 告诉链接器去寻找并链接 pthread 库</li>
+<li>如果不链接这个库，链接器会报”未定义的引用”(undefined reference)错误</li>
+</ul>
+<p><strong>具体作用</strong></p>
+<ul>
+<li><code>-l</code> 是链接库的标志</li>
+<li><code>pthread</code> 是库的名称（省略了前缀”lib”和后缀”.so”或”.a”）</li>
+<li>实际上链接器会寻找 <code>libpthread.so</code>（共享库）或 <code>libpthread.a</code>（静态库）文件</li>
+</ul>
+</blockquote>
+<ul>
+<li><p>软链接</p>
+<p>作用1：允许从不同位置访问同一个文件或目录，而不需要复制数据，相当于创建快捷方式</p>
+<p>作用2：，比如先转移文件到其它目录，再删除原路径的文件，这时创建一个软链接，确保依赖于旧路径的程序继续正常工作</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">如果已有Downloads目录且有内容，先移动</span></span><br><span class="line">mv ~/Downloads/* /data/Downloads/ # 仅当Downloads有内容时</span><br><span class="line">rm -rf ~/Downloads # 删除原Downloads目录</span><br><span class="line">ln -s /data/Downloads ~/Downloads # 创建软链接</span><br></pre></td></tr></table></figure>
+
+</li>
+<li><p>网络相关</p>
+<ul>
+<li>查看网络的配置和状态</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">ifconfig</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查看 socket、网络协议栈、网口以及路由表的信息</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-n表示以数字方式显示ip和端口</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-l表示只显示listen状态的socket</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-p表示显示进程信息</span></span><br><span class="line">netstat -nlp</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash"><span class="comment">#######################################</span></span></span><br><span class="line">ss -ntlp</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-n表示以数字方式显示ip和端口</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-t表示只显示tcp连接</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-l表示只显示listen状态的socket</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-p表示显示进程信息</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查看协议栈的统计信息</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">netstat -s</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash"><span class="comment">##或者</span></span></span><br><span class="line">ss -s</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>查看网络吞吐率和pps</p>
+<blockquote>
+<p><strong>网络吞吐率</strong>：单位事件内成功传输的数据量</p>
+<p><strong>pps</strong>：packet per second</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">sar -n DEV  #显示网口的统计数据</span><br><span class="line">sar -n EDEV	#显示关于网络错误的统计数据</span><br><span class="line">sar -n TCP	#显示 TCP 的统计数据</span><br><span class="line">ethtool eth0 | grep Speed	#查看eth0网卡带宽，单位为Mb/s</span><br></pre></td></tr></table></figure></blockquote>
+</li>
+</ul>
+</li>
+</ul>
+<p>​	</p>
+]]></content>
+      <categories>
+        <category>linux</category>
+        <category>shell命令</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>linux命令02</title>
+    <url>/2025/04/22/linux_bashCmd02/</url>
+    <content><![CDATA[<p>摘抄自《linux就该这么学》，仅做个人学习用</p>
+<h2 id="4个快捷键-组合键小技巧"><a href="#4个快捷键-组合键小技巧" class="headerlink" title="4个快捷键&#x2F;组合键小技巧"></a>4个快捷键&#x2F;组合键小技巧</h2><ul>
+<li><p>tab</p>
+<p>它能够实现对命令、参数或文件的内容补全。例如，如果想执行reboot重启命令，但一时想不起来该命令的完整拼写，则可以这样输入：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# re&lt;Tab键&gt;&lt;Tab键&gt;</span><br><span class="line">read                    redhat-access-insights  rescan-scsi-bus.sh</span><br><span class="line">readarray               reject                  reset</span><br><span class="line">readelf                 remotectl               resize2fs</span><br><span class="line">readlink                rename                  resizecons</span><br><span class="line">readmult                renew-dummy-cert        resizepart</span><br><span class="line">readonly                renice                  resolvconf</span><br><span class="line">readprofile             report-cli              resolvectl</span><br><span class="line">realm                   reporter-rhtsupport     restorecon</span><br><span class="line">realpath                reporter-upload         restorecon_xattr</span><br><span class="line">reboot                  report-gtk              return</span><br><span class="line">recode-sr-latin         repquota                rev</span><br><span class="line">red                     request-key     </span><br><span class="line">[root@linuxprobe ~]# reb&lt;Tab键&gt;</span><br><span class="line">[root@linuxprobe ~]# reboot</span><br></pre></td></tr></table></figure>
+
+<span id="more"></span>
+</li>
+<li><p><strong>Ctrl+C组合键</strong></p>
+<p>同时按下键盘上的Ctrl和字母C的时候，意味着终止当前进程的运行。假如执行了一个错误命令，或者是执行某个命令后迟迟无法结束，这时就可以冷静地按下Ctrl+C组合键，命令行终端的控制权会立刻回到我们手中。</p>
+</li>
+<li><p><strong>Ctrl+D组合键</strong>：当同时按下键盘上的Ctrl和字母D的时候，表示键盘输入结束。</p>
+</li>
+<li><p><strong>Ctrl+L组合键</strong>：当同时按下键盘上的Ctrl和字母L的时候，会清空当前终端中已有的内容（相当于清屏操作）。</p>
+</li>
+</ul>
+<h2 id="常用系统工作命令"><a href="#常用系统工作命令" class="headerlink" title="常用系统工作命令"></a>常用系统工作命令</h2><h3 id="1．echo命令"><a href="#1．echo命令" class="headerlink" title="1．echo命令"></a><strong>1．echo命令</strong></h3><p>echo命令用于在终端设备上输出字符串或变量提取后的值，语法格式为“echo [字符串] [$变量]”，它的操作非常简单，执行“echo字符串”或“echo $变量”就行，其中$符号的意思是提取变量的实际值，以便后续的输出操作。</p>
+<p>例如，把指定字符串“LinuxProbe.com”输出到终端屏幕的命令为：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# <span class="built_in">echo</span> LinuxProbe.com</span><br></pre></td></tr></table></figure>
+
+<p>下面使用“$变量”的方式提取出变量SHELL的值，并将其输出到屏幕上：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# echo $SHELL</span><br><span class="line">/bin/bash</span><br></pre></td></tr></table></figure>
+
+<h3 id="2．date命令"><a href="#2．date命令" class="headerlink" title="2．date命令"></a><strong>2．date命令</strong></h3><p>date命令用于显示或设置系统的时间与日期，语法格式为“date [+指定的格式]”。</p>
+<p>用户只需在强大的date命令后输入以“+”号开头的参数，即可按照指定格式来输出系统的时间或日期，这样在日常工作时便可以把备份数据的命令与指定格式输出的时间信息结合到一起。例如，把打包后的文件自动按照“年-月-日”的格式打包成“backup-2020-9-1.tar.gz”，用户只需要看一眼文件名称就能大致了解到每个文件的备份时间了。date命令中常见的参数格式及其作用如表2-4所示。</p>
+
+
+<p>按照默认格式查看当前系统时间的date命令如下所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# date</span><br><span class="line">Sat Sep 5 09:13:45 CST 2020</span><br></pre></td></tr></table></figure>
+
+<p>按照“年-月-日 小时:分钟:秒”的格式查看当前系统时间的date命令如下所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# date &quot;+%Y-%m-%d %H:%M:%S&quot;</span><br><span class="line">2020-09-05 09:14:35</span><br></pre></td></tr></table></figure>
+
+<p>将系统的当前时间设置为2020年11月1日8点30分的date命令如下所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# date -s &quot;20201101 8:30:00&quot;</span><br><span class="line">Sun Nov 1 08:30:00 CST 2020</span><br></pre></td></tr></table></figure>
+
+<p>date命令中的参数%j可用来查看今天是当年中的第几天。这个参数能够很好地区分备份时间的早晚，即数字越大，越靠近当前时间。该参数的使用方式以及显示结果如下所示：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# date &quot;+%j&quot;</span><br><span class="line">306</span><br></pre></td></tr></table></figure>
+
+<h3 id="3．wget命令"><a href="#3．wget命令" class="headerlink" title="3．wget命令"></a><strong>3．wget命令</strong></h3><p>wget命令用于在终端命令行中下载网络文件，英文全称为“web get”，语法格式为“wget [参数] 网址”。</p>
+<p>借助于wget命令，可以无须打开浏览器，直接在命令行界面中就能下载文件。表2-6所示为wget命令中的参数以及参数的作用。</p>
+<style>.edakllyyhmhb{zoom:50%;}</style>
+
+<blockquote>
+<p>由于本命令需要从外部网络下载文件，但虚拟机默认是无法连接外网的，在操作后会提示响应超时的报错</p>
+</blockquote>
+<p>使用wget命令从本书的配套站点中下载本书最新的PDF格式的电子文档</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# wget https://www.linuxprobe.com/docs/LinuxProbe.pdf</span><br></pre></td></tr></table></figure>
+
+<h3 id="4．ps命令"><a href="#4．ps命令" class="headerlink" title="4．ps命令"></a><strong>4．ps命令</strong></h3><p>ps命令用于查看系统中的进程状态，英文全称为“processes”，语法格式为“ps [参数]”。</p>
+<p>估计读者在第一次执行这个命令时都要惊呆一下—怎么会有这么多输出值，这可怎么看得过来？其实，高手通常会将ps命令与第3章的管道符技术搭配使用，用来抓取与某个指定服务进程相对应的PID号码。ps命令的常见参数以及作用如表2-7所示。</p>
+
+
+<p>Linux系统中时刻运行着许多进程，如果能够合理地管理它们，则可以优化系统的性能。在Linux系统中有5种常见的进程状态，分别为运行、中断、不可中断、僵死与停止，其各自含义如下所示。</p>
+<blockquote>
+<p><strong>R（运行）</strong>：进程正在运行或在运行队列中等待。</p>
+<p><strong>S（中断）</strong>：进程处于休眠中，当某个条件形成后或者接收到信号时，则脱离该  状态。</p>
+<p><strong>D（不可中断）</strong>：进程不响应系统异步信号，即便用kill命令也不能将其中断。</p>
+<p><strong>Z（僵死）</strong>：进程已经终止，但进程描述符依然存在, 直到父进程调用wait4()系统函数后将进程释放。</p>
+<p><strong>T（停止）</strong>：进程收到停止信号后停止运行。</p>
+</blockquote>
+<p>除了上面5种常见的进程状态，还有可能是高优先级（&lt;）、低优先级（N）、被锁进内存（L）、包含子进程（s）以及多线程（l）这5种补充形式。</p>
+<p>当执行ps aux命令后通常会看到如表2-8所示的进程状态。表2-8只是列举了部分输出值，而且正常的输出值中不包括中文注释。</p>
+
+
+<blockquote>
+<p>如前面所提到的，在Linux系统中的命令参数有长短格式之分，长格式和长格式之间不能合并，长格式和短格式之间也不能合并，但短格式和短格式之间是可以合并的，合并后仅保留一个减号（-）即可。另外ps命令可允许参数不加减号（-），因此可直接写成ps aux的样子。</p>
+</blockquote>
+<h3 id="5．pstree命令"><a href="#5．pstree命令" class="headerlink" title="5．pstree命令"></a><strong>5．pstree命令</strong></h3><p>pstree命令用于以树状图的形式展示进程之间的关系，英文全称为“process tree”，输入该命令后按回车键执行即可。</p>
+<p>前文提到，在执行ps命令后，产生的信息量太大又没有规律，很难让人再想看第二眼。如果想让进程以树状图的形式，有层次地展示出进程之间的关系，则可以使用pstree命令：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# pstree</span><br><span class="line">systemd─┬─ModemManager───2*[&#123;ModemManager&#125;]</span><br><span class="line">├─NetworkManager───2*[&#123;NetworkManager&#125;]</span><br><span class="line">├─VGAuthService</span><br><span class="line">├─accounts-daemon───2*[&#123;accounts-daemon&#125;]</span><br><span class="line">├─atd</span><br><span class="line">├─auditd─┬─sedispatch</span><br><span class="line">│ └─2*[&#123;auditd&#125;]</span><br><span class="line">├─avahi-daemon───avahi-daemon</span><br><span class="line">├─boltd───2*[&#123;boltd&#125;]</span><br><span class="line">├─colord───2*[&#123;colord&#125;]</span><br><span class="line">├─crond</span><br><span class="line">├─cupsd</span><br><span class="line">├─dbus-daemon───&#123;dbus-daemon&#125;</span><br><span class="line">├─dnsmasq───dnsmasq</span><br><span class="line">├─firewalld───&#123;firewalld&#125;</span><br><span class="line">├─fprintd───&#123;fprintd&#125;</span><br><span class="line">├─fwupd───4*[&#123;fwupd&#125;]</span><br><span class="line">………………省略部分输出信息………………</span><br></pre></td></tr></table></figure>
+
+<h3 id="6．top命令"><a href="#6．top命令" class="headerlink" title="6．top命令"></a><strong>6．top命令</strong></h3><p>top命令用于<strong>动态地监视进程活动及系统负载等信息，输入该命令后按回车键执行即可</strong>。</p>
+<p>前面介绍的命令都是静态地查看系统状态，不能实时滚动最新数据，而top命令能够动态地查看系统状态，因此完全可以将它看作是<strong>Linux中“强化版的Windows任务管理器”</strong>。top是相当好用的性能分析工具，该命令的运行界面如图2-6所示。</p>
+<style>.lhuhkzitibvf{zoom:50%;}</style>
+
+<p>在图2-6中，top命令执行结果的前5行为系统整体的统计信息，其所代表的含义如下。</p>
+<blockquote>
+<p>第1行：系统时间、运行时间、登录终端数、系统负载（3个数值分别为1分钟、5分钟、15分钟内的平均值，数值越小意味着负载越低）。</p>
+<p>第2行：进程总数、运行中的进程数、睡眠中的进程数、停止的进程数、僵死的进程数。</p>
+<p>第3行：用户占用资源百分比、系统内核占用资源百分比、改变过优先级的进程资源百分比、空闲的资源百分比等。其中数据均为CPU数据并以百分比格式显示，例如“99.9 id”意味着有99.9%的CPU处理器资源处于空闲。</p>
+<p>第4行：物理内存总量、内存空闲量、内存使用量、作为内核缓存的内存量。</p>
+<p>第5行：虚拟内存总量、虚拟内存空闲量、虚拟内存使用量、已被提前加载的内存量。</p>
+</blockquote>
+<h3 id="7．nice命令"><a href="#7．nice命令" class="headerlink" title="7．nice命令"></a><strong>7．nice命令</strong></h3><p>nice命令用于调整进程的优先级，语法格式为“nice优先级数字 服务名称”。</p>
+<p>在top命令输出的结果中，PR和NI值代表的是进程的优先级，数字越低（取值范围是-20～19），优先级越高。在日常的生产工作中，可以将一些不重要进程的优先级调低，让紧迫的服务更多地利用CPU和内存资源，以达到合理分配系统资源的目的。例如将bash服务的优先级调整到最高：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# nice -n -20 bash</span><br><span class="line">[root@linuxprobe ~]#</span><br></pre></td></tr></table></figure>
+
+<h3 id="8．pidof命令"><a href="#8．pidof命令" class="headerlink" title="8．pidof命令"></a><strong>8．pidof命令</strong></h3><p>pidof命令用于查询某个指定服务进程的PID号码值，语法格式为“pidof [参数] 服务名称”。</p>
+<p>每个进程的进程号码值（PID）是唯一的，可以用于区分不同的进程。例如，执行如下命令来查询本机上sshd服务程序的PID：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# pidof sshd</span><br><span class="line">2156</span><br></pre></td></tr></table></figure>
+
+<h3 id="9．kill命令"><a href="#9．kill命令" class="headerlink" title="9．kill命令"></a><strong>9．kill命令</strong></h3><p>kill命令用于终止某个指定PID值的服务进程，语法格式为“kill [参数] 进程的PID”。</p>
+<p>接下来，使用kill命令把上面用pidof命令查询到的PID所代表的进程终止掉，其命令如下所示。这种操作的效果等同于强制停止sshd服务。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# kill 2156</span><br></pre></td></tr></table></figure>
+
+<p>但有时系统会提示进程无法被终止，此时可以加参数-9，表示最高级别地强制杀死进程：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# kill -9 2156</span><br></pre></td></tr></table></figure>
+
+<h3 id="10．killall命令"><a href="#10．killall命令" class="headerlink" title="10．killall命令"></a><strong>10．killall命令</strong></h3><p>killall命令用于终止某个指定名称的服务所对应的全部进程，语法格式为“killall [参数] 服务名称”。</p>
+<p>通常来讲，复杂软件的服务程序会有多个进程协同为用户提供服务，如果用kill命令逐个去结束这些进程会比较麻烦，此时可以使用killall命令来批量结束某个服务程序带有的全部进程。下面以httpd服务程序为例，来结束其全部进程。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# pidof httpd</span><br><span class="line">13581 13580 13579 13578 13577 13576</span><br><span class="line">[root@linuxprobe ~]# killall httpd</span><br><span class="line">[root@linuxprobe ~]# pidof httpd</span><br><span class="line">[root@linuxprobe ~]# </span><br></pre></td></tr></table></figure>
+
+<p>如果在系统终端中执行一个命令后想立即停止它，可以同时按下Ctrl + C组合键（生产环境中比较常用的一个组合键），这样将立即终止该命令的进程。或者，<strong>如果有些命令在执行时不断地在屏幕上输出信息，影响到后续命令的输入，则可以在执行命令时在末尾添加一个&amp;符号</strong>，这样命令将进入系统后台来执行。</p>
+<h2 id="系统状态检测命令"><a href="#系统状态检测命令" class="headerlink" title="系统状态检测命令"></a>系统状态检测命令</h2><p>要想更快、更好地了解Linux服务器，必须具备快速查看系统运行状态的能力，因此接下来会逐个讲解与网卡网络、系统内核、系统负载、内存使用情况、当前启用终端数量、历史登录记录、命令执行记录以及救援诊断等相关命令的使用方法。</p>
+<h3 id="1．ifconfig命令"><a href="#1．ifconfig命令" class="headerlink" title="1．ifconfig命令"></a><strong>1．ifconfig命令</strong></h3><p>ifconfig命令用于获取网卡配置与网络状态等信息，英文全称为“interface config”，语法格式为“ifconfig [参数] [网络设备]”。</p>
+<p>使用<strong>ifconfig命令来查看本机当前的网卡配置与网络状态等信息时</strong>，其实主要查看的就是<strong>网卡名称</strong>、inet参数后面的IP地址、<strong>ether参数后面的网卡物理地址（又称为MAC地址）</strong>，以及<strong>RX、TX的接收数据包与发送数据包的个数及累计流量</strong>（即下面加粗的信息内容）：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# ifconfig</span><br><span class="line">ens160: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 1500</span><br><span class="line">        inet 192.168.10.10  netmask 255.255.255.0  broadcast 192.168.10.255</span><br><span class="line">        inet6 fe80::c8f8:f5c5:8251:aeaa  prefixlen 64  scopeid 0x20</span><br><span class="line">        ether 00:0c:29:7d:27:bf  txqueuelen 1000  (Ethernet)</span><br><span class="line">        RX packets 304  bytes 33283 (32.5 KiB)</span><br><span class="line">        RX errors 0  dropped 0  overruns 0  frame 0</span><br><span class="line">        TX packets 91  bytes 11052 (10.7 KiB)</span><br><span class="line">        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0</span><br><span class="line"></span><br><span class="line">lo: flags=73&lt;UP,LOOPBACK,RUNNING&gt;  mtu 65536</span><br><span class="line">        inet 127.0.0.1  netmask 255.0.0.0</span><br><span class="line">        inet6 ::1  prefixlen 128  scopeid 0x10</span><br><span class="line">        loop  txqueuelen 1000  (Local Loopback)</span><br><span class="line">        RX packets 376  bytes 31784 (31.0 KiB)</span><br><span class="line">        RX errors 0  dropped 0  overruns 0  frame 0</span><br><span class="line">        TX packets 376  bytes 31784 (31.0 KiB)</span><br><span class="line">        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0</span><br><span class="line"></span><br><span class="line">virbr0: flags=4099&lt;UP,BROADCAST,MULTICAST&gt;  mtu 1500</span><br><span class="line">        ether 52:54:00:a2:89:54  txqueuelen 1000  (Ethernet)</span><br><span class="line">        RX packets 0  bytes 0 (0.0 B)</span><br><span class="line">        RX errors 0  dropped 0  overruns 0  frame 0</span><br><span class="line">        TX packets 0  bytes 0 (0.0 B)</span><br><span class="line">        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="2．uname命令"><a href="#2．uname命令" class="headerlink" title="2．uname命令"></a><strong>2．uname命令</strong></h3><p>uname命令<strong>用于查看系统内核版本与系统架构等信息</strong>，英文全称为“unix name”，语法格式为“uname [-a]”。</p>
+<p>在使用uname命令时，一般要固定搭配上-a参数来完整地查看当前系统的内核名称、主机名、内核发行版本、节点名、压制时间、硬件名称、硬件平台、处理器类型以及操作系统名称等信息：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# uname -a</span><br><span class="line">Linux linuxprobe.com 4.18.0-80.el8.x86_64 #1 SMP Wed Mar 13 12:02:46 UTC 2019 x86_64 x86_64 x86_64 GNU/Linux</span><br></pre></td></tr></table></figure>
+
+<p>顺带一提，如果要查看当前系统版本的详细信息，则需要查看redhat-release文件，其命令以及相应的结果如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# cat /etc/redhat-release</span><br><span class="line">Red Hat Enterprise Linux release 8.0 (Ootpa)</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="3．uptime命令"><a href="#3．uptime命令" class="headerlink" title="3．uptime命令"></a><strong>3．uptime命令</strong></h3><p><strong>uptime命令用于查看系统的负载信息，输入该命令后按回车键执行即可</strong>。</p>
+<p>uptime命令真的很棒，它可以<strong>显示当前系统时间、系统已运行时间、启用终端数量以及平均负载值等信息</strong>。<font color='mediumseagreen'><strong>平均负载值指的是系统在最近1分钟、5分钟、15分钟内的压力情况（下面加粗的信息部分），负载值越低越好</strong>：</font></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# uptime</span><br><span class="line">22:49:55 up 10 min, 1 users, load average: 0.01, 0.19, 0.18</span><br></pre></td></tr></table></figure>
+
+<p>“负载值越低越好”是对运维人员来讲的，<strong>越低表示越安全省心。但是公司购置的硬件设备如果长期处于空闲状态，则明显是种资源浪费，老板也不会开心。所以建议负载值保持在1左右，在生产环境中不要超过5就好。</strong></p>
+<h3 id="4．free命令"><a href="#4．free命令" class="headerlink" title="4．free命令"></a><strong>4．free命令</strong></h3><p><strong>free命令用于显示当前系统中内存的使用量信息</strong>，语法格式为“free [-h]”。</p>
+<p>为了保证Linux系统不会因资源耗尽而突然宕机，运维人员需要时刻关注内存的使用量。在使用free命令时，可以结合使用-h参数以更人性化的方式输出当前内存的实时使用量信息。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# free -h</span><br></pre></td></tr></table></figure>
+
+<p>表2-9                      执行free -h命令后的输出信息</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>内存总量</th>
+<th>已用量</th>
+<th>空闲量</th>
+<th>共享使用的内存量</th>
+<th>缓存的内存量</th>
+<th>可用量</th>
+</tr>
+</thead>
+<tbody><tr>
+<td></td>
+<td>total</td>
+<td>used</td>
+<td>free</td>
+<td>shared</td>
+<td>buff&#x2F;cache</td>
+<td>available</td>
+</tr>
+<tr>
+<td>Mem:</td>
+<td>1.9Gi</td>
+<td>1.5Gi</td>
+<td>126Mi</td>
+<td>16Mi</td>
+<td>487Mi</td>
+<td>437Mi</td>
+</tr>
+<tr>
+<td>Swap:</td>
+<td>2.0Gi</td>
+<td>56Mi</td>
+<td>1.9Gi</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<p><strong>如果不使用-h（易读模式）查看内存使用量情况，则默认以KB为单位</strong>。这样一来，服务器如果有几百GB的内存，则换算下来就会是一大长串的数字，真不利于阅读。</p>
+<h3 id="5．who命令"><a href="#5．who命令" class="headerlink" title="5．who命令"></a><strong>5．who命令</strong></h3><p><strong>who命令用于查看当前登入主机的用户终端信息</strong>，输入该命令后按回车键执行即可。</p>
+<p>这3个简单的字母可以快速显示出所有正在登录本机的用户名称以及他们正在开启的终端信息；如<strong>果有远程用户，还会显示出来访者的IP地址。表2-10所示为执行who命令后的结果。</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# who</span><br></pre></td></tr></table></figure>
+
+<p>表2-10                     执行who命令的结果</p>
+<table>
+<thead>
+<tr>
+<th>登录的用户名</th>
+<th>终端设备</th>
+<th>登录到系统的时间</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>root</td>
+<td>seat0</td>
+<td>2025-05-18 02:31 (login screen)</td>
+</tr>
+<tr>
+<td>root</td>
+<td>tty2</td>
+<td>2025-05-18 02:31 (tty2)</td>
+</tr>
+</tbody></table>
+<h3 id="6．last命令"><a href="#6．last命令" class="headerlink" title="6．last命令"></a><strong>6．last命令</strong></h3><p><strong>last命令用于调取主机的被访记录，输入该命令后按回车键执行即可</strong>。</p>
+<p>Linux系统会将每次的登录信息都记录到日志文件中，如果哪天想翻阅了，直接执行这条命令就行：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# last</span><br><span class="line">root     pts/1        192.168.10.1     Tue May 18 10:30 - 11:03  (00:32)</span><br><span class="line">root     tty2         tty2             Fri Jul 24 06:26    gone - no logout</span><br><span class="line">reboot   system boot  4.18.0-80.el8.x8 Fri Jul 24 05:59   still running</span><br><span class="line">root     tty2         tty2             Tue Jul 21 05:19 - down   (00:00)</span><br><span class="line">reboot   system boot  4.18.0-80.el8.x8 Tue Jul 21 05:16 - 05:19  (00:02)</span><br><span class="line"></span><br><span class="line">wtmp begins Tue Jul 21 05:16:47 2020</span><br></pre></td></tr></table></figure>
+
+<h3 id="7．ping命令"><a href="#7．ping命令" class="headerlink" title="7．ping命令"></a><strong>7．ping命令</strong></h3><p>ping命令用于测试主机之间的网络连通性，语法格式为“ping [参数] 主机地址”。</p>
+<p>即便大家没有学习过Linux系统，相信也肯定见过别人使用ping命令。执行ping命令时，系统会使用ICMP向远端主机发出要求回应的信息，若连接远端主机的网络没有问题，远端主机会回应该信息。由此可见，ping命令可用于判断远端主机是否在线并且网络是否正常。ping命令的常见参数以及作用如表2-11所示。</p>
+<p>表2-11                         ping命令中的参数以及作用</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>-c</td>
+<td>总共发送次数</td>
+</tr>
+<tr>
+<td>-l</td>
+<td>指定网卡名称</td>
+</tr>
+<tr>
+<td>-i</td>
+<td>每次间隔时间（秒）</td>
+</tr>
+<tr>
+<td>-W</td>
+<td>最长等待时间（秒）</td>
+</tr>
+</tbody></table>
+<p>我们使用ping命令测试一台在线的主机（其IP地址为192.168.10.10），得到的回应是这样的：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# ping -c 4 192.168.10.10</span><br><span class="line">PING 192.168.10.10 (192.168.10.10) 56(84) bytes of data.</span><br><span class="line">64 bytes from 192.168.10.10: icmp_seq=1 ttl=64 time=0.155 ms</span><br><span class="line">64 bytes from 192.168.10.10: icmp_seq=2 ttl=64 time=0.110 ms</span><br><span class="line">64 bytes from 192.168.10.10: icmp_seq=3 ttl=64 time=0.112 ms</span><br><span class="line">64 bytes from 192.168.10.10: icmp_seq=4 ttl=64 time=0.209 ms</span><br><span class="line"></span><br><span class="line">--- 192.168.10.10 ping statistics ---</span><br><span class="line">4 packets transmitted, 4 received, 0% packet loss, time 56ms</span><br><span class="line">rtt min/avg/max/mdev = 0.110/0.146/0.209/0.042 ms</span><br></pre></td></tr></table></figure>
+
+<p>测试一台不在线的主机（其IP地址为192.168.10.20），得到的回应是这样的：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# ping -c 4 192.168.10.20</span><br><span class="line">PING 192.168.10.20 (192.168.10.20) 56(84) bytes of data.</span><br><span class="line">From 192.168.10.10 icmp_seq=1 Destination Host Unreachable</span><br><span class="line">From 192.168.10.10 icmp_seq=2 Destination Host Unreachable</span><br><span class="line">From 192.168.10.10 icmp_seq=3 Destination Host Unreachable</span><br><span class="line">From 192.168.10.10 icmp_seq=4 Destination Host Unreachable</span><br><span class="line"></span><br><span class="line">--- 192.168.10.20 ping statistics ---</span><br><span class="line">4 packets transmitted, 0 received, +4 errors, 100% packet loss, time 68ms</span><br><span class="line">pipe 4</span><br></pre></td></tr></table></figure>
+
+<h3 id="8．tracepath命令"><a href="#8．tracepath命令" class="headerlink" title="8．tracepath命令"></a><strong>8．tracepath命令</strong></h3><p><strong>tracepath命令用于显示数据包到达目的主机时途中经过的所有路由信息</strong>，语法格式为“tracepath [参数] 域名”。</p>
+<p>当两台主机之间无法正常ping通时，要考虑两台主机之间是否有错误的路由信息，导致数据被某一台设备错误地丢弃。这时便可以使用tracepath命令追踪数据包到达目的主机时途中的所有路由信息，以分析是哪台设备出了问题。下面的情况就很清晰了：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# tracepath www.linuxprobe.com</span><br><span class="line"> 1?: [LOCALHOST]                                          pmtu 1500</span><br><span class="line"> 1:  no reply</span><br><span class="line"> 2:  11.223.0.189                                          5.954ms asymm  1 </span><br><span class="line"> 3:  11.223.0.14                                           6.256ms asymm  2 </span><br><span class="line"> 4:  11.220.159.62                                         3.313ms asymm  3 </span><br><span class="line"> 5:  116.251.107.13                                        1.841ms </span><br><span class="line"> 6:  140.205.50.237                                        2.416ms asymm  5 </span><br><span class="line"> 7:  101.95.211.117                                        2.772ms </span><br><span class="line"> 8:  101.95.208.45                                        40.839ms </span><br><span class="line"> 9:  101.95.218.217                                       13.898ms asymm  8 </span><br><span class="line">10:  202.97.81.162                                         8.113ms asymm  9 </span><br><span class="line">11:  221.229.193.238                                      15.693ms asymm 10 </span><br><span class="line">12:  no reply</span><br><span class="line">13:  no reply</span><br><span class="line">14:  no reply</span><br><span class="line">15:  no reply</span><br><span class="line">16:  no reply</span><br><span class="line">17:  no reply</span><br><span class="line">18:  no reply</span><br><span class="line">………………省略部分输出信息………………</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="9．netstat命令"><a href="#9．netstat命令" class="headerlink" title="9．netstat命令"></a><strong>9．netstat命令</strong></h3><p>netstat命令用于显示如网络连接、路由表、接口状态等的网络相关信息，英文全称为“network status”，语法格式为“netstat [参数]”。</p>
+<p>只要netstat命令使用得当，便可以查看到网络状态的方方面面信息。我们找出一些常用的参数让大家感受一下。netstat命令的常见参数以及作用如表2-12所示。</p>
+<p>表2-12                         netstat命令中的参数以及作用</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>-a</td>
+<td>显示所有连接中的Socket</td>
+</tr>
+<tr>
+<td>-p</td>
+<td>显示正在使用的Socket信息</td>
+</tr>
+<tr>
+<td>-t</td>
+<td>显示TCP协议的连接状态</td>
+</tr>
+<tr>
+<td>-u</td>
+<td>显示UDP协议的连接状态</td>
+</tr>
+<tr>
+<td>-n</td>
+<td>使用IP地址，不使用域名</td>
+</tr>
+<tr>
+<td>-l</td>
+<td>仅列出正在监听的服务状态</td>
+</tr>
+<tr>
+<td>-i</td>
+<td>显示网卡列表信息</td>
+</tr>
+<tr>
+<td>-r</td>
+<td>显示路由表信息</td>
+</tr>
+</tbody></table>
+<p>使用netstat命令显示详细的网络状况：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# netstat -a</span><br><span class="line">Active Internet connections (servers and established)</span><br><span class="line">Proto Recv-Q Send-Q Local Address           Foreign Address         State      </span><br><span class="line">tcp        0      0 0.0.0.0:ssh             0.0.0.0:*               LISTEN     </span><br><span class="line">tcp        0      0 localhost:ipp           0.0.0.0:*               LISTEN     </span><br><span class="line">tcp        0      0 0.0.0.0:sunrpc          0.0.0.0:*               LISTEN     </span><br><span class="line">tcp6       0      0 [::]:ssh                [::]:*                  LISTEN     </span><br><span class="line">tcp6       0      0 localhost:ipp           [::]:*                  LISTEN     </span><br><span class="line">tcp6       0      0 [::]:sunrpc             [::]:*                  LISTEN     </span><br><span class="line">udp        0      0 0.0.0.0:bootps          0.0.0.0:*                          </span><br><span class="line">udp        0      0 0.0.0.0:sunrpc          0.0.0.0:*                          </span><br><span class="line">udp        0      0 0.0.0.0:mdns            0.0.0.0:*                          </span><br><span class="line">udp        0      0 0.0.0.0:37396           0.0.0.0:*                          </span><br><span class="line">udp6       0      0 [::]:sunrpc             [::]:*                             </span><br><span class="line">udp6       0      0 [::]:mdns               [::]:*                             </span><br><span class="line">udp6       0      0 [::]:38541              [::]:*       </span><br><span class="line">………………省略部分输出信息………………     </span><br></pre></td></tr></table></figure>
+
+<p>使用netstat命令显示网卡列表：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxrpobe ~]# netstat -i </span><br><span class="line">Kernel Interface table</span><br><span class="line">Iface             MTU    RX-OK RX-ERR RX-DRP RX-OVR    TX-OK TX-ERR TX-DRP TX-OVR Flg</span><br><span class="line">ens160           1500       70      0      0 0            79      0      0      0 BMRU</span><br><span class="line">lo              65536      248      0      0 0           248      0      0      0 LRU</span><br><span class="line">virbr0           1500        0      0      0 0             0      0      0      0 BMU</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="10．history命令"><a href="#10．history命令" class="headerlink" title="10．history命令"></a><strong>10．history命令</strong></h3><p>history命令用于显示执行过的命令历史，语法格式为“history [-c]”。</p>
+<p><strong>history命令应该是运维人员最喜欢的命令。执行history命令能显示出当前用户在本地计算机中执行过的最近1000条命令记录。</strong>如果觉得1000不够用，可以自定义&#x2F;etc&#x2F;profile文件中的HISTSIZE变量值。在使用history命令时，可以使用-c参数清空所有的命令历史记录。还可以使用“!编码数字”的方式来重复执行某一次的命令。总之，history命令有很多有趣的玩法等待您去开发。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# history</span><br><span class="line">1 ifconfig</span><br><span class="line">2 uname -a</span><br><span class="line">3 cat /etc/redhat-release</span><br><span class="line">4 uptime</span><br><span class="line">5 free -h</span><br><span class="line">6 who</span><br><span class="line">7 last</span><br><span class="line">8 ping -c 192.168.10.10</span><br><span class="line">9 ping -c 192.168.10.20</span><br><span class="line">10 tracepath www.linuxprobe.com</span><br><span class="line">11 netstat -a</span><br><span class="line">12 netstat -i</span><br><span class="line">13 history</span><br><span class="line">[root@linuxprobe ~]# !3</span><br><span class="line">cat /etc/redhat-release</span><br><span class="line">Red Hat Enterprise Linux release 8.0 (Ootpa)</span><br></pre></td></tr></table></figure>
+
+<p>历史命令会被保存到用户家目录中的.bash_history文件中。Linux系统中以点（.）开头的文件均代表隐藏文件，这些文件大多数为系统服务文件，可以用cat命令查看其文件内容：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# cat ~/.bash_history</span><br></pre></td></tr></table></figure>
+
+<p>要清空当前用户在本机上执行的Linux命令历史记录信息，可执行如下命令：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# history -c</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="11．sosreport命令"><a href="#11．sosreport命令" class="headerlink" title="11．sosreport命令"></a><strong>11．sosreport命令</strong></h3><p>sosreport命令用于收集系统配置及架构信息并输出诊断文档，输入该命令后按回车键执行即可。</p>
+<p>当Linux系统出现故障需要联系技术支持人员时，大多数时候都要先使用这个命令来简单收集系统的运行状态和服务配置信息，以便让技术支持人员能够远程解决一些小问题，抑或让他们能提前了解某些复杂问题。在下面的输出信息中，加粗的部分是收集好的资料压缩文件以及校验码，将其发送给技术支持人员即可：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@linuxprobe ~]# sosreport</span><br><span class="line">sosreport (version 3.6)</span><br><span class="line">This command will collect diagnostic and configuration information from</span><br><span class="line">this Red Hat Enterprise Linux system and installed applications.</span><br><span class="line"></span><br><span class="line">An archive containing the collected information will be generated in</span><br><span class="line">/var/tmp/sos.9_i0glu8 and may be provided to a Red Hat support</span><br><span class="line">representative.</span><br><span class="line"></span><br><span class="line">Any information provided to Red Hat will be treated in accordance with</span><br><span class="line">the published support policies at:</span><br><span class="line">https://access.redhat.com/support/</span><br><span class="line">The generated archive may contain data considered sensitive and its</span><br><span class="line">content should be reviewed by the originating organization before being</span><br><span class="line">passed to any third party.</span><br><span class="line"></span><br><span class="line">No changes will be made to system configuration.</span><br><span class="line">Press ENTER to continue, or CTRL-C to quit.</span><br><span class="line">此处按下回车键进行确认</span><br><span class="line">Please enter the case id that you are generating this report for []:此处按下回车键进行确认</span><br><span class="line">Setting up archive ...</span><br><span class="line">Setting up plugins ...</span><br><span class="line">Running plugins. Please wait ...</span><br><span class="line">………………省略部分输出信息………………</span><br><span class="line">Finished running plugins </span><br><span class="line">Creating compressed archive...</span><br><span class="line"></span><br><span class="line">Your sosreport has been generated and saved in:</span><br><span class="line">/var/tmp/sosreport-linuxprobe.com-2021-05-18-jnkaspu.tar.xz</span><br><span class="line"></span><br><span class="line">The checksum is: 9fbecbd167b7e5836db1ff8f068c4db3</span><br><span class="line">Please send this file to your support representative.</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>sosreport命令有点像是远程问诊。假如我们今天有点咳嗽发烧不舒服，可以先从网上搜索相关症状的病因，如果仅仅是感冒的话那就多喝水，这就免去了到医院挂号看病的车马劳顿；而如果怀疑出了大毛病，再请专业人员进行处理也不迟。</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>linux</category>
+        <category>Bash命令</category>
       </categories>
   </entry>
 </search>
