@@ -22,7 +22,7 @@
 <li>时间复杂度o(n^2), 有flag的情况下最佳时间复杂度o(n), 空间复杂度o(1)，稳定排序</li>
 </ul>
 <h3 id="插入排序"><a href="#插入排序" class="headerlink" title="插入排序"></a>插入排序</h3><p>思路：在未排序区间选择一个基准元素，将其与左边的已排序区间比较，一直到左边元素不大于基准元素为止</p>
-<style>.bdbhelxeoign{zoom:33%;}</style><img src="/2025/02/27/Algo_Sort/image-20250227120737150.png" class="bdbhelxeoign" alt="image-20250227120737150">
+<style>.ghrzfapuckca{zoom:33%;}</style><img src="/2025/02/27/Algo_Sort/image-20250227120737150.png" class="ghrzfapuckca" alt="image-20250227120737150">
 
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">insertionSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums)</span> </span>&#123;</span><br><span class="line">	<span class="comment">//外循环，已排序区间为[0,i-1]</span></span><br><span class="line">    <span class="comment">//初始状态，第一个元素已完成排序</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt; nums.<span class="built_in">size</span>(); i++) &#123;</span><br><span class="line">        <span class="type">int</span> base = nums[i], j = i<span class="number">-1</span>; </span><br><span class="line">    	<span class="comment">//内循环，将base插入到已排序区间</span></span><br><span class="line">		<span class="keyword">while</span> (j &gt;= <span class="number">0</span> &amp;&amp; nums[j] &gt; base) &#123;</span><br><span class="line">            nums[j<span class="number">+1</span>] = nums[j]; <span class="comment">//右移一位</span></span><br><span class="line">            j--;</span><br><span class="line">        &#125;</span><br><span class="line">        nums[j<span class="number">+1</span>] = base; <span class="comment">//插入base</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -98,7 +98,7 @@
 
 
 <h3 id="归并排序"><a href="#归并排序" class="headerlink" title="归并排序"></a>归并排序</h3><p>归并排序的递归顺序和二叉树的后序遍历是一样的，即先递归左数组，再递归右数组，最后合并，注意合并时的子数组是有序的。一图总结如下：</p>
-<style>.jtwquacvogdm{zoom: 67%;}</style><img src="/2025/02/27/Algo_Sort/image-20250227153030239.png" class="jtwquacvogdm" alt="image-20250227153030239">
+<style>.ejchqboipyut{zoom: 67%;}</style><img src="/2025/02/27/Algo_Sort/image-20250227153030239.png" class="ejchqboipyut" alt="image-20250227153030239">
 
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//合并左右子数组,左数组[left, mid], 右数组[mid+1, right]</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">merge</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> left, <span class="type">int</span> mid, <span class="type">int</span> right)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> i = left, j = mid + <span class="number">1</span>, k = <span class="number">0</span>;</span><br><span class="line">    <span class="comment">//创建临时数组存放合并后数组</span></span><br><span class="line">    <span class="function">vector&lt;<span class="type">int</span>&gt; <span class="title">tmp</span><span class="params">(right- left <span class="number">+1</span>)</span></span>;</span><br><span class="line">    <span class="comment">//左右数组都还有元素时进行比较</span></span><br><span class="line">    <span class="keyword">while</span> (i &lt;= mid &amp;&amp; j &lt;= right) &#123;</span><br><span class="line">        <span class="comment">//将较小元素放入tmp</span></span><br><span class="line">        <span class="keyword">if</span> (nums[i] &lt;= nums[j]) &#123;</span><br><span class="line">            tmp[k++] = nums[i++]</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            tmp[k++] = nums[j++];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//将剩下元素放入tmp,注意i,j往后移动</span></span><br><span class="line">    <span class="keyword">while</span> (i &lt;= mid) &#123;</span><br><span class="line">        tmp[k++] = nums[i++]; </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> (j &lt;= right) &#123;</span><br><span class="line">        tmp[k++] = nums[j++]</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//将合并后放回到原数组对应位置</span></span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; tmp.<span class="built_in">size</span>(); i++) &#123;</span><br><span class="line">        nums[left+i] = tmp[i]; </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//归并排序</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">mergeSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> left, <span class="type">int</span> right)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//子数组长度为1时终止</span></span><br><span class="line">	<span class="keyword">if</span> (left &gt;= right) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;    </span><br><span class="line">    <span class="comment">//子数组划分</span></span><br><span class="line">    <span class="type">int</span> mid = left + (right - left) / <span class="number">2</span>;</span><br><span class="line">    <span class="built_in">mergeSort</span>(nums, left, mid); <span class="comment">//左</span></span><br><span class="line">    <span class="built_in">mergeSort</span>(nums, mid<span class="number">+1</span>, right); <span class="comment">//右</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">//对子数组进行合并</span></span><br><span class="line">    <span class="built_in">merge</span>(nums, left, mid, right);  <span class="comment">//中</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -120,7 +120,7 @@
 <li>循环<strong>n-1</strong>次交换和堆化的过程</li>
 </ul>
 <p><strong>完全二叉树非常适合使用数组来表示</strong>，而堆就是一种特殊的完全二叉树，所以其底层实现就是数组。</p>
-<style>.byhiifaqelbd{zoom: 50%;}</style><img src="/2025/02/27/Algo_Sort/image-20250227171531676.png" class="byhiifaqelbd" alt="image-20250227171531676">
+<style>.jxxtpbhyzrin{zoom: 50%;}</style><img src="/2025/02/27/Algo_Sort/image-20250227171531676.png" class="jxxtpbhyzrin" alt="image-20250227171531676">
 
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//堆的长度为n，从节点i开始，从顶至底执行堆化</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">siftDown</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> n, <span class="type">int</span> i)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">        <span class="comment">//索引i的左子节点为2i+1,右子节点为2i+2, 父节点索引为(i-1)/2</span></span><br><span class="line">        <span class="type">int</span> l = <span class="number">2</span>i<span class="number">+1</span>, r = <span class="number">2</span>i<span class="number">+2</span>;</span><br><span class="line">        <span class="type">int</span> ma = i; <span class="comment">//ma为i,l,r中值最大的节点索引</span></span><br><span class="line">        <span class="keyword">if</span> (l &lt; n &amp;&amp; nums[l] &gt;= nums[ma]) &#123;</span><br><span class="line">            ma = l;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (r &lt; n &amp;&amp; nums[r] &gt;= nums[ma]) &#123;</span><br><span class="line">           ma = r; </span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//如节点i最大或l，r越界则无需继续堆化</span></span><br><span class="line">        <span class="keyword">if</span> (ma == i) &#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">swap</span>(nums[i], nums[ma]);</span><br><span class="line">        i = ma; <span class="comment">//循环进行堆化</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//堆排序</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">haepSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums)</span> </span>&#123;</span><br><span class="line">	<span class="comment">//建堆，堆化除叶子节点外所有节点</span></span><br><span class="line">    <span class="comment">//建堆的循环语句还可以从最后一个节点的父节点开始，即for (int i = (nums.size()- 1 - 1) / 2; i &gt;= 0; --i) &#123;&#125;</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = nums.<span class="built_in">size</span>() / <span class="number">2</span> - <span class="number">1</span>; i &gt;= <span class="number">0</span>; --i) &#123;</span><br><span class="line">        <span class="comment">//从索引i开始从顶至底的执行堆化</span></span><br><span class="line">    	<span class="built_in">siftDown</span>(nums, nums.<span class="built_in">size</span>(), i); 	   </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//循环n-1次</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = nums.<span class="built_in">size</span>() - <span class="number">1</span>; i &gt;<span class="number">0</span>; --i) &#123;</span><br><span class="line">        <span class="comment">//交换堆顶元素与堆底元素</span></span><br><span class="line">        <span class="built_in">swap</span>(nums[<span class="number">0</span>], nums[i]); <span class="comment">//堆长度减1</span></span><br><span class="line">        <span class="built_in">siftDown</span>(nums, i, <span class="number">0</span>); <span class="comment">//从堆顶开始堆化</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -152,7 +152,7 @@
   </entry>
   <entry>
     <title>智能指针</title>
-    <url>/2025/03/10/Cpp11__smart_ptr/</url>
+    <url>/2025/03/10/Cpp11__inteligent_ptr/</url>
     <content><![CDATA[<h3 id="基础"><a href="#基础" class="headerlink" title="基础"></a>基础</h3><p><strong>c++11之后引入智能指针的目的</strong>：动态分配的内存空间如果不进行释放，就会导致内存泄露。智能指针是一个模板类，其离开作用域时就会销毁，这时就会调用其析构函数来释放所指向的动态分配对象的空间。<font color='red'>即智能指针就是用来解决内存泄露问题的。</font></p>
 <p>本文重在实现简化版的智能指针的模板类，其它概念不多介绍。</p>
 <p>阅读前请确保已了解右值引用和移动语义相关知识。</p>
@@ -171,7 +171,7 @@
 <li>成员函数get(), reset(), use_count()</li>
 <li>make_shared函数模板</li>
 </ul>
-<img src="Cpp11__inteligent_ptr/image-20250310211607484.png" alt="image-20250310211607484" style="zoom:50%;" />
+<style>.rxxmqrjipbsk{zoom:50%;}</style><img src="/2025/03/10/Cpp11__inteligent_ptr/image-20250310211607484.png" class="rxxmqrjipbsk" alt="image-20250310211607484">
 
 <blockquote>
 <p><strong>为什么图中使用<code>int* m_count</code>而不是<code>int m_count</code>?</strong></p>
@@ -242,7 +242,7 @@
 <p>此外，<font color='red'>还需注意标准库中的shared_ptr的reset函数在智能指针对象指向了动态分配对象的前提下使用且不传参，引用计数减1的同时，还会销毁该对象</font></p>
 <h4 id="线程安全的引用计数"><a href="#线程安全的引用计数" class="headerlink" title="线程安全的引用计数"></a>线程安全的引用计数</h4><p><strong>注意在shared_ptr中引用计数是线程安全的，但是管理的数据不是线程安全的</strong>。我们上面的实现并不能保证引用计数是线程安全的，因为多个线程可能同时操作引用计数指针<code>m_count</code>，导致动态对象被提前释放或永远不被释放。</p>
 <p>下面将采用互斥锁来实现引用计数线程安全（可以参考下图实现，这里我们就不考虑weak_count了）</p>
-<img src="Cpp11__inteligent_ptr/image-20250310221101442.png" alt="image-20250310221101442" style="zoom:50%;" />
+<style>.blrylgkbjdsh{zoom:50%;}</style><img src="/2025/03/10/Cpp11__inteligent_ptr/image-20250310221101442.png" class="blrylgkbjdsh" alt="image-20250310221101442">
 
 <p>具体代码如下：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">* shared_ptr.h</span></span><br><span class="line"><span class="comment">* 实现一个线程安全的shared_ptr模板类，不考虑weak_ptr</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="meta">#<span class="keyword">ifndef</span> SHARED_PTR_H</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> SHARED_PTR_H</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;utility&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;mutex&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MySharedPtr</span> &#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="comment">// 控制块结构</span></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">ControlBlock</span> &#123;</span><br><span class="line">        <span class="type">int</span> ref_count; <span class="comment">// 引用计数</span></span><br><span class="line">        std::mutex mutex; <span class="comment">// 互斥锁，保证线程安全</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 构造函数</span></span><br><span class="line">        <span class="built_in">ControlBlock</span>() : <span class="built_in">ref_count</span>(<span class="number">1</span>) &#123;&#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 指向管理对象的原始指针</span></span><br><span class="line">    T* raw_ptr;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 指向控制块的指针</span></span><br><span class="line">    ControlBlock* control_block;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 增加引用计数</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">add_count</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (control_block) &#123;</span><br><span class="line">            <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(control_block-&gt;mutex)</span></span>;</span><br><span class="line">            ++(control_block-&gt;ref_count);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 减少引用计数</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">sub_count</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (control_block) &#123;</span><br><span class="line">            <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(control_block-&gt;mutex)</span></span>;</span><br><span class="line">            --(control_block-&gt;ref_count);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 释放资源</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">release</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (control_block) &#123;</span><br><span class="line">            <span class="built_in">sub_count</span>();</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 检查是否为最后一个引用</span></span><br><span class="line">            <span class="type">bool</span> delete_resources = <span class="literal">false</span>;</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(control_block-&gt;mutex)</span></span>;</span><br><span class="line">                delete_resources = (control_block-&gt;ref_count == <span class="number">0</span>);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 只有当引用计数为零时才删除资源</span></span><br><span class="line">            <span class="keyword">if</span> (delete_resources) &#123;</span><br><span class="line">                <span class="keyword">delete</span> raw_ptr;</span><br><span class="line">                <span class="keyword">delete</span> control_block;</span><br><span class="line">                raw_ptr = <span class="literal">nullptr</span>;</span><br><span class="line">                control_block = <span class="literal">nullptr</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// 默认构造函数</span></span><br><span class="line">    <span class="built_in">MySharedPtr</span>() : <span class="built_in">raw_ptr</span>(<span class="literal">nullptr</span>), <span class="built_in">control_block</span>(<span class="literal">nullptr</span>) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 有参构造，从原始指针构造</span></span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="title">MySharedPtr</span><span class="params">(T* ptr)</span>: raw_ptr(ptr), control_block(ptr ? new ControlBlock() : nullptr) &#123;</span>&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 拷贝构造函数</span></span><br><span class="line">    <span class="built_in">MySharedPtr</span>(<span class="type">const</span> MySharedPtr&amp; other): <span class="built_in">raw_ptr</span>(other.raw_ptr), <span class="built_in">control_block</span>(other.control_block) &#123;</span><br><span class="line">        <span class="built_in">add_count</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 移动构造函数</span></span><br><span class="line">    <span class="built_in">MySharedPtr</span>(MySharedPtr&amp;&amp; other) <span class="keyword">noexcept</span>: <span class="built_in">raw_ptr</span>(other.raw_ptr), <span class="built_in">control_block</span>(other.control_block) &#123;</span><br><span class="line">        other.raw_ptr = <span class="literal">nullptr</span>;</span><br><span class="line">        other.control_block = <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 析构函数</span></span><br><span class="line">    ~<span class="built_in">MySharedPtr</span>() &#123;</span><br><span class="line">        <span class="built_in">release</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 拷贝赋值运算符重载</span></span><br><span class="line">    <span class="comment">//这里不能给shared_ptr赋裸指针</span></span><br><span class="line">    MySharedPtr&amp; <span class="keyword">operator</span>=(<span class="type">const</span> MySharedPtr&amp; other) &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">this</span> != &amp;other) &#123;</span><br><span class="line">            <span class="built_in">release</span>();</span><br><span class="line">            raw_ptr = other.raw_ptr;</span><br><span class="line">            control_block = other.control_block;</span><br><span class="line">            <span class="built_in">add_count</span>();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 移动赋值运算符重载</span></span><br><span class="line">    MySharedPtr&amp; <span class="keyword">operator</span>=(MySharedPtr&amp;&amp; other) <span class="keyword">noexcept</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">this</span> != &amp;other) &#123;</span><br><span class="line">            <span class="built_in">release</span>();</span><br><span class="line">            raw_ptr = other.raw_ptr;</span><br><span class="line">            control_block = other.control_block;</span><br><span class="line">            other.raw_ptr = <span class="literal">nullptr</span>;</span><br><span class="line">            other.control_block = <span class="literal">nullptr</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 解引用运算符重载</span></span><br><span class="line">    T&amp; <span class="keyword">operator</span>*() <span class="type">const</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> *raw_ptr;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 箭头运算符重载</span></span><br><span class="line">    T* <span class="keyword">operator</span>-&gt;() <span class="type">const</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> raw_ptr;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 重置函数</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">reset</span><span class="params">(T* ptr = <span class="literal">nullptr</span>)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (raw_ptr != ptr) &#123;</span><br><span class="line">            <span class="built_in">release</span>();</span><br><span class="line">            <span class="keyword">if</span> (ptr) &#123;</span><br><span class="line">                raw_ptr = ptr;</span><br><span class="line">                control_block = <span class="keyword">new</span> <span class="built_in">ControlBlock</span>();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取原始指针</span></span><br><span class="line">    <span class="function">T* <span class="title">get</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> raw_ptr;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取引用计数</span></span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">use_count</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (control_block) &#123;</span><br><span class="line">            <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(control_block-&gt;mutex)</span></span>;</span><br><span class="line">            <span class="keyword">return</span> control_block-&gt;ref_count;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 检查指针是否是唯一拥有者（只有一个引用）</span></span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">unique</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">use_count</span>() == <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// make_shared函数模板</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keyword">typename</span>... Args&gt;</span><br><span class="line"><span class="function">MySharedPtr&lt;T&gt; <span class="title">make_shared</span><span class="params">(Args&amp;&amp;... args)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">MySharedPtr</span>&lt;T&gt;(<span class="keyword">new</span> <span class="built_in">T</span>(std::forward&lt;Args&gt;(args)...));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
@@ -343,7 +343,7 @@
 </blockquote>
 <p>​	</p>
 <p>加了weak_ptr之后的实现可以参考下图，具体代码省略</p>
-<img src="Cpp11__inteligent_ptr/image-20250310230603480.png" alt="image-20250310230603480" style="zoom:50%;" />
+<style>.varmivnuwkwa{zoom:50%;}</style><img src="/2025/03/10/Cpp11__inteligent_ptr/image-20250310230603480.png" class="varmivnuwkwa" alt="image-20250310230603480">
 
 
 
@@ -518,6 +518,47 @@
       </categories>
   </entry>
   <entry>
+    <title>cmake</title>
+    <url>/2025/03/10/DevTools__cmake/</url>
+    <content><![CDATA[<h2 id="从零开始写一个CMakeLists-txt文件"><a href="#从零开始写一个CMakeLists-txt文件" class="headerlink" title="从零开始写一个CMakeLists.txt文件"></a>从零开始写一个CMakeLists.txt文件</h2><p>从零开始写CMakeLists.txt的基本步骤和结构：</p>
+<ol>
+<li><strong>第一步：基础设置</strong><figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 指定CMake最低版本</span></span><br><span class="line"><span class="keyword">cmake_minimum_required</span>(VERSION <span class="number">3.10</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 项目名称</span></span><br><span class="line"><span class="keyword">project</span>(你的项目名称)</span><br></pre></td></tr></table></figure></li>
+</ol>
+<span id="more"></span>
+
+<ol start="2">
+<li><strong>第二步：设置编译选项</strong></li>
+</ol>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 设置C++标准</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_STANDARD <span class="number">11</span>)</span><br><span class="line"><span class="comment"># 或者</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS <span class="string">&quot;$&#123;CMAKE_CXX_FLAGS&#125; -std=c++11&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置编译类型（Debug/Release）</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_BUILD_TYPE Debug)</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li><p><strong>第三步：设置头文件和库文件路径</strong></p>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 如果有额外的头文件目录</span></span><br><span class="line"><span class="keyword">include_directories</span>(<span class="keyword">include</span>)</span><br><span class="line"><span class="comment"># 如果有额外的库文件目录</span></span><br><span class="line"><span class="keyword">link_directories</span>(lib)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>第四步：添加源文件</strong></p>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 方法1：直接列出所有源文件</span></span><br><span class="line"><span class="keyword">add_executable</span>(项目名称 </span><br><span class="line">    src/main.cpp</span><br><span class="line">    src/other.cpp</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 方法2：使用变量收集源文件</span></span><br><span class="line"><span class="keyword">set</span>(SOURCES</span><br><span class="line">    src/main.cpp</span><br><span class="line">    src/other.cpp</span><br><span class="line">)</span><br><span class="line"><span class="keyword">add_executable</span>(项目名称 <span class="variable">$&#123;SOURCES&#125;</span>)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>第五步：如果需要链接外部库</strong></p>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 链接库</span></span><br><span class="line"><span class="keyword">target_link_libraries</span>(项目名称</span><br><span class="line">    库名称<span class="number">1</span></span><br><span class="line">    库名称<span class="number">2</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure></li>
+</ol>
+<p>一些实用的建议：</p>
+<ol>
+<li>保持结构清晰，按照上述步骤组织你的CMakeLists.txt</li>
+<li>使用注释说明每个部分的作用</li>
+<li>对于大型项目，可以使用子目录的CMakeLists.txt</li>
+<li>养成良好的变量命名习惯</li>
+<li>建议使用现代CMake的命令和特性</li>
+</ol>
+<p>创建一个最简单的CMakeLists.txt，可以参考这个模板：</p>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 最低CMake版本要求</span></span><br><span class="line"><span class="keyword">cmake_minimum_required</span>(VERSION <span class="number">3.10</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 项目名称</span></span><br><span class="line"><span class="keyword">project</span>(MyProject)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将所有源文件添加到可执行文件</span></span><br><span class="line"><span class="keyword">add_executable</span>(MyProject main.cpp)</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>开发工具</category>
+        <category>构建</category>
+      </categories>
+  </entry>
+  <entry>
     <title>AI提示词</title>
     <url>/2025/03/25/blog_AIprompt/</url>
     <content><![CDATA[<h2 id="提示词基本结构"><a href="#提示词基本结构" class="headerlink" title="提示词基本结构"></a>提示词基本结构</h2><p>即：角色+指令+上下文+输入问题+约束+例子+输出格式 。</p>
@@ -576,47 +617,6 @@
       <tags>
         <tag>AI prompt</tag>
       </tags>
-  </entry>
-  <entry>
-    <title>cmake</title>
-    <url>/2025/03/10/DevTools__cmake/</url>
-    <content><![CDATA[<h2 id="从零开始写一个CMakeLists-txt文件"><a href="#从零开始写一个CMakeLists-txt文件" class="headerlink" title="从零开始写一个CMakeLists.txt文件"></a>从零开始写一个CMakeLists.txt文件</h2><p>从零开始写CMakeLists.txt的基本步骤和结构：</p>
-<ol>
-<li><strong>第一步：基础设置</strong><figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 指定CMake最低版本</span></span><br><span class="line"><span class="keyword">cmake_minimum_required</span>(VERSION <span class="number">3.10</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 项目名称</span></span><br><span class="line"><span class="keyword">project</span>(你的项目名称)</span><br></pre></td></tr></table></figure></li>
-</ol>
-<span id="more"></span>
-
-<ol start="2">
-<li><strong>第二步：设置编译选项</strong></li>
-</ol>
-<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 设置C++标准</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_STANDARD <span class="number">11</span>)</span><br><span class="line"><span class="comment"># 或者</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS <span class="string">&quot;$&#123;CMAKE_CXX_FLAGS&#125; -std=c++11&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置编译类型（Debug/Release）</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_BUILD_TYPE Debug)</span><br></pre></td></tr></table></figure>
-
-<ol start="3">
-<li><p><strong>第三步：设置头文件和库文件路径</strong></p>
-<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 如果有额外的头文件目录</span></span><br><span class="line"><span class="keyword">include_directories</span>(<span class="keyword">include</span>)</span><br><span class="line"><span class="comment"># 如果有额外的库文件目录</span></span><br><span class="line"><span class="keyword">link_directories</span>(lib)</span><br></pre></td></tr></table></figure>
-</li>
-<li><p><strong>第四步：添加源文件</strong></p>
-<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 方法1：直接列出所有源文件</span></span><br><span class="line"><span class="keyword">add_executable</span>(项目名称 </span><br><span class="line">    src/main.cpp</span><br><span class="line">    src/other.cpp</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 方法2：使用变量收集源文件</span></span><br><span class="line"><span class="keyword">set</span>(SOURCES</span><br><span class="line">    src/main.cpp</span><br><span class="line">    src/other.cpp</span><br><span class="line">)</span><br><span class="line"><span class="keyword">add_executable</span>(项目名称 <span class="variable">$&#123;SOURCES&#125;</span>)</span><br></pre></td></tr></table></figure>
-</li>
-<li><p><strong>第五步：如果需要链接外部库</strong></p>
-<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 链接库</span></span><br><span class="line"><span class="keyword">target_link_libraries</span>(项目名称</span><br><span class="line">    库名称<span class="number">1</span></span><br><span class="line">    库名称<span class="number">2</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure></li>
-</ol>
-<p>一些实用的建议：</p>
-<ol>
-<li>保持结构清晰，按照上述步骤组织你的CMakeLists.txt</li>
-<li>使用注释说明每个部分的作用</li>
-<li>对于大型项目，可以使用子目录的CMakeLists.txt</li>
-<li>养成良好的变量命名习惯</li>
-<li>建议使用现代CMake的命令和特性</li>
-</ol>
-<p>创建一个最简单的CMakeLists.txt，可以参考这个模板：</p>
-<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 最低CMake版本要求</span></span><br><span class="line"><span class="keyword">cmake_minimum_required</span>(VERSION <span class="number">3.10</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 项目名称</span></span><br><span class="line"><span class="keyword">project</span>(MyProject)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将所有源文件添加到可执行文件</span></span><br><span class="line"><span class="keyword">add_executable</span>(MyProject main.cpp)</span><br></pre></td></tr></table></figure>
-
-]]></content>
-      <categories>
-        <category>开发工具</category>
-        <category>构建</category>
-      </categories>
   </entry>
   <entry>
     <title>typora+hexo-asset-img插入文章图片</title>
@@ -939,7 +939,7 @@
 </ol>
 </blockquote>
 <h2 id="进程间通信"><a href="#进程间通信" class="headerlink" title="进程间通信"></a>进程间通信</h2><p>由于进程的内存空间都是独立的，一般而言是不能互相访问的，<strong>但内核空间是每个进程都共享的</strong>，所以进程间通信必须要内核</p>
-<style>.lyixbcmkndoc{zoom:50%;}</style><img src="/2025/04/21/linux_LearningNote01_IPC/image-20250422183736258.png" class="lyixbcmkndoc" alt="image-20250422183736258">
+<style>.phvwtnnbddew{zoom:50%;}</style><img src="/2025/04/21/linux_LearningNote01_IPC/image-20250422183736258.png" class="phvwtnnbddew" alt="image-20250422183736258">
 
 <h3 id="管道"><a href="#管道" class="headerlink" title="管道"></a>管道</h3><h4 id="匿名管道"><a href="#匿名管道" class="headerlink" title="匿名管道"></a>匿名管道</h4><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ps auxf | grep mysql</span><br></pre></td></tr></table></figure>
 
@@ -975,7 +975,7 @@
 <li><p>另外，<strong>管道传输的数据是无格式的流且大小受限</strong>。</p>
 </li>
 <li><p>在 shell 里面执行 <code>A | B</code>命令的时候，A 进程和 B 进程都是 shell 创建出来的子进程，A 和 B 之间不存在父子关系，它俩的父进程都是 shell。</p>
-<style>.ndcwueynplje{zoom: 25%;}</style><img src="/2025/04/21/linux_LearningNote01_IPC/image-20250422213247731.png" class="ndcwueynplje" alt="image-20250422213247731"></li>
+<style>.iskpmauugxsj{zoom: 25%;}</style><img src="/2025/04/21/linux_LearningNote01_IPC/image-20250422213247731.png" class="iskpmauugxsj" alt="image-20250422213247731"></li>
 </ul>
 <p>​		因此，在bash终端输入的<code>|</code>匿名管道将多个命令连		接在一起，实际上也创建了多个子进程。所以为了		减少创建子进程的开销，尽量不要用多个<code>|</code>来连接		多个命令</p>
 <ul>
@@ -1026,7 +1026,7 @@
 </blockquote>
 <h3 id="共享内存"><a href="#共享内存" class="headerlink" title="共享内存"></a>共享内存</h3><p>在内存管理中，每个进程都有自己的虚拟内存空间，即使虚拟内存地址相同也不影响，因为他们可以对应不同的物理内存地址。</p>
 <p>而共享内存就是将进程的虚拟内存拿出一块并映射到相同的物理内存空间。当一个进程将数据传入时，另外一个进程也能“知道”，<strong>避免了相互拷贝带来的开销，大大提高进程间通信的速度</strong></p>
-<style>.egkqmsausppm{zoom:33%;}</style><img src="/2025/04/21/linux_LearningNote01_IPC/image-20250422215548453.png" class="egkqmsausppm" alt="image-20250422215548453">
+<style>.onyjdkfiklvk{zoom:33%;}</style><img src="/2025/04/21/linux_LearningNote01_IPC/image-20250422215548453.png" class="onyjdkfiklvk" alt="image-20250422215548453">
 
 <blockquote>
 <p><strong>需要用到的一个重要系统函数<code>mmap</code>介绍</strong></p>
@@ -1344,7 +1344,7 @@
 
 <h3 id="3．wget命令"><a href="#3．wget命令" class="headerlink" title="3．wget命令"></a><strong>3．wget命令</strong></h3><p>wget命令用于在终端命令行中下载网络文件，英文全称为“web get”，语法格式为“wget [参数] 网址”。</p>
 <p>借助于wget命令，可以无须打开浏览器，直接在命令行界面中就能下载文件。表2-6所示为wget命令中的参数以及参数的作用。</p>
-<style>.hzgfehveuckr{zoom:50%;}</style><img src="/2025/04/22/linux_bashCmd02/image-20250422140610109.png" class="hzgfehveuckr" alt="image-20250422140610109">
+<style>.upeyyamyplyo{zoom:50%;}</style><img src="/2025/04/22/linux_bashCmd02/image-20250422140610109.png" class="upeyyamyplyo" alt="image-20250422140610109">
 
 <blockquote>
 <p>由于本命令需要从外部网络下载文件，但虚拟机默认是无法连接外网的，在操作后会提示响应超时的报错</p>
@@ -1377,7 +1377,7 @@
 
 <h3 id="6．top命令"><a href="#6．top命令" class="headerlink" title="6．top命令"></a><strong>6．top命令</strong></h3><p>top命令用于<strong>动态地监视进程活动及系统负载等信息，输入该命令后按回车键执行即可</strong>。</p>
 <p>前面介绍的命令都是静态地查看系统状态，不能实时滚动最新数据，而top命令能够动态地查看系统状态，因此完全可以将它看作是<strong>Linux中“强化版的Windows任务管理器”</strong>。top是相当好用的性能分析工具，该命令的运行界面如图2-6所示。</p>
-<style>.poxkvrttbexy{zoom:50%;}</style><img src="/2025/04/22/linux_bashCmd02/image-20250422141220828.png" class="poxkvrttbexy" alt="image-20250422141220828">
+<style>.miythuojcuhs{zoom:50%;}</style><img src="/2025/04/22/linux_bashCmd02/image-20250422141220828.png" class="miythuojcuhs" alt="image-20250422141220828">
 
 <p>在图2-6中，top命令执行结果的前5行为系统整体的统计信息，其所代表的含义如下。</p>
 <blockquote>
