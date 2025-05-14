@@ -1,6 +1,393 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>播放器总结</title>
+    <url>/2025/02/18/AVDev_player/</url>
+    <content><![CDATA[<h2 id="1-播放器实现概述"><a href="#1-播放器实现概述" class="headerlink" title="1. 播放器实现概述"></a>1. 播放器实现概述</h2><p>[<strong>搬运请标注出处</strong>⚠]一个播放器实现大致可以分为两块，即ui主界面，播放器功能模块。这两个模块之间还可以添加其它的模块进行解耦等，例如bilibili的开源项目ijkplayer的框架就是: UI主界面—ijkplayer核心—ffplayer。其中ijkplayer作为ui主界面和ffplayer之间的中转站(<strong>实际ijkplayer核心中也可以处理部分回调的消息，并不需要所有的消息都回到主界面的消息循环函数中处理</strong>)。下文将提炼ijkplayer和ffplay的源码，并主要谈谈qt环境下ijkplayer与ffplay两者不同之处以及相同之处 。(后续对音视频理解更深了会继续更新)</p>
+<blockquote>
+<p>qt中实现ijkplayer：<a href="https://blog.csdn.net/yan_chenglong/article/details/136422632">超详细讲解IJKPlayer的播放器实战和源码分析-CSDN博客</a></p>
+</blockquote>
+<span id="more"></span>
+
+<img src="/2025/02/18/AVDev_player/image-20250218222315603.png" class="" title="image-20250218222315603">
+
+<h3 id="1-1-按下播放按钮到视频播放的过程"><a href="#1-1-按下播放按钮到视频播放的过程" class="headerlink" title="1.1 按下播放按钮到视频播放的过程"></a>1.1 按下播放按钮到视频播放的过程</h3><p>播放按钮到视频播放这一个功能实现大概分为以下过程</p>
+<blockquote>
+<ul>
+<li><p>按钮按下，发送信号给对应的响应函数(这其中包含了qt的信号槽机制，即信号的传递过程为：按钮点击 -&gt; QPushButton::clicked信号触发 -&gt; 控件对应响应函数执行，emit自定义信号SigPlayOrPauseBtnClicked-&gt; 主界面对应响应函数执行)</p>
+<p>注意：connect在响应函数对应文件中完成.</p>
+</li>
+<li><p>主界面对应的(PlayOrPause)响应函数执行，完成创建播放器，设置播放源，准备播放(调用ijkmp_prepare_async函数)</p>
+</li>
+<li><p>在准备播放函数中(prepare_async())启用消息队列并创建消息循环线程(<strong>消息循环队列有解耦的作用</strong>)，接着调用真正的播放器ffplay的众多接口</p>
+</li>
+<li><p>在ffplay.cpp中调用stream_open(该函数主要完成初始化工作),接下来就是ffplay框架的一系列执行动作了，即完成解复用，解码，音频输出，视频图像显示，AVDev_同步等等（注意ffplay播放器read_thread还完成了将相关消息放到消息队列的过程，这样消息循环线程就可以取相应消息并让播放器完成相应的动作。）</p>
+</li>
+</ul>
+</blockquote>
+<p>整个ffplay的执行过程一图流如下：(参考八小时码字员)</p>
+<img src="/2025/02/18/AVDev_player/image-20250218222358324.png" class="" title="image-20250218222358324">
+
+<h3 id="1-2-ijkplayer主要的改进之处–消息循环机制"><a href="#1-2-ijkplayer主要的改进之处–消息循环机制" class="headerlink" title="1.2 ijkplayer主要的改进之处–消息循环机制"></a>1.2 ijkplayer主要的改进之处–消息循环机制</h3><p>相比于ffplay播放器，ijkplayer主要增加了一个独立的消息队列，在播放按键被按下后便会有一个消息循环线程一直执行。这里也给出一个qt环境下该机制的总结图解。</p>
+<img src="/2025/02/18/AVDev_player/image-20250220210418225.png" class="" title="image-20250220210418225">
+
+<p>上面循环机制中牵涉到了状态的转换，而播放器状态的检查主要在ijkplayer的<code>ijkmp_prepare_async_l</code>和<code>ikjmp_chkst_start_l</code>函数中，即如果状态为错误状态，那么就会释放内存并结束，下面这张状态机图，描述了播放器状态转换的流程。</p>
+<style>.plhxnuwhwlck{zoom: 50%;}</style><img src="/2025/02/18/AVDev_player/image-20250220210507008.png" class="plhxnuwhwlck" alt="image-20250220210507008">
+
+<p>qt环境中，消息队列中的消息在message中被取出来，并通知上层ui主界面 ，而ijkplayer也需要通知上层的app处理消息，因此这里也给出添加注释后ijkplayer中的消息循环函数，以便读者区分。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//相当于主界面的消息循环函数</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">media_AVDev_player_msg_loop</span><span class="params">(<span class="type">void</span>* arg)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    @autoreleasepool &#123;<span class="comment">// 创建自动释放池以管理内存</span></span><br><span class="line">        IjkMediaAVDev_player *mp = (IjkMediaAVDev_player*)arg; </span><br><span class="line">        <span class="comment">// 创建一个弱引用的播放器控制器，避免循环引用</span></span><br><span class="line">        __weak IJKFFMovieAVDev_playerController *ffpController = <span class="built_in">ffplayerRetain</span>(<span class="built_in">ijkmp_set_weak_thiz</span>(mp, <span class="literal">NULL</span>));</span><br><span class="line">        <span class="comment">// 消息循环主体，当控制器存在时持续运行</span></span><br><span class="line">        <span class="keyword">while</span> (ffpController) &#123;</span><br><span class="line">            @autoreleasepool &#123;<span class="comment">// 为每次循环创建独立的自动释放池</span></span><br><span class="line">                <span class="comment">// 获取一个新的消息对象</span></span><br><span class="line">                IJKFFMovieAVDev_playerMessage *msg = [ffpController obtainMessage];</span><br><span class="line">                <span class="keyword">if</span> (!msg)</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                </span><br><span class="line">			   <span class="comment">// 从消息队列中获取消息，timeout为1</span></span><br><span class="line">                <span class="type">int</span> retval = <span class="built_in">ijkmp_get_msg</span>(mp, &amp;msg-&gt;_msg, <span class="number">1</span>);</span><br><span class="line">                <span class="keyword">if</span> (retval &lt; <span class="number">0</span>)</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">                <span class="comment">// block-get should never return 0</span></span><br><span class="line">                <span class="built_in">assert</span>(retval &gt; <span class="number">0</span>);	<span class="comment">// 确保消息获取成功</span></span><br><span class="line">                <span class="comment">// 通知app上层处理消息. 在主线程上异步处理消息事件</span></span><br><span class="line">                [ffpController performSelectorOnMainThread:@<span class="built_in">selector</span>(postEvent:) withObject:msg waitUntilDone:NO];</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">		<span class="comment">// 减少播放器引用计数并释放资源</span></span><br><span class="line">        <span class="comment">// retained in prepare_async, before SDL_CreateThreadEx</span></span><br><span class="line">        <span class="built_in">ijkmp_dec_ref_p</span>(&amp;mp);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-解复用"><a href="#2-解复用" class="headerlink" title="2.解复用"></a>2.解复用</h2><blockquote>
+<p>因为从read_thread开始，ijkplayer主要是按照ffplay的流程写的，所以下面也基本按照ffplay的总结了。</p>
+</blockquote>
+<p>在stream_open函数中创建读数据线程read_thread();解复用在该线程中完成</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">is-&gt;read_tid = <span class="built_in">SDL_CreateThreadEx</span>(&amp;is-&gt;_read_tid, read_thread, ffp, <span class="string">&quot;ff_read&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<p>—-&gt;来到read_thread()中</p>
+<blockquote>
+<p>引用<a href="https://www.jianshu.com/p/daf0a61cc1e0">ijkplayer框架深入剖析 - 简书</a></p>
+<p><strong>read_thread主要完成解复用，并得到解码前AVDev_流分开后各自的包队列。</strong></p>
+<ol>
+<li><p>创建上下文结构体，这个结构体是最上层的结构体，表示输入上下文</p>
+   <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">ic = <span class="built_in">avformat_alloc_context</span>();</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>设置中断函数，如果出错或者退出，就可以立刻退出</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">ic-&gt;interrupt_callback.callback = decode_interrupt_cb;</span><br><span class="line">  ic-&gt;interrupt_callback.opaque = is;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>打开文件，主要是探测协议类型，如果是网络文件则创建网络链接等</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">err = <span class="built_in">avformat_open_input</span>(&amp;ic, is-&gt;filename, is-&gt;iformat, &amp;ffp-&gt;format_opts);</span><br></pre></td></tr></table></figure>
+
+<ol start="4">
+<li>探测媒体类型，可得到当前文件的封装格式，AVDev_编码参数等信息</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">err = <span class="built_in">avformat_find_stream_info</span>(ic, opts);</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>打开视频、音频解码器。在此会打开相应解码器，并创建相应的解码线程。</p>
+   <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">stream_component_open</span>(ffp, st_index[AVMEDIA_TYPE_AUDIO]);</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>读取媒体数据，<strong>得到的是AVDev_分离的解码前数据</strong></p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">ret = <span class="built_in">av_read_frame</span>(ic, pkt);</span><br><span class="line">  <span class="comment">//被读取出来的数据如果不入包队列PacketQueue就要释放,而且必须要手动释放packet的数据</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>将AVDev_数据分别送入相应的queue中</p>
+</li>
+</ol>
+  <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (pkt-&gt;stream_index == is-&gt;audio_stream &amp;&amp; pkt_in_play_range) &#123;</span><br><span class="line">   <span class="built_in">packet_queue_put</span>(&amp;is-&gt;audioq, pkt);</span><br><span class="line">   &#125; <span class="keyword">else</span> <span class="keyword">if</span> (pkt-&gt;stream_index == is-&gt;video_stream &amp;&amp; pkt_in_play_range &amp;&amp; !(is-&gt;video_st &amp;&amp; (is-&gt;video_st-&gt;disposition &amp; AV_DISPOSITION_ATTACHED_PIC))) &#123;</span><br><span class="line">   <span class="built_in">packet_queue_put</span>(&amp;is-&gt;videoq, pkt);</span><br><span class="line">    ......</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="built_in">av_packet_unref</span>(pkt);<span class="comment">//释放pkt的数据</span></span><br><span class="line">&#125;   </span><br></pre></td></tr></table></figure>
+
+<p>重复6、7步，即可不断获取待播放的数据。</p>
+</blockquote>
+<h2 id="3-解码"><a href="#3-解码" class="headerlink" title="3. 解码"></a>3. 解码</h2><style>.qgnjuorwsslq{zoom: 67%;}</style><img src="/2025/02/18/AVDev_player/image-20250220224325219.png" class="qgnjuorwsslq" alt="image-20250220224325219">
+
+<ul>
+<li>解码定义：<strong>将压缩的视频&#x2F;音频数据转换回原始的未压缩格式</strong></li>
+</ul>
+<p>在stream_component_open()中启动了几个解码线程,分别为音频解码线程audio_thread, 视频解码线程video_thread，字母解码线程subtitle_thread</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//实际线程创建是在decoder_start中</span></span><br><span class="line"><span class="comment">//static int decoder_start(Decoder *d, int (*fn)(void *), const char *thread_name, void* arg)</span></span><br><span class="line">d-&gt;decoder_tid = <span class="built_in">SDL_CreateThread</span>(fn, thread_name, arg);    <span class="comment">// 创建解码线程</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>stream_component_open函数作用：</strong></p>
+<ul>
+<li><p>包含decode_init和decoder_start</p>
+</li>
+<li><p><strong>打开对应的解码器</strong>并作初始化</p>
+</li>
+<li><p><strong>创建和启动解码线程(audio_thread, video_thread)</strong></p>
+</li>
+<li><p><strong>初始化音频或视频输出设备(audio_open)</strong></p>
+</li>
+</ul>
+<h3 id="3-1视频解码线程video-thread"><a href="#3-1视频解码线程video-thread" class="headerlink" title="3.1视频解码线程video_thread"></a>3.1视频解码线程video_thread</h3><p>该线程的总体流程为：</p>
+<blockquote>
+<ol>
+<li>获取stream timebase，以便将frame的pts转成秒为单位(注意这里frame定义为<code>AVFrame *frame = av_frame_alloc();</code>，即解码后的帧数据)</li>
+<li>获取帧率，以便计算每帧picture的duration</li>
+<li>获取解码后的视频帧，具体调⽤**get_video_frame()**实现</li>
+<li>计算帧持续时间和换算pts值为秒</li>
+<li>将解码后的视频帧插⼊队列，具体调⽤queue_picture()实现</li>
+<li><strong>释放frame对应的数据</strong>(<code>av_frame_free(&amp;frame);</code>)</li>
+</ol>
+</blockquote>
+<ul>
+<li><p>get_video_frame()函数</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">static</span> <span class="type">int</span> <span class="title">get_video_frame</span><span class="params">(VideoState *is, AVFrame *frame)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	<span class="type">int</span> got_picture;</span><br><span class="line">	<span class="comment">// 1. 获取解码后的视频帧</span></span><br><span class="line">	<span class="keyword">if</span> ((got_picture = <span class="built_in">decoder_decode_frame</span>(&amp;is-&gt;viddec, frame, <span class="literal">NULL</span></span><br><span class="line">)) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="number">-1</span>; <span class="comment">// 返回-1意味着要退出解码线程, 所以要分析decoder_decode_frame什么情况下返回-1</span></span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">if</span> (got_picture) &#123;</span><br><span class="line">	<span class="comment">//分析获取到的该帧是否要drop掉, 该机制的⽬的是在放⼊帧队列前先drop掉过时的视频帧</span></span><br><span class="line">		.....</span><br><span class="line"> 	&#125;</span><br><span class="line">	<span class="keyword">return</span> got_picture;    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<p>​	其中<code>decoder_decode_frame</code>是ffplay封装好的函数,其中就有了<code>avcodec_send_packet</code>往解码器发送解复用后的包队列数据，和<code>avcodec_receive_frame</code>接收解码后的帧</p>
+<ul>
+<li>get_video_frame()函数的流程为：</li>
+</ul>
+<blockquote>
+<p>1.调⽤decoder_decode_frame 解码并获取解码后的视频帧；(要拿到⼀帧解码数据，或解码出错、⽂件结束，才会返回。)</p>
+<p>2.分析如果获取到帧是否需要drop掉（逻辑就是如果刚解出来就落后主时钟，那就没有必要放⼊Frame队<br>列，再拿去播放，但是丢帧也是有⼀定的条件的.</p>
+<p><strong>即需要以下因素都成立才丢帧</strong></p>
+<ul>
+<li><p>!isnan(diff)：当前pts和主时钟的差值是有效值</p>
+</li>
+<li><p>fabs(diff) &lt; AV_NOSYNC_THRESHOLD：差值在可同步范围内，这⾥设置的是10秒，意思是如果差<br>值太⼤这⾥就不管了了，可能流本身录制的时候就有问题，这⾥不能随便把帧都drop掉；</p>
+</li>
+<li><p>diff - is-&gt;frame_last_filter_delay &lt; 0：和过滤器有关系，不设置过滤器时简化为 diff &lt; 0;</p>
+</li>
+<li><p>is-&gt;viddec.pkt_serial &#x3D;&#x3D; is-&gt;vidclk.serial：解码器的serial和时钟的serial相同，即是⾄少显示了<br>⼀帧图像，因为只有显示的时候才调⽤update_video_pts()设置到video clk的serial；</p>
+</li>
+<li><p>is-&gt;videoq.nb_packets：⾄少packetqueue有1个包。</p>
+</li>
+</ul>
+</blockquote>
+<ul>
+<li>decoder_decode_frame函数</li>
+</ul>
+<p>​	该函数内部有一个循环，循环主要分成以下3个步骤</p>
+<blockquote>
+<ol>
+<li><p>同⼀播放序列流连续的情况下(即d-&gt;queue-&gt;serial &#x3D;&#x3D; d-&gt;pkt_serial)，不断调⽤avcodec_receive_frame获取解码后的frame。取到帧就直接返回1，错误返回0</p>
+</li>
+<li><p>获取⼀个packet，如果播放序列不⼀致(数据不连续，即d-&gt;queue-&gt;serial !&#x3D; d-&gt;pkt_serial)则过滤掉“过时”的packet。这个过滤操作具体为</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">    <span class="comment">// 2.1 如果没有数据可读则唤醒read_thread, 实际是continue_read_thread SDL_cond</span></span><br><span class="line">    <span class="keyword">if</span> (d-&gt;queue-&gt;nb_packets == <span class="number">0</span>)  <span class="comment">// 没有数据可读</span></span><br><span class="line">        <span class="built_in">SDL_CondSignal</span>(d-&gt;empty_queue_cond);<span class="comment">// 通知read_thread(生产者线程)放入packet</span></span><br><span class="line">    <span class="comment">// 阻塞式读取packet,这里就对应“过滤”操作</span></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">    packet_queue_get内部有一个等待线程，即SDL_CondWait(q-&gt;cond, q-&gt;mutex);（设置block=1了，所以是阻塞模式，需要等待数据）。</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">packet_queue_get</span>(d-&gt;queue, &amp;pkt, <span class="number">1</span>, &amp;d-&gt;pkt_serial) &lt; <span class="number">0</span>) <span class="comment">// block=1 表示使用阻塞模式</span></span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>; <span class="comment">//返回-1表示队列被标记为中止了</span></span><br><span class="line">&#125; <span class="keyword">while</span> (d-&gt;queue-&gt;serial != d-&gt;pkt_serial);<span class="comment">// 如果不是同一播放序列(流不连续)则继续读取</span></span><br></pre></td></tr></table></figure>
+
+<p>补充：packet_queue_get函数</p>
+<p>​	packet_queue_get 返回小于0的情况：</p>
+<ul>
+<li>队列被标记为中止（abort_request &#x3D; 1）</li>
+<li>队列被销毁或无效</li>
+<li>发生了系统错误</li>
+<li>播放器请求停止</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">static</span> <span class="type">int</span> <span class="title">packet_queue_get</span><span class="params">(PacketQueue *q, AVPacket *pkt, <span class="type">int</span> block, <span class="type">int</span> *serial)</span> </span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> ret;</span><br><span class="line">    <span class="built_in">SDL_LockMutex</span>(q-&gt;mutex);  <span class="comment">// 加锁</span></span><br><span class="line">    <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">        <span class="comment">// 检查队列状态</span></span><br><span class="line">        <span class="keyword">if</span> (q-&gt;abort_request) &#123;</span><br><span class="line">            ret = <span class="number">-1</span>;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 尝试获取数据包</span></span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">av_fifo_size</span>(q-&gt;pkt_list) &gt;= <span class="built_in">sizeof</span>(MyAVPacketList)) &#123;</span><br><span class="line">            <span class="comment">// 有数据可读，读取数据包</span></span><br><span class="line">            ret = <span class="number">1</span>;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 没有数据可读</span></span><br><span class="line">        <span class="keyword">if</span> (!block) &#123;  <span class="comment">// 非阻塞模式</span></span><br><span class="line">            ret = <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 阻塞模式：等待数据</span></span><br><span class="line">        <span class="built_in">SDL_CondWait</span>(q-&gt;cond, q-&gt;mutex);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">SDL_UnlockMutex</span>(q-&gt;mutex);  <span class="comment">// 解锁</span></span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>将packet送⼊解码器</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">avcodec_send_packet</span>(d-&gt;avctx, &amp;pkt);</span><br></pre></td></tr></table></figure></li>
+</ol>
+</blockquote>
+<h3 id="3-2-音频解码线程audio-thread"><a href="#3-2-音频解码线程audio-thread" class="headerlink" title="3.2 音频解码线程audio_thread"></a>3.2 音频解码线程audio_thread</h3><p>解码后的音频帧frame放入音频帧队列sampq。音频解码流程和视频相差不大</p>
+<p>注意几个frame结构体的区别：</p>
+<ul>
+<li><p>AVFrame(结构体): 可以看作解码后数据的最基本单位</p>
+</li>
+<li><p>Frame(结构体)：还包含了视频控制信息，其中包含了AVFrame</p>
+</li>
+<li><p>FrameQueue(结构体):其中包含了一个数据队列，用于存放Frame类型数据</p>
+</li>
+</ul>
+<p>下面为audio_thread中代码</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> ((got_frame = <span class="built_in">decoder_decode_frame</span>(&amp;is-&gt;auddec, frame, <span class="literal">NULL</span>)) &lt; <span class="number">0</span>)</span><br><span class="line">        <span class="keyword">goto</span> the_end;</span><br><span class="line">    <span class="keyword">if</span> (got_frame) &#123;</span><br><span class="line">        tb = &#123; <span class="number">1</span>, frame-&gt;sample_rate &#125;; <span class="comment">//采样率一般是44.1khz</span></span><br><span class="line">        <span class="comment">//af是队列中的一个槽slot）作为队列中的一个容器，用于存储解码后的帧信息（如 pts、duration</span></span><br><span class="line">        <span class="keyword">if</span> (!(af = <span class="built_in">frame_queue_peek_writable</span>(&amp;is-&gt;sampq)))</span><br><span class="line">            <span class="keyword">goto</span> the_end;</span><br><span class="line">        <span class="comment">// 计算 PTS（显示时间戳</span></span><br><span class="line">        <span class="comment">// 将解码后的PTS 从采样点数转换为秒，即af-&gt;pts = 当前对应采样点* 1/采样率</span></span><br><span class="line">        af-&gt;pts = (frame-&gt;pts == AV_NOPTS_VALUE) ? NAN : frame-&gt;pts * <span class="built_in">av_q2d</span>(tb);<span class="comment">//av_q2d(tb)前一个除以后一个数</span></span><br><span class="line">        <span class="comment">// 设置帧位置和序列号</span></span><br><span class="line">        af-&gt;pos = <span class="built_in">av_frame_get_pkt_pos</span>(frame);<span class="comment">//获取帧对应的数据包在文件中的字节位置</span></span><br><span class="line">        af-&gt;serial = is-&gt;auddec.pkt_serial;</span><br><span class="line">        <span class="comment">// 计算帧持续时间（样本数/采样率）</span></span><br><span class="line">        af-&gt;duration = <span class="built_in">av_q2d</span>(&#123; frame-&gt;nb_samples, frame-&gt;sample_rate &#125;);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//AVframe和AVpacket都是结构体，一般定义一个指向其的指针。引用计数主要就是为了避免不同的指针指向同一空间(浅拷贝问题)时</span></span><br><span class="line">        <span class="comment">// 会导致的内存重复释放问题。</span></span><br><span class="line">        <span class="built_in">av_frame_move_ref</span>(af-&gt;frame, frame); <span class="comment">//frame是解码后得到的帧(数据类型为指向AVFrame的指针)，af-&gt;frame是Frame结构体中的指向AVFrame的指针，这里将解码后的帧数据全都转移到Frame中去</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">//解码后的帧传递给播放线程</span></span><br><span class="line">        <span class="built_in">frame_queue_push</span>(&amp;is-&gt;sampq); <span class="comment">//进入该函数唤醒msg_queue_get()取消息</span></span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125; <span class="keyword">while</span> (ret &gt;= <span class="number">0</span> || ret == <span class="built_in">AVERROR</span>(EAGAIN) || ret == AVERROR_EOF);<span class="comment">//AVERROR(EAGAIN)需要更多数据</span></span><br></pre></td></tr></table></figure>
+
+<p>注意音频解码中，设置时间基<code>tb = (AVRational)&#123;1, frame-&gt;sample_rate&#125;;</code> ，而视频解码中设置时间基为<code>stream-&gt;base_base</code>。实际上在decoder_decode_frame()函数中</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//decoder_decode_frame()函数中	</span></span><br><span class="line"><span class="keyword">case</span> AVMEDIA_TYPE_AUDIO:</span><br><span class="line">    ret = <span class="built_in">avcodec_receive_frame</span>(d-&gt;avctx, frame);</span><br><span class="line">    <span class="keyword">if</span> (ret &gt;= <span class="number">0</span>) &#123;</span><br><span class="line">        AVRational tb = &#123;<span class="number">1</span>, frame-&gt;sample_rate&#125;;    <span class="comment">//</span></span><br><span class="line">        <span class="keyword">if</span> (frame-&gt;pts != AV_NOPTS_VALUE) &#123;</span><br><span class="line">            <span class="comment">// 如果frame-&gt;pts正常则先将其从pkt_timebase转成&#123;1, frame-&gt;sample_rate&#125;</span></span><br><span class="line">            <span class="comment">// pkt_timebase实质就是stream-&gt;time_base</span></span><br><span class="line">            frame-&gt;pts = <span class="built_in">av_rescale_q</span>(frame-&gt;pts, d-&gt;avctx-&gt;pkt_timebase, tb);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (d-&gt;next_pts != AV_NOPTS_VALUE) &#123;</span><br><span class="line">            <span class="comment">// 如果frame-&gt;pts不正常则使用上一帧更新的next_pts和next_pts_tb</span></span><br><span class="line">            <span class="comment">// 转成&#123;1, frame-&gt;sample_rate&#125;</span></span><br><span class="line">            frame-&gt;pts = <span class="built_in">av_rescale_q</span>(d-&gt;next_pts, d-&gt;next_pts_tb, tb);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (frame-&gt;pts != AV_NOPTS_VALUE) &#123;</span><br><span class="line">            <span class="comment">// 根据当前帧的pts和nb_samples预估下一帧的pts</span></span><br><span class="line">            d-&gt;next_pts = frame-&gt;pts + frame-&gt;nb_samples;</span><br><span class="line">            d-&gt;next_pts_tb = tb; <span class="comment">// 设置timebase</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">	<span class="keyword">break</span>;</span><br></pre></td></tr></table></figure>
+
+<p>从上可以看出来，将audio frame从decoder_decode_frame取出来后，已由stream-&gt;time_base转成了{1, frame-&gt;sample_rate}作为time_base。</p>
+<h2 id="4-AVDev-输出"><a href="#4-AVDev-输出" class="headerlink" title="4. AVDev_输出"></a>4. AVDev_输出</h2><h3 id="4-1-音频输出"><a href="#4-1-音频输出" class="headerlink" title="4.1 音频输出"></a>4.1 音频输出</h3><p>播放流程总结：</p>
+<blockquote>
+<p>[SDL音频设备] -&gt; [需要数据] -&gt; [调用sdl_audio_callback] -&gt; [从音频队列获取数据] -&gt; [填充到设备缓冲区] -&gt; [播放]</p>
+</blockquote>
+<p>在ffplay中，音频输出的函数调用结构为</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//在read_thread()函数中</span></span><br><span class="line">--&gt;stream_componet_open</span><br><span class="line">	--&gt;audio_open   <span class="comment">//SDL_OpenAudio,打开音频输出设备</span></span><br><span class="line">    	--&gt;sdl_audio_callback <span class="comment">//音频pcm数据回调函数</span></span><br><span class="line">       		--&gt;audio_decode_frame <span class="comment">//该函数从解码后的帧队列中取一帧并放到audio_buf中，以供sdl回调函数取数据</span></span><br></pre></td></tr></table></figure>
+
+<p>而在ijkplayer中，ffplay.c这部分是将“音频输出”这个消息放到消息队列，并由主界面的message_loop读取消息。</p>
+<p>下面一步步分析这几个函数的流程</p>
+<ul>
+<li><p>stream_component_open中</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">/* prepare audio output */</span></span><br><span class="line"><span class="comment">//打开音频流</span></span><br><span class="line"><span class="keyword">if</span> ((ret = <span class="built_in">audio_open</span>(is, channel_layout, nb_channels, sample_rate, &amp;is-&gt;audio_tgt)) &lt; <span class="number">0</span>)<span class="comment">//调用audio_open,其中有sdl回调函数</span></span><br><span class="line">    <span class="keyword">goto</span> fail;</span><br><span class="line">is-&gt;audio_hw_buf_size = ret;<span class="comment">//音频硬件设备的缓冲区大小.</span></span><br><span class="line">is-&gt;audio_src = is-&gt;audio_tgt; <span class="comment">////暂且将数据源参数等同于⽬标输出参数</span></span><br><span class="line"><span class="comment">//初始化audio_buf相关参数</span></span><br><span class="line">is-&gt;audio_buf_size = <span class="number">0</span>;</span><br><span class="line">is-&gt;audio_buf_index = <span class="number">0</span>;</span><br></pre></td></tr></table></figure>
+
+<p>在这里牵涉了几个缓存区</p>
+<blockquote>
+<ul>
+<li>audio_buf</li>
+</ul>
+<p>​    audio_decode_frame从解码后的音频帧队列sampq取pcm数据，并存入audio_buf指向的内存空间</p>
+<ul>
+<li>audio_buf1</li>
+</ul>
+<p>​    audio_decode_frame函数重采样机制定义的指针，audio_buf1指向重采样后的数据</p>
+<ul>
+<li>audio_hw_buf</li>
+</ul>
+<p>​    SDL_audio_callback取数据就存入该音频设备缓存区(在该函数中audio_decode_frame取的pcm是数据后面都会拷贝到stream指向的内存空间，这个内存空间就是音频设备缓存区)</p>
+<hr>
+<p>对应的几个size</p>
+<ul>
+<li>audio_buf_size: audio_buf的总⼤⼩，有效的PCMsize</li>
+<li>audio_buf_index: 下⼀次可读的audio_buf的index位置。</li>
+<li>audio_write_buf_size：audio_buf剩余的buffer⻓度，即audio_buf_size - audio_buf_index</li>
+<li>audio_buf1_size:  在audio_decode_frame中申请的缓冲区大小(所以该大小代表最初buf的上限大小)，经过重采样后得到缓存区大小就是audio_buf_size</li>
+</ul>
+</blockquote>
+</li>
+<li><p>audio_open()函数中</p>
+</li>
+</ul>
+<p>​	设置期望的输出参数：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">wanted_spec.format = AUDIO_S16SYS; <span class="comment">//sdl支持的音频采样点格式</span></span><br><span class="line">wanted_spec.silence = <span class="number">0</span>;</span><br><span class="line"><span class="comment">//sample是一次回调处理的采样点数</span></span><br><span class="line"><span class="comment">//例如1024表示一次回调处理1024个采样点</span></span><br><span class="line">wanted_spec.samples = <span class="built_in">FFMAX</span>(SDL_AUDIO_MIN_BUFFER_SIZE, <span class="number">2</span> &lt;&lt; <span class="built_in">av_log2</span>(wanted_spec.freq / <span class="built_in">SDL_AoutGetAudioPerSecondCallBacks</span>(ffp-&gt;aout)));</span><br><span class="line">wanted_spec.callback = sdl_audio_callback; <span class="comment">//回调</span></span><br><span class="line">wanted_spec.userdata = opaque; <span class="comment">//用户数据</span></span><br></pre></td></tr></table></figure>
+
+<p>​	打开音频设备</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// SDL_OpenAudio 是 SDL 1.2 的接口，较为简单;</span></span><br><span class="line"><span class="comment">//SDL_AoutOpenAudio 是 SDL 2.0 中更先进的音频设备管理接口</span></span><br><span class="line"><span class="keyword">while</span> (<span class="built_in">SDL_AoutOpenAudio</span>(ffp-&gt;aout, &amp;wanted_spec, &amp;spec) &lt; <span class="number">0</span>) &#123;<span class="comment">//打开音频设备</span></span><br><span class="line">    ....</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​	设置重采样要输出的格式</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//audio_hw_params就是做重采样要输出的参数格式</span></span><br><span class="line">audio_hw_params-&gt;fmt = AV_SAMPLE_FMT_S16;</span><br><span class="line">audio_hw_params-&gt;freq = spec.freq;</span><br><span class="line">audio_hw_params-&gt;channel_layout = wanted_channel_layout;</span><br><span class="line">audio_hw_params-&gt;channels =  spec.channels;</span><br><span class="line"><span class="comment">//frame_size为一个音频样本点的大小(单位为字节)</span></span><br><span class="line">audio_hw_params-&gt;frame_size = <span class="built_in">av_samples_get_buffer_size</span>(<span class="literal">NULL</span>, audio_hw_params-&gt;channels, <span class="number">1</span>, audio_hw_params-&gt;fmt, <span class="number">1</span>);</span><br><span class="line"><span class="comment">//计算每秒的字节数</span></span><br><span class="line">audio_hw_params-&gt;bytes_per_sec = <span class="built_in">av_samples_get_buffer_size</span>(<span class="literal">NULL</span>, audio_hw_params-&gt;channels, audio_hw_params-&gt;freq, audio_hw_params-&gt;fmt, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
+
+<p>​	返回输出设备缓存区的大小（这个缓冲区在音频需要变速的场景下很有用，因为回调函数每次获取的数据量是固定的，但是变速后音频帧队列每帧的采样点数量会改变，从而导致输出设备变速的数据大小和SDL回调取的数据大小不一致）</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">return</span> spec.size; <span class="comment">//单位为字节</span></span><br></pre></td></tr></table></figure>
+
+<p><code>spec.size = wanted_sepc.sample * channels * frame_size</code></p>
+<p>例如一帧采样点为1024，双通道，音频格式为是s16，则<code>spec.size = 1024*2*2</code></p>
+<ul>
+<li>回调函数sdl_audio_callback</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//stream 拷贝pcm数据的指针</span></span><br><span class="line"><span class="comment">//len    需要拷贝的长度</span></span><br><span class="line"><span class="comment">//static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//主要逻辑</span></span><br><span class="line"><span class="comment">//len初始长度就是spec.size</span></span><br><span class="line"><span class="keyword">while</span> (len &gt; <span class="number">0</span>) &#123;<span class="comment">//循环取数据，直接达到要求的大小</span></span><br><span class="line">    <span class="comment">//音频缓冲区已经被读取完，需要重新从队列（sampq）中获取新的音频数据来继续播放。</span></span><br><span class="line">    <span class="keyword">if</span> (is-&gt;audio_buf_index &gt;= is-&gt;audio_buf_size) &#123;</span><br><span class="line">        <span class="comment">//从音频帧队列sampq中取pcm数据，大小为audio_size，注意单位是字节，输出不是采样点个数</span></span><br><span class="line">        audio_size = <span class="built_in">audio_decode_frame</span>(ffp); <span class="comment">//真正有效的pcm数据大小</span></span><br><span class="line">        <span class="keyword">if</span> (audio_size &lt; <span class="number">0</span>) &#123;<span class="comment">//没有数据了</span></span><br><span class="line">            <span class="comment">/* if error, just output silence */</span></span><br><span class="line">            <span class="comment">//静音</span></span><br><span class="line">            is-&gt;audio_buf = <span class="literal">NULL</span>;</span><br><span class="line">            is-&gt;audio_buf_size = SDL_AUDIO_MIN_BUFFER_SIZE / is-&gt;audio_tgt.frame_size * is-&gt;audio_tgt.frame_size;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (is-&gt;show_mode != SHOW_MODE_VIDEO)</span><br><span class="line">                <span class="built_in">update_sample_display</span>(is, (<span class="type">int16_t</span> *)is-&gt;audio_buf, audio_size);</span><br><span class="line">            <span class="comment">//audio_size即为audio_decode_frame返回的(重采样)实际输出数据大小(单位为字节)</span></span><br><span class="line">            is-&gt;audio_buf_size = audio_size; <span class="comment">//audio_buf的大小</span></span><br><span class="line">        &#125;</span><br><span class="line">        is-&gt;audio_buf_index = <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (is-&gt;auddec.pkt_serial != is-&gt;audioq.serial) &#123;</span><br><span class="line">        is-&gt;audio_buf_index = is-&gt;audio_buf_size;</span><br><span class="line">        <span class="built_in">memset</span>(stream, <span class="number">0</span>, len);</span><br><span class="line">        <span class="comment">// stream += len;</span></span><br><span class="line">        <span class="comment">// len = 0;</span></span><br><span class="line">        <span class="built_in">SDL_AoutFlushAudio</span>(ffp-&gt;aout);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// len1就是目前audio_buf还剩下的长度</span></span><br><span class="line">    len1 = is-&gt;audio_buf_size - is-&gt;audio_buf_index; </span><br><span class="line">    <span class="keyword">if</span> (len1 &gt; len) <span class="comment">//如果还剩下的长度比还要取的数据长度大</span></span><br><span class="line">        len1 = len; <span class="comment">//需要多少给多少</span></span><br><span class="line">    <span class="comment">//如果不需要静音且audio_buf不为空且音量最大则直接拷贝数据</span></span><br><span class="line">    <span class="keyword">if</span> (!is-&gt;muted &amp;&amp; is-&gt;audio_buf &amp;&amp; is-&gt;audio_volume == SDL_MIX_MAXVOLUME)</span><br><span class="line">        <span class="built_in">memcpy</span>(stream, (<span class="type">uint8_t</span> *)is-&gt;audio_buf + is-&gt;audio_buf_index, len1);<span class="comment">//数据拷贝</span></span><br><span class="line">    <span class="keyword">else</span> &#123;<span class="comment">//调整音频</span></span><br><span class="line">        <span class="built_in">memset</span>(stream, <span class="number">0</span>, len1);</span><br><span class="line">        <span class="keyword">if</span> (!is-&gt;muted &amp;&amp; is-&gt;audio_buf)</span><br><span class="line">            <span class="built_in">SDL_MixAudio</span>(stream, (<span class="type">uint8_t</span> *)is-&gt;audio_buf + is-&gt;audio_buf_index, len1, is-&gt;audio_volume);</span><br><span class="line">    &#125;</span><br><span class="line">    len -= len1;  <span class="comment">//减去每次读取的数据</span></span><br><span class="line">    stream += len1; <span class="comment">//stream拷贝数据的位置也做相应的位移</span></span><br><span class="line">    is-&gt;audio_buf_index += len1; <span class="comment">//audio_buf_index位置也更新</span></span><br><span class="line">&#125;</span><br><span class="line">is-&gt;audio_write_buf_size = is-&gt;audio_buf_size - is-&gt;audio_buf_index;</span><br><span class="line"> <span class="comment">/* Let&#x27;s assume the audio driver that is used by SDL has two periods. */</span></span><br><span class="line"><span class="comment">//设置音频同步的时钟  </span></span><br><span class="line"><span class="comment">//set_clock_at</span></span><br><span class="line">    <span class="keyword">if</span> (!std::<span class="built_in">isnan</span>(is-&gt;audio_clock)) &#123;</span><br><span class="line">        <span class="type">double</span> audio_clock = is-&gt;audio_clock / pVideoCtl-&gt;<span class="built_in">ffp_get_playback_rate</span>();</span><br><span class="line">        pVideoCtl-&gt;<span class="built_in">set_clock_at</span>(&amp;is-&gt;audclk, audio_clock  - (<span class="type">double</span>)(<span class="number">2</span> * is-&gt;audio_hw_buf_size + is-&gt;audio_write_buf_size) / is-&gt;audio_tgt.bytes_per_sec, is-&gt;audio_clock_serial, audio_callback_time / <span class="number">1000000.0</span>);</span><br><span class="line">        pVideoCtl-&gt;<span class="built_in">sync_clock_to_slave</span>(&amp;is-&gt;extclk, &amp;is-&gt;audclk);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>audio_decode_frame</li>
+</ul>
+<p>​	该函数主要完成的功能为：</p>
+<p>1.从sampq取⼀帧，必要时丢帧。如发⽣了seek，此时serial会不连续，就需要丢帧处理</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (!(af = <span class="built_in">frame_queue_peek_readable</span>(&amp;is-&gt;sampq)))</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    <span class="built_in">frame_queue_next</span>(&amp;is-&gt;sampq); <span class="comment">//获取下一帧，丢帧的前提就是下一帧存在</span></span><br><span class="line">&#125; <span class="keyword">while</span> (af-&gt;serial != is-&gt;audioq.serial); <span class="comment">//数据不连续</span></span><br></pre></td></tr></table></figure>
+
+<p>2.计算这⼀帧的字节数</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">data_size = <span class="built_in">av_samples_get_buffer_size</span>(<span class="literal">NULL</span>, af-&gt;frame-&gt;channels,</span><br><span class="line">                                       af-&gt;frame-&gt;nb_samples,   <span class="comment">//af指向Frame类型结构体</span></span><br><span class="line">                                       af-&gt;frame-&gt;format, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
+
+<p>3.获取这⼀帧的数据。对于frame格式和输出设备不同的，需要重采样；如果格式相同，则直接拷⻉指针输出即可</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//，重采样是否需要初始化在前面有进行判断，如果sdl支持的格式和采的解码音频帧格式不同就重采样</span></span><br><span class="line"><span class="keyword">if</span> (is-&gt;swr_ctx) &#123;</span><br><span class="line"> ....<span class="comment">//省略前面的   </span></span><br><span class="line">	is-&gt;audio_buf = is-&gt;audio_buf1;</span><br><span class="line">        <span class="type">int</span> bytes_per_sample = <span class="built_in">av_get_bytes_per_sample</span>(is-&gt;audio_tgt.fmt);</span><br><span class="line">    <span class="comment">//重采样后返回的实际数据大小resampled_data_size。单位为字节，len2是重采样后单个声道的采样点数</span></span><br><span class="line">    resampled_data_size = len2 * is-&gt;audio_tgt.channels * bytes_per_sample; </span><br><span class="line">&#125; <span class="keyword">else</span> &#123;<span class="comment">//如果不需要重采样</span></span><br><span class="line">	 is-&gt;audio_buf = af-&gt;frame-&gt;data[<span class="number">0</span>];</span><br><span class="line">      resampled_data_size = data_size;	    </span><br><span class="line">&#125;</span><br><span class="line">is-&gt;audio_buf = is-&gt;audio_buf1;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<p>该部分重采样的逻辑可阅读阅读查看，这里省略</p>
+<p>最后返回的resampled_data_size就是重采样后实际的audio_buf大小。</p>
+<p>4.更新audio_clock，audio_clock_serial。⽤于设置audclk.</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">/* update the audio clock with the pts */</span></span><br><span class="line"><span class="keyword">if</span> (!<span class="built_in">isnan</span>(af-&gt;pts))</span><br><span class="line">    is-&gt;audio_clock = af-&gt;pts + (<span class="type">double</span>) af-&gt;frame-&gt;nb_samples / af-&gt;frame-&gt;sample_rate;<span class="comment">//audio_clock指向这一帧的末尾</span></span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    is-&gt;audio_clock = NAN;</span><br><span class="line">is-&gt;audio_clock_serial = af-&gt;serial;</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-2-视频输出"><a href="#4-2-视频输出" class="headerlink" title="4.2 视频输出"></a>4.2 视频输出</h3><p>在ffplay中，视频输出的函数调用结构为</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//主函数中</span></span><br><span class="line">--&gt;<span class="built_in">event_loop</span>() <span class="comment">//</span></span><br><span class="line">	--&gt;<span class="built_in">refresh_loop_wait_event</span>() <span class="comment">//视频在这里显示</span></span><br><span class="line">		 --&gt;<span class="built_in">video_refresh</span>() </span><br><span class="line">			 --&gt;<span class="built_in">video_display</span>() </span><br><span class="line">				 --&gt;<span class="built_in">video_image_display</span>() </span><br><span class="line">					 --&gt;<span class="built_in">upload_texture</span>()    </span><br></pre></td></tr></table></figure>
+
+<p>ffplay中使用可以跨平台的SDL作为显示的SDK</p>
+<p>因此第一步就是SDL初始化—即先<code>SDL_Init</code>,创建窗口(<code>SDL_CreateWindow</code>)，创建渲染器(<code>SDL_CreateRenderer</code>)</p>
+<p>随后主函数调用stream_open，开启<strong>read_thread()<strong>数据读取线程,并调用播放控制相应循环</strong>event_loop</strong></p>
+<p>与视频画面输出有关的函数解析如下</p>
+<ul>
+<li>read_thread中（包含画面窗口的设置）</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//7 从待处理流中获取相关参数，设置显示窗口的宽度、高度及宽高比</span></span><br><span class="line"><span class="keyword">if</span> (st_index[AVMEDIA_TYPE_VIDEO] &gt;= <span class="number">0</span>) &#123;</span><br><span class="line">    AVStream *st = ic-&gt;streams[st_index[AVMEDIA_TYPE_VIDEO]];</span><br><span class="line">    AVCodecParameters *codecpar = st-&gt;codecpar;</span><br><span class="line">    <span class="comment">//根据流和帧宽高比猜测视频帧单个像素宽高比（像素的宽高比，注意不是图像的）</span></span><br><span class="line">    AVRational sar = <span class="built_in">av_guess_sample_aspect_ratio</span>(ic, st, <span class="literal">NULL</span>);</span><br><span class="line">    <span class="keyword">if</span> (codecpar-&gt;width) &#123;</span><br><span class="line">        <span class="comment">// 设置显示窗口的大小和宽高比</span></span><br><span class="line">        <span class="built_in">set_default_window_size</span>(codecpar-&gt;width, codecpar-&gt;height, sar);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p> set_default_window_size设置了窗口的宽，高，同时还调用<code>calculate_display_rect(&amp;rect, 0, 0, max_width,max_height, width, height, sar);</code>获取了显示区域的起始坐标和大小</p>
+<ul>
+<li>refresh_loop_wait_event()</li>
+</ul>
+<p>视频画面显示逻辑部分，在event_loop()被调用。</p>
+<p>设置休眠等待时间</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="type">double</span> remaining_time = <span class="number">0.0</span>;</span><br></pre></td></tr></table></figure>
+
+<p>抽取输入设备的事件到事件队列中,并再次通过参数SDL_GETEVENT⾮阻塞查询队列中是否有事件</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">SDL_PumpEvents</span>();</span><br><span class="line"><span class="comment">////////</span></span><br><span class="line"><span class="built_in">SDL_PeepEvents</span>(event, <span class="number">1</span>, SDL_GETEVENT, SDL_FIRSTEVENT, S</span><br><span class="line">DL_LASTEVENT)</span><br></pre></td></tr></table></figure>
+
+<p>如果返回值不为0则有时间发生，函数要返回让event_loop处理事件，否则就调用video_refresh显示画面</p>
+<ul>
+<li>video_refresh</li>
+</ul>
+<p>该函数图解如下</p>
+<style>.mnjnhnbnwtgl{zoom: 67%;}</style><img src="/2025/02/18/AVDev_player/image-20250221174757834.png" class="mnjnhnbnwtgl" alt="image-20250221174757834">
+
+<p>几个时间戳关系如下：</p>
+<p>(<strong>注意丢帧之前一定要保证下一帧存在</strong>)</p>
+<style>.ffbcsgpvqwlf{zoom:50%;}</style><img src="/2025/02/18/AVDev_player/image-20250221174324289.png" class="ffbcsgpvqwlf" alt="image-20250221174324289">
+
+<ul>
+<li>video_display</li>
+</ul>
+<p>其中调用的下层函数不再过多介绍，主要的显示逻辑就要使用<code>video_image_display(is)</code>来显示一帧视频画面.该函数先<code>frame_queue_peek_last</code>取要显示的帧，然后upload_texture 更新图像数据到SDL_Texture(如果是解码图片帧队列像素格式不是sdl支持的像素格式，就要做图像格式转换<code>sws_scale</code>)，最后通过SDL_RenderCopyEx 拷⻉纹理给render显示。</p>
+<p><strong>tips:</strong></p>
+<ul>
+<li><p>当改变播放器窗口大小时，视频的显示宽高比能保持正常的原因就在于—–利用视频解码层保存的<strong>原始视频宽高比信息</strong>(SAR，每个像素的宽高比)，并在视频画面输出时通过<code>calculate_display_rect</code>计算视频正确的显示宽高比(DAR ).</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 转成真正的播放⽐例</span></span><br><span class="line">aspect_ratio = <span class="built_in">av_mul_q</span>(aspect_ratio, <span class="built_in">av_make_q</span>(pic_width, pic_height));</span><br></pre></td></tr></table></figure>
+
+<p>这样当窗口大小变化时，渲染层也会按照上面计算出来的播放比例就行等比例缩放。</p>
+</li>
+<li><p>以ffplay为例，窗口大小改变时，由upload_texture中的sws_scale来对原始数据（解码后的数据）进⾏缩放</p>
+</li>
+</ul>
+<hr>
+<p>下面也给出了参考ijkplayer，画面刷新逻辑的流程图</p>
+<style>.ctcrvyrtwgpb{zoom: 50%;}</style><img src="/2025/02/18/AVDev_player/image-20250221210703870.png" class="ctcrvyrtwgpb" alt="image-20250221210703870">
+
+<h2 id="5-AVDev-同步"><a href="#5-AVDev-同步" class="headerlink" title="5. AVDev_同步"></a>5. AVDev_同步</h2><p>同步方式主要分为：</p>
+<ul>
+<li>以视频为主导</li>
+<li>以音频为主导</li>
+<li>以外部时钟为主导</li>
+</ul>
+<h3 id="以音频为主导"><a href="#以音频为主导" class="headerlink" title="以音频为主导"></a>以音频为主导</h3><p>由于人耳对于声音的敏感度相比视频更高，所以一般都是以音频为主导进行同步。下面也只介绍这一种同步方式（ffplay中的案例）</p>
+<p>视频与音频的同步主要通过音频的显示时间戳来维护一个参考时间轴，这样视频就可以通过与该轴上的时间戳进行比较，以判断是播快了，还是播慢了。下面讲讲代码中具体是怎么做的</p>
+<ul>
+<li><p>在ffplay中，音频显示时间戳audclk是在sdl回调函数中维护</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//sdl_audio_callback中</span></span><br><span class="line"><span class="keyword">if</span> (!std::<span class="built_in">isnan</span>(is-&gt;audio_clock)) &#123;</span><br><span class="line">    <span class="type">double</span> audio_clock = is-&gt;audio_clock / pVideoCtl-&gt;<span class="built_in">ffp_get_playback_rate</span>();</span><br><span class="line">    pVideoCtl-&gt;<span class="built_in">set_clock_at</span>(&amp;is-&gt;audclk, audio_clock  - (<span class="type">double</span>)(<span class="number">2</span> * is-&gt;audio_hw_buf_size + is-&gt;audio_write_buf_size) / is-&gt;audio_tgt.bytes_per_sec, is-&gt;audio_clock_serial, audio_callback_time / <span class="number">1000000.0</span>);</span><br><span class="line">    pVideoCtl-&gt;<span class="built_in">sync_clock_to_slave</span>(&amp;is-&gt;extclk, &amp;is-&gt;audclk); <span class="comment">//is-&gt;audclk就是音频显示时间戳pts</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在ffplay中，视频同步的逻辑主要在video_refresh()中完成。假如当**前系统时间time(audclk来维系的时间轴)**是介于vp帧起始时间戳和nextvp帧起始事件戳之间，那么就正常播放这一帧；当视频播放慢了(即time&gt; timer + lastvp的duration)，就丢掉当前vp帧，取nextvp帧(<strong>丢帧的前提就是存在nextvp帧</strong>，注意如果视频慢特别多，即当前图片的时间戳与参考的时间戳差值很多，才是直接丢帧，如果差的小就快速渲染当前帧并马上显示下一帧)；如果视频播放快了，就重复播放上一帧,即lastvp</p>
+</li>
+</ul>
+<h2 id="6-其它功能"><a href="#6-其它功能" class="headerlink" title="6. 其它功能"></a>6. 其它功能</h2><ul>
+<li><p>暂停：图片的暂停就是重复显示上一帧，而声音的暂停则是直接在<code>audio_decode_frame</code>函数中返回-1，回调函数取数据的缓存区audio_buf为空就按静音处理</p>
+</li>
+<li><p>逐帧播放step的本质就是播放一帧暂停</p>
+</li>
+<li><p>音量调节本质就是控制采样点的幅值(通过SDL_MixAudioFormat 调整音量，静音通过将音量设为0实现)</p>
+</li>
+<li><p>快进和快退的本质是seek到某个点重新开始播放</p>
+<ul>
+<li>ffplay通过 av_seek_frame() 实现跳转</li>
+<li>需要清空解码器缓存和播放队列</li>
+<li>重新计算AVDev_同步时间戳</li>
+</ul>
+</li>
+</ul>
+<h3 id="变速"><a href="#变速" class="headerlink" title="变速"></a>变速</h3><ul>
+<li><p>音频倍速可以改变音频的采样率，采样率越高，每s采的样本点越多，每个样本点的持续时间就越短，速度就越快，但是这样会使声调变高；更好的方式是采用<strong>时间拉伸</strong>（Time Stretching）</p>
+<p>对应的变速算法讲解可以参考<a href="https://xie.infoq.cn/article/d71ced957347f6f70f3c0775d">音频变速变调-sonic源码分析_音视频_floer rivor_InfoQ写作社区</a></p>
+</li>
+</ul>
+<blockquote>
+<p><strong>时间拉伸</strong></p>
+<ul>
+<li><strong>原理</strong>：通过算法拉伸或压缩音频时长，保持音调不变。常用算法如：<ul>
+<li><strong>WSOLA（Waveform Similarity Overlap-and-Add）</strong>：通过寻找相似波形片段进行重叠拼接。(<strong>soundtouch就是通过这种算法写的</strong>)</li>
+<li><strong>Phase Vocoder</strong>：在频域调整音频时长，适用于音乐等复杂信号。</li>
+</ul>
+</li>
+<li><strong>实现</strong>：使用开源库（如SoundTouch、Sonic或FFmpeg的<code>libavfilter</code>）直接处理PCM数据。</li>
+</ul>
+</blockquote>
+<p>​		而视频倍速播放主要通过调整帧率或显示时间实现：</p>
+<p>​		方法主要有如下</p>
+<blockquote>
+<p><strong>a. 跳帧（Frame Dropping）</strong></p>
+<ul>
+<li><strong>快放</strong>：丢弃部分帧（如2倍速时每秒显示60帧，原帧率30fps则每帧显示一次）。</li>
+<li><strong>缺点</strong>：可能导致画面卡顿，需智能选择丢弃非关键帧（如B帧）。</li>
+</ul>
+<p><strong>b. 重复帧或插帧（Frame Interpolation）</strong></p>
+<ul>
+<li><strong>慢放</strong>：重复帧或生成中间帧（通过光流法、AI插帧算法）。</li>
+<li><strong>缺点</strong>：插帧计算复杂度高，可能影响实时性。</li>
+</ul>
+<p><strong>c. 时间戳调整</strong></p>
+<ul>
+<li><strong>修改PTS&#x2F;DTS</strong>：调整每一帧的显示时间戳。例如，2倍速播放时，每帧的显示时间减半。</li>
+<li><strong>实现</strong>：在解码后调整<code>AVFrame.pts</code>，确保渲染器按新时间戳播放。</li>
+</ul>
+</blockquote>
+<p>我们的播放器变速主要基于sonic实现，sonic加速过程的核心是 <strong>去掉一些冗余数据点，同时保证听感上的连续性</strong>。Sonic 通过“基因周期”来分析音频信号的周期性，然后将相似的部分合并，使得音频的时间缩短，但不会让人觉得是简单的裁剪（否则会有“跳跃感”）。</p>
+<ul>
+<li><p>采样率没变，播放时间变短，所以听起来更快</p>
+</li>
+<li><p>通过音频信号的周期分析，避免简单裁剪带来的突兀感</p>
+</li>
+<li><p>Sonic 的方法是聪明地丢弃冗余数据，而不是机械地删点</p>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>技术开发</category>
+        <category>音视频</category>
+      </categories>
+      <tags>
+        <tag>音视频</tag>
+        <tag>ijkplayer</tag>
+        <tag>ffplay</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>遍历排序与分治排序</title>
     <url>/2025/02/27/Algo_Sort/</url>
     <content><![CDATA[<p>总结了3种遍历排序与三种分治排序算法</p>
@@ -22,7 +409,7 @@
 <li>时间复杂度o(n^2), 有flag的情况下最佳时间复杂度o(n), 空间复杂度o(1)，稳定排序</li>
 </ul>
 <h3 id="插入排序"><a href="#插入排序" class="headerlink" title="插入排序"></a>插入排序</h3><p>思路：在未排序区间选择一个基准元素，将其与左边的已排序区间比较，一直到左边元素不大于基准元素为止</p>
-<style>.wzppilhmdufo{zoom:33%;}</style><img src="/2025/02/27/Algo_Sort/image-20250227120737150.png" class="wzppilhmdufo" alt="image-20250227120737150">
+<style>.wpbpwkhmotgc{zoom:33%;}</style><img src="/2025/02/27/Algo_Sort/image-20250227120737150.png" class="wpbpwkhmotgc" alt="image-20250227120737150">
 
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">insertionSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums)</span> </span>&#123;</span><br><span class="line">	<span class="comment">//外循环，已排序区间为[0,i-1]</span></span><br><span class="line">    <span class="comment">//初始状态，第一个元素已完成排序</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">1</span>; i &lt; nums.<span class="built_in">size</span>(); i++) &#123;</span><br><span class="line">        <span class="type">int</span> base = nums[i], j = i<span class="number">-1</span>; </span><br><span class="line">    	<span class="comment">//内循环，将base插入到已排序区间</span></span><br><span class="line">		<span class="keyword">while</span> (j &gt;= <span class="number">0</span> &amp;&amp; nums[j] &gt; base) &#123;</span><br><span class="line">            nums[j<span class="number">+1</span>] = nums[j]; <span class="comment">//右移一位</span></span><br><span class="line">            j--;</span><br><span class="line">        &#125;</span><br><span class="line">        nums[j<span class="number">+1</span>] = base; <span class="comment">//插入base</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -98,7 +485,7 @@
 
 
 <h3 id="归并排序"><a href="#归并排序" class="headerlink" title="归并排序"></a>归并排序</h3><p>归并排序的递归顺序和二叉树的后序遍历是一样的，即先递归左数组，再递归右数组，最后合并，注意合并时的子数组是有序的。一图总结如下：</p>
-<style>.xtdfdqmygmvn{zoom: 67%;}</style><img src="/2025/02/27/Algo_Sort/image-20250227153030239.png" class="xtdfdqmygmvn" alt="image-20250227153030239">
+<style>.vgqkkfivqupq{zoom: 67%;}</style><img src="/2025/02/27/Algo_Sort/image-20250227153030239.png" class="vgqkkfivqupq" alt="image-20250227153030239">
 
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//合并左右子数组,左数组[left, mid], 右数组[mid+1, right]</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">merge</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> left, <span class="type">int</span> mid, <span class="type">int</span> right)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> i = left, j = mid + <span class="number">1</span>, k = <span class="number">0</span>;</span><br><span class="line">    <span class="comment">//创建临时数组存放合并后数组</span></span><br><span class="line">    <span class="function">vector&lt;<span class="type">int</span>&gt; <span class="title">tmp</span><span class="params">(right- left <span class="number">+1</span>)</span></span>;</span><br><span class="line">    <span class="comment">//左右数组都还有元素时进行比较</span></span><br><span class="line">    <span class="keyword">while</span> (i &lt;= mid &amp;&amp; j &lt;= right) &#123;</span><br><span class="line">        <span class="comment">//将较小元素放入tmp</span></span><br><span class="line">        <span class="keyword">if</span> (nums[i] &lt;= nums[j]) &#123;</span><br><span class="line">            tmp[k++] = nums[i++]</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            tmp[k++] = nums[j++];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//将剩下元素放入tmp,注意i,j往后移动</span></span><br><span class="line">    <span class="keyword">while</span> (i &lt;= mid) &#123;</span><br><span class="line">        tmp[k++] = nums[i++]; </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> (j &lt;= right) &#123;</span><br><span class="line">        tmp[k++] = nums[j++]</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//将合并后放回到原数组对应位置</span></span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; tmp.<span class="built_in">size</span>(); i++) &#123;</span><br><span class="line">        nums[left+i] = tmp[i]; </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//归并排序</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">mergeSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> left, <span class="type">int</span> right)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//子数组长度为1时终止</span></span><br><span class="line">	<span class="keyword">if</span> (left &gt;= right) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;    </span><br><span class="line">    <span class="comment">//子数组划分</span></span><br><span class="line">    <span class="type">int</span> mid = left + (right - left) / <span class="number">2</span>;</span><br><span class="line">    <span class="built_in">mergeSort</span>(nums, left, mid); <span class="comment">//左</span></span><br><span class="line">    <span class="built_in">mergeSort</span>(nums, mid<span class="number">+1</span>, right); <span class="comment">//右</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">//对子数组进行合并</span></span><br><span class="line">    <span class="built_in">merge</span>(nums, left, mid, right);  <span class="comment">//中</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -120,7 +507,7 @@
 <li>循环<strong>n-1</strong>次交换和堆化的过程</li>
 </ul>
 <p><strong>完全二叉树非常适合使用数组来表示</strong>，而堆就是一种特殊的完全二叉树，所以其底层实现就是数组。</p>
-<style>.mpqxlizoibmv{zoom: 50%;}</style><img src="/2025/02/27/Algo_Sort/image-20250227171531676.png" class="mpqxlizoibmv" alt="image-20250227171531676">
+<style>.kqtowaiszoqn{zoom: 50%;}</style><img src="/2025/02/27/Algo_Sort/image-20250227171531676.png" class="kqtowaiszoqn" alt="image-20250227171531676">
 
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">//堆的长度为n，从节点i开始，从顶至底执行堆化</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">siftDown</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums, <span class="type">int</span> n, <span class="type">int</span> i)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">        <span class="comment">//索引i的左子节点为2i+1,右子节点为2i+2, 父节点索引为(i-1)/2</span></span><br><span class="line">        <span class="type">int</span> l = <span class="number">2</span>i<span class="number">+1</span>, r = <span class="number">2</span>i<span class="number">+2</span>;</span><br><span class="line">        <span class="type">int</span> ma = i; <span class="comment">//ma为i,l,r中值最大的节点索引</span></span><br><span class="line">        <span class="keyword">if</span> (l &lt; n &amp;&amp; nums[l] &gt;= nums[ma]) &#123;</span><br><span class="line">            ma = l;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (r &lt; n &amp;&amp; nums[r] &gt;= nums[ma]) &#123;</span><br><span class="line">           ma = r; </span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//如节点i最大或l，r越界则无需继续堆化</span></span><br><span class="line">        <span class="keyword">if</span> (ma == i) &#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">swap</span>(nums[i], nums[ma]);</span><br><span class="line">        i = ma; <span class="comment">//循环进行堆化</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//堆排序</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">haepSort</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;nums)</span> </span>&#123;</span><br><span class="line">	<span class="comment">//建堆，堆化除叶子节点外所有节点</span></span><br><span class="line">    <span class="comment">//建堆的循环语句还可以从最后一个节点的父节点开始，即for (int i = (nums.size()- 1 - 1) / 2; i &gt;= 0; --i) &#123;&#125;</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = nums.<span class="built_in">size</span>() / <span class="number">2</span> - <span class="number">1</span>; i &gt;= <span class="number">0</span>; --i) &#123;</span><br><span class="line">        <span class="comment">//从索引i开始从顶至底的执行堆化</span></span><br><span class="line">    	<span class="built_in">siftDown</span>(nums, nums.<span class="built_in">size</span>(), i); 	   </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//循环n-1次</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = nums.<span class="built_in">size</span>() - <span class="number">1</span>; i &gt;<span class="number">0</span>; --i) &#123;</span><br><span class="line">        <span class="comment">//交换堆顶元素与堆底元素</span></span><br><span class="line">        <span class="built_in">swap</span>(nums[<span class="number">0</span>], nums[i]); <span class="comment">//堆长度减1</span></span><br><span class="line">        <span class="built_in">siftDown</span>(nums, i, <span class="number">0</span>); <span class="comment">//从堆顶开始堆化</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -171,7 +558,7 @@
 <li>成员函数get(), reset(), use_count()</li>
 <li>make_shared函数模板</li>
 </ul>
-<style>.kacyuaqgfwdn{zoom:50%;}</style><img src="/2025/03/10/Cpp11__inteligent_ptr/image-20250310211607484.png" class="kacyuaqgfwdn" alt="image-20250310211607484">
+<style>.tmdjamnapgcx{zoom:50%;}</style><img src="/2025/03/10/Cpp11__inteligent_ptr/image-20250310211607484.png" class="tmdjamnapgcx" alt="image-20250310211607484">
 
 <blockquote>
 <p><strong>为什么图中使用<code>int* m_count</code>而不是<code>int m_count</code>?</strong></p>
@@ -242,7 +629,7 @@
 <p>此外，<font color='red'>还需注意标准库中的shared_ptr的reset函数在智能指针对象指向了动态分配对象的前提下使用且不传参，引用计数减1的同时，还会销毁该对象</font></p>
 <h4 id="线程安全的引用计数"><a href="#线程安全的引用计数" class="headerlink" title="线程安全的引用计数"></a>线程安全的引用计数</h4><p><strong>注意在shared_ptr中引用计数是线程安全的，但是管理的数据不是线程安全的</strong>。我们上面的实现并不能保证引用计数是线程安全的，因为多个线程可能同时操作引用计数指针<code>m_count</code>，导致动态对象被提前释放或永远不被释放。</p>
 <p>下面将采用互斥锁来实现引用计数线程安全（可以参考下图实现，这里我们就不考虑weak_count了）</p>
-<style>.ewumjvxvtjfl{zoom:50%;}</style><img src="/2025/03/10/Cpp11__inteligent_ptr/image-20250310221101442.png" class="ewumjvxvtjfl" alt="image-20250310221101442">
+<style>.cyfprubfewej{zoom:50%;}</style><img src="/2025/03/10/Cpp11__inteligent_ptr/image-20250310221101442.png" class="cyfprubfewej" alt="image-20250310221101442">
 
 <p>具体代码如下：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">* shared_ptr.h</span></span><br><span class="line"><span class="comment">* 实现一个线程安全的shared_ptr模板类，不考虑weak_ptr</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="meta">#<span class="keyword">ifndef</span> SHARED_PTR_H</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> SHARED_PTR_H</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;utility&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;mutex&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MySharedPtr</span> &#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="comment">// 控制块结构</span></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">ControlBlock</span> &#123;</span><br><span class="line">        <span class="type">int</span> ref_count; <span class="comment">// 引用计数</span></span><br><span class="line">        std::mutex mutex; <span class="comment">// 互斥锁，保证线程安全</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 构造函数</span></span><br><span class="line">        <span class="built_in">ControlBlock</span>() : <span class="built_in">ref_count</span>(<span class="number">1</span>) &#123;&#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 指向管理对象的原始指针</span></span><br><span class="line">    T* raw_ptr;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 指向控制块的指针</span></span><br><span class="line">    ControlBlock* control_block;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 增加引用计数</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">add_count</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (control_block) &#123;</span><br><span class="line">            <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(control_block-&gt;mutex)</span></span>;</span><br><span class="line">            ++(control_block-&gt;ref_count);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 减少引用计数</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">sub_count</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (control_block) &#123;</span><br><span class="line">            <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(control_block-&gt;mutex)</span></span>;</span><br><span class="line">            --(control_block-&gt;ref_count);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 释放资源</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">release</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (control_block) &#123;</span><br><span class="line">            <span class="built_in">sub_count</span>();</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 检查是否为最后一个引用</span></span><br><span class="line">            <span class="type">bool</span> delete_resources = <span class="literal">false</span>;</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(control_block-&gt;mutex)</span></span>;</span><br><span class="line">                delete_resources = (control_block-&gt;ref_count == <span class="number">0</span>);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 只有当引用计数为零时才删除资源</span></span><br><span class="line">            <span class="keyword">if</span> (delete_resources) &#123;</span><br><span class="line">                <span class="keyword">delete</span> raw_ptr;</span><br><span class="line">                <span class="keyword">delete</span> control_block;</span><br><span class="line">                raw_ptr = <span class="literal">nullptr</span>;</span><br><span class="line">                control_block = <span class="literal">nullptr</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// 默认构造函数</span></span><br><span class="line">    <span class="built_in">MySharedPtr</span>() : <span class="built_in">raw_ptr</span>(<span class="literal">nullptr</span>), <span class="built_in">control_block</span>(<span class="literal">nullptr</span>) &#123;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 有参构造，从原始指针构造</span></span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="title">MySharedPtr</span><span class="params">(T* ptr)</span>: raw_ptr(ptr), control_block(ptr ? new ControlBlock() : nullptr) &#123;</span>&#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 拷贝构造函数</span></span><br><span class="line">    <span class="built_in">MySharedPtr</span>(<span class="type">const</span> MySharedPtr&amp; other): <span class="built_in">raw_ptr</span>(other.raw_ptr), <span class="built_in">control_block</span>(other.control_block) &#123;</span><br><span class="line">        <span class="built_in">add_count</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 移动构造函数</span></span><br><span class="line">    <span class="built_in">MySharedPtr</span>(MySharedPtr&amp;&amp; other) <span class="keyword">noexcept</span>: <span class="built_in">raw_ptr</span>(other.raw_ptr), <span class="built_in">control_block</span>(other.control_block) &#123;</span><br><span class="line">        other.raw_ptr = <span class="literal">nullptr</span>;</span><br><span class="line">        other.control_block = <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 析构函数</span></span><br><span class="line">    ~<span class="built_in">MySharedPtr</span>() &#123;</span><br><span class="line">        <span class="built_in">release</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 拷贝赋值运算符重载</span></span><br><span class="line">    <span class="comment">//这里不能给shared_ptr赋裸指针</span></span><br><span class="line">    MySharedPtr&amp; <span class="keyword">operator</span>=(<span class="type">const</span> MySharedPtr&amp; other) &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">this</span> != &amp;other) &#123;</span><br><span class="line">            <span class="built_in">release</span>();</span><br><span class="line">            raw_ptr = other.raw_ptr;</span><br><span class="line">            control_block = other.control_block;</span><br><span class="line">            <span class="built_in">add_count</span>();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 移动赋值运算符重载</span></span><br><span class="line">    MySharedPtr&amp; <span class="keyword">operator</span>=(MySharedPtr&amp;&amp; other) <span class="keyword">noexcept</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">this</span> != &amp;other) &#123;</span><br><span class="line">            <span class="built_in">release</span>();</span><br><span class="line">            raw_ptr = other.raw_ptr;</span><br><span class="line">            control_block = other.control_block;</span><br><span class="line">            other.raw_ptr = <span class="literal">nullptr</span>;</span><br><span class="line">            other.control_block = <span class="literal">nullptr</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 解引用运算符重载</span></span><br><span class="line">    T&amp; <span class="keyword">operator</span>*() <span class="type">const</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> *raw_ptr;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 箭头运算符重载</span></span><br><span class="line">    T* <span class="keyword">operator</span>-&gt;() <span class="type">const</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> raw_ptr;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 重置函数</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">reset</span><span class="params">(T* ptr = <span class="literal">nullptr</span>)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (raw_ptr != ptr) &#123;</span><br><span class="line">            <span class="built_in">release</span>();</span><br><span class="line">            <span class="keyword">if</span> (ptr) &#123;</span><br><span class="line">                raw_ptr = ptr;</span><br><span class="line">                control_block = <span class="keyword">new</span> <span class="built_in">ControlBlock</span>();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取原始指针</span></span><br><span class="line">    <span class="function">T* <span class="title">get</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> raw_ptr;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取引用计数</span></span><br><span class="line">    <span class="function"><span class="type">int</span> <span class="title">use_count</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (control_block) &#123;</span><br><span class="line">            <span class="function">std::lock_guard&lt;std::mutex&gt; <span class="title">lock</span><span class="params">(control_block-&gt;mutex)</span></span>;</span><br><span class="line">            <span class="keyword">return</span> control_block-&gt;ref_count;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 检查指针是否是唯一拥有者（只有一个引用）</span></span><br><span class="line">    <span class="function"><span class="type">bool</span> <span class="title">unique</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">use_count</span>() == <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// make_shared函数模板</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T, <span class="keyword">typename</span>... Args&gt;</span><br><span class="line"><span class="function">MySharedPtr&lt;T&gt; <span class="title">make_shared</span><span class="params">(Args&amp;&amp;... args)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">MySharedPtr</span>&lt;T&gt;(<span class="keyword">new</span> <span class="built_in">T</span>(std::forward&lt;Args&gt;(args)...));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
@@ -343,7 +730,7 @@
 </blockquote>
 <p>​	</p>
 <p>加了weak_ptr之后的实现可以参考下图，具体代码省略</p>
-<style>.gjfscymuwwig{zoom:50%;}</style><img src="/2025/03/10/Cpp11__inteligent_ptr/image-20250310230603480.png" class="gjfscymuwwig" alt="image-20250310230603480">
+<style>.sucwnbpjdxmg{zoom:50%;}</style><img src="/2025/03/10/Cpp11__inteligent_ptr/image-20250310230603480.png" class="sucwnbpjdxmg" alt="image-20250310230603480">
 
 
 
@@ -515,6 +902,47 @@
       <categories>
         <category>c++11</category>
         <category>智能指针</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>cmake</title>
+    <url>/2025/03/10/DevTools__cmake/</url>
+    <content><![CDATA[<h2 id="从零开始写一个CMakeLists-txt文件"><a href="#从零开始写一个CMakeLists-txt文件" class="headerlink" title="从零开始写一个CMakeLists.txt文件"></a>从零开始写一个CMakeLists.txt文件</h2><p>从零开始写CMakeLists.txt的基本步骤和结构：</p>
+<ol>
+<li><strong>第一步：基础设置</strong><figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 指定CMake最低版本</span></span><br><span class="line"><span class="keyword">cmake_minimum_required</span>(VERSION <span class="number">3.10</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 项目名称</span></span><br><span class="line"><span class="keyword">project</span>(你的项目名称)</span><br></pre></td></tr></table></figure></li>
+</ol>
+<span id="more"></span>
+
+<ol start="2">
+<li><strong>第二步：设置编译选项</strong></li>
+</ol>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 设置C++标准</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_STANDARD <span class="number">11</span>)</span><br><span class="line"><span class="comment"># 或者</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS <span class="string">&quot;$&#123;CMAKE_CXX_FLAGS&#125; -std=c++11&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置编译类型（Debug/Release）</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_BUILD_TYPE Debug)</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li><p><strong>第三步：设置头文件和库文件路径</strong></p>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 如果有额外的头文件目录</span></span><br><span class="line"><span class="keyword">include_directories</span>(<span class="keyword">include</span>)</span><br><span class="line"><span class="comment"># 如果有额外的库文件目录</span></span><br><span class="line"><span class="keyword">link_directories</span>(lib)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>第四步：添加源文件</strong></p>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 方法1：直接列出所有源文件</span></span><br><span class="line"><span class="keyword">add_executable</span>(项目名称 </span><br><span class="line">    src/main.cpp</span><br><span class="line">    src/other.cpp</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 方法2：使用变量收集源文件</span></span><br><span class="line"><span class="keyword">set</span>(SOURCES</span><br><span class="line">    src/main.cpp</span><br><span class="line">    src/other.cpp</span><br><span class="line">)</span><br><span class="line"><span class="keyword">add_executable</span>(项目名称 <span class="variable">$&#123;SOURCES&#125;</span>)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>第五步：如果需要链接外部库</strong></p>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 链接库</span></span><br><span class="line"><span class="keyword">target_link_libraries</span>(项目名称</span><br><span class="line">    库名称<span class="number">1</span></span><br><span class="line">    库名称<span class="number">2</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure></li>
+</ol>
+<p>一些实用的建议：</p>
+<ol>
+<li>保持结构清晰，按照上述步骤组织你的CMakeLists.txt</li>
+<li>使用注释说明每个部分的作用</li>
+<li>对于大型项目，可以使用子目录的CMakeLists.txt</li>
+<li>养成良好的变量命名习惯</li>
+<li>建议使用现代CMake的命令和特性</li>
+</ol>
+<p>创建一个最简单的CMakeLists.txt，可以参考这个模板：</p>
+<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 最低CMake版本要求</span></span><br><span class="line"><span class="keyword">cmake_minimum_required</span>(VERSION <span class="number">3.10</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 项目名称</span></span><br><span class="line"><span class="keyword">project</span>(MyProject)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将所有源文件添加到可执行文件</span></span><br><span class="line"><span class="keyword">add_executable</span>(MyProject main.cpp)</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>开发工具</category>
+        <category>构建</category>
       </categories>
   </entry>
   <entry>
@@ -745,47 +1173,6 @@
       </tags>
   </entry>
   <entry>
-    <title>cmake</title>
-    <url>/2025/03/10/DevTools__cmake/</url>
-    <content><![CDATA[<h2 id="从零开始写一个CMakeLists-txt文件"><a href="#从零开始写一个CMakeLists-txt文件" class="headerlink" title="从零开始写一个CMakeLists.txt文件"></a>从零开始写一个CMakeLists.txt文件</h2><p>从零开始写CMakeLists.txt的基本步骤和结构：</p>
-<ol>
-<li><strong>第一步：基础设置</strong><figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 指定CMake最低版本</span></span><br><span class="line"><span class="keyword">cmake_minimum_required</span>(VERSION <span class="number">3.10</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 项目名称</span></span><br><span class="line"><span class="keyword">project</span>(你的项目名称)</span><br></pre></td></tr></table></figure></li>
-</ol>
-<span id="more"></span>
-
-<ol start="2">
-<li><strong>第二步：设置编译选项</strong></li>
-</ol>
-<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 设置C++标准</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_STANDARD <span class="number">11</span>)</span><br><span class="line"><span class="comment"># 或者</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS <span class="string">&quot;$&#123;CMAKE_CXX_FLAGS&#125; -std=c++11&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置编译类型（Debug/Release）</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_BUILD_TYPE Debug)</span><br></pre></td></tr></table></figure>
-
-<ol start="3">
-<li><p><strong>第三步：设置头文件和库文件路径</strong></p>
-<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 如果有额外的头文件目录</span></span><br><span class="line"><span class="keyword">include_directories</span>(<span class="keyword">include</span>)</span><br><span class="line"><span class="comment"># 如果有额外的库文件目录</span></span><br><span class="line"><span class="keyword">link_directories</span>(lib)</span><br></pre></td></tr></table></figure>
-</li>
-<li><p><strong>第四步：添加源文件</strong></p>
-<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 方法1：直接列出所有源文件</span></span><br><span class="line"><span class="keyword">add_executable</span>(项目名称 </span><br><span class="line">    src/main.cpp</span><br><span class="line">    src/other.cpp</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 方法2：使用变量收集源文件</span></span><br><span class="line"><span class="keyword">set</span>(SOURCES</span><br><span class="line">    src/main.cpp</span><br><span class="line">    src/other.cpp</span><br><span class="line">)</span><br><span class="line"><span class="keyword">add_executable</span>(项目名称 <span class="variable">$&#123;SOURCES&#125;</span>)</span><br></pre></td></tr></table></figure>
-</li>
-<li><p><strong>第五步：如果需要链接外部库</strong></p>
-<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 链接库</span></span><br><span class="line"><span class="keyword">target_link_libraries</span>(项目名称</span><br><span class="line">    库名称<span class="number">1</span></span><br><span class="line">    库名称<span class="number">2</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure></li>
-</ol>
-<p>一些实用的建议：</p>
-<ol>
-<li>保持结构清晰，按照上述步骤组织你的CMakeLists.txt</li>
-<li>使用注释说明每个部分的作用</li>
-<li>对于大型项目，可以使用子目录的CMakeLists.txt</li>
-<li>养成良好的变量命名习惯</li>
-<li>建议使用现代CMake的命令和特性</li>
-</ol>
-<p>创建一个最简单的CMakeLists.txt，可以参考这个模板：</p>
-<figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 最低CMake版本要求</span></span><br><span class="line"><span class="keyword">cmake_minimum_required</span>(VERSION <span class="number">3.10</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 项目名称</span></span><br><span class="line"><span class="keyword">project</span>(MyProject)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将所有源文件添加到可执行文件</span></span><br><span class="line"><span class="keyword">add_executable</span>(MyProject main.cpp)</span><br></pre></td></tr></table></figure>
-
-]]></content>
-      <categories>
-        <category>开发工具</category>
-        <category>构建</category>
-      </categories>
-  </entry>
-  <entry>
     <title>死锁与活锁</title>
     <url>/2025/04/21/conCurrency__muteManage/</url>
     <content><![CDATA[]]></content>
@@ -877,6 +1264,182 @@
       </categories>
   </entry>
   <entry>
+    <title>linux常用命令总结</title>
+    <url>/2025/02/23/linux_bashCmd01/</url>
+    <content><![CDATA[<p>总结了一些linux中常用的基本命令和项目中常用的命令</p>
+<h2 id="基础概念"><a href="#基础概念" class="headerlink" title="基础概念"></a>基础概念</h2><ul>
+<li>shell ：即命令解释器，是用户和linux内核交互的桥梁，通过在shell终端输入命令让linux内核相应部分识别用户命令并处理。</li>
+</ul>
+<span id="more"></span>
+
+<style>.yfjnpsxrherb{zoom:50%;}</style><img src="/2025/02/23/linux_bashCmd01/image-20250422133735308.png" class="yfjnpsxrherb" alt="image-20250422133735308">
+
+<blockquote>
+<p><strong>bash与shell的关系</strong></p>
+<p><strong>Shell就是终端程序的统称</strong>，它充当了人与内核（硬件）之间的翻译官，用户把一些命令“告诉”终端程序，它就会调用相应的程序服务去完成某些工作。许多主流Linux系统默认使用的<strong>终端是Bash（Bourne-Again SHell）解释器。</strong></p>
+<p><strong>Shell与Bash是包含与被包含的关系</strong>。举例来说，在社会中有翻译官这个职业，它是由许多从业者共同组成的职业名称，而Bash则是其中一个出色的成员，是Shell终端程序中的一份子。</p>
+</blockquote>
+<p>shell命令的基本格式为</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">命令 [option] 参数 </span><br></pre></td></tr></table></figure>
+<p>​	其中加”[]”符号表示可以不输入这个选项</p>
+<p><strong>tips</strong>: </p>
+<ul>
+<li><p>对于不熟悉的命令可以使用<code>man 1 命令</code>或者<code>命令 --help</code>来查看说明</p>
+<img src="/2025/02/23/linux_bashCmd01/image-20250422135042892.png" class="" title="image-20250422135042892">
+</li>
+<li><p>注意如果想要在windows复制并粘贴到linux虚拟机中，就要安装open-vm-tools，而vm-tools是老版的，重复安装这两个就会冲突，所以只安装open-vm-tools即可。对应命令为：</p>
+</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">apt-get install open-vm-tools-desktop</span><br></pre></td></tr></table></figure>
+
+<p>​	以下给出几个vm-tools的区别</p>
+<blockquote>
+<p><strong>open-vm-tools</strong>：开源工具集，主要用于 Linux 虚拟机。</p>
+<p><strong>vm-tools</strong>：VMware 提供的专有工具集，通常用于 VMware 产品。</p>
+<p><strong>open-vm-tools-desktop</strong>：<code>open-vm-tools</code> 的桌面扩展版，专为桌面环境（有图形界面的 Linux）优化，提供更多图形相关的功能。</p>
+</blockquote>
+<p>linux磁盘相关文件系统，扩容等：<a href="https://blog.csdn.net/zhanhjxxx/article/details/123232402">Linux磁盘分区详解（新建分区，现有分区扩容，分区减容）_linux分区-CSDN博客</a></p>
+<h2 id="基本常用命令"><a href="#基本常用命令" class="headerlink" title="基本常用命令"></a>基本常用命令</h2><ol>
+<li>切换用户权限组</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">sudo su //切换为管理员</span><br><span class="line">exit //推出管理员权限</span><br></pre></td></tr></table></figure>
+
+<p>在命令前加<code>sudo</code>也可以使用管理员权限</p>
+<ol start="2">
+<li>创建目录</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">mkdir -m 目录名</span><br><span class="line">mkdir -r /home/hh # -r 可以递归的创建目录</span><br></pre></td></tr></table></figure>
+
+<p>3.删除目录或者文件</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">rm -i 文件名</span><br><span class="line">rm -r 目录名 #主要用来删除目录</span><br><span class="line">rm -f 文件名 #强制删除</span><br></pre></td></tr></table></figure>
+
+<p>4.切换路径</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cd /  #切换到根目录</span><br><span class="line">cd ~  #切换到家目录</span><br><span class="line">cd /home/xxx  </span><br></pre></td></tr></table></figure>
+
+<p>5.gedit 记事本</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">gedit main.c</span><br></pre></td></tr></table></figure>
+
+<p>6.查看文件</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cat main.c #查看文件内容并输出到shell终端</span><br><span class="line">cat -A 文件名  #隐藏的字符也可以查看</span><br></pre></td></tr></table></figure>
+
+<p>7.复制</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cp -r 源文件 目标文件 #可以复制目录的所有文件</span><br></pre></td></tr></table></figure>
+
+<p>8.移动或重命名</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">mv [选项] 源文件 目标文件</span><br><span class="line">mv old.txt new.txt #重命名单个文件</span><br><span class="line">mv old_folder new_folder #重命名目录</span><br><span class="line">mv file.txt /home/user/documents/newfile.txt #移动文件到其他目录并重命名</span><br></pre></td></tr></table></figure>
+
+<p>9.查看当前路径</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">pwd</span><br></pre></td></tr></table></figure>
+
+<p>10.查看当前目录文件</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">ls [option]</span><br><span class="line">ls -a #查看所有文件，包括隐藏的</span><br></pre></td></tr></table></figure>
+
+<ol start="11">
+<li>显示磁盘空间使用情况</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">df -h</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="项目常用命令"><a href="#项目常用命令" class="headerlink" title="项目常用命令"></a>项目常用命令</h2><ul>
+<li>解压缩</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">tar -zxvf xx.tar.gz # 解压缩tar.gz文件，x为提取，v为详细信息，f即file</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查看进程</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">ps au #查看所有进程</span><br><span class="line">ps aux|grep xx*</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查找文件</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">基本语法：find 搜索路径 选项 表达式</span></span><br><span class="line">find /path/to/search -name &quot;filename&quot;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">在当前目录及子目录查找名为<span class="string">&quot;example.txt&quot;</span>的文件</span></span><br><span class="line">find . -name &quot;example.txt&quot;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">使用通配符查找所有.<span class="built_in">log</span>文件</span></span><br><span class="line">find /var/log -name &quot;*.log&quot;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">查找指定用户拥有的文件</span></span><br><span class="line">find /home -user username</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">查找过去7天内修改的文件</span></span><br><span class="line">find /home/user -mtime -7</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">使用 find 命令查找最近修改的文件</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">如果你刚刚安装了软件，可以查找系统中最近被修改的文件：</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">查找过去30分钟内修改的文件</span></span><br><span class="line">sudo find / -type f -mmin -30 2&gt;/dev/null</span><br></pre></td></tr></table></figure>
+
+<p>查找文件还可以使用</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">whereis xx</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>安装软件</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">sudo dpkg -i 文件名.deb #安装的默认路径为：/opt</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">查看 dpkg 日志找出最近安装的包</span></span><br><span class="line">grep &quot;install &quot; /var/log/dpkg.log | tail</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>挂载共享文件夹</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">sudo mount -t fuse.vmhgfs-fuse .host:/ /mnt/hgfs -o allow_other</span><br></pre></td></tr></table></figure>
+
+<p>开机自动挂载共享文件夹参考下图：</p>
+<img src="/2025/02/23/linux_bashCmd01/image-20250302110137834.png" class="" title="image-20250302110137834">
+
+<ul>
+<li>安装和卸载</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">apt-get install </span><br><span class="line">apt-get autoremove </span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>编译和链接</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">编译c源码,以创建线程为例</span></span><br><span class="line">gcc thread1.c -o trl -lphread</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><code>gcc</code>: GNU编译器集合(GNU Compiler Collection)，这是一个常用的C&#x2F;C++编译器</p>
+<p><code>thread1.c</code>: 源代码文件名，这是要被编译的C语言源文件</p>
+<p><code>-o tr1</code>: 输出选项，指定编译后生成的可执行文件名为”tr1”</p>
+<p><code>-lpthread</code>: 链接选项，告诉编译器链接POSIX线程库(pthread库)</p>
+<p><strong>为什么要链接</strong>：</p>
+<ul>
+<li>当编译器看到你的代码引用了 pthread 库中的函数时，它需要知道这些函数的实现在哪里</li>
+<li><code>-lpthread</code> 告诉链接器去寻找并链接 pthread 库</li>
+<li>如果不链接这个库，链接器会报”未定义的引用”(undefined reference)错误</li>
+</ul>
+<p><strong>具体作用</strong></p>
+<ul>
+<li><code>-l</code> 是链接库的标志</li>
+<li><code>pthread</code> 是库的名称（省略了前缀”lib”和后缀”.so”或”.a”）</li>
+<li>实际上链接器会寻找 <code>libpthread.so</code>（共享库）或 <code>libpthread.a</code>（静态库）文件</li>
+</ul>
+</blockquote>
+<ul>
+<li><p>软链接</p>
+<p>作用1：允许从不同位置访问同一个文件或目录，而不需要复制数据，相当于创建快捷方式</p>
+<p>作用2：，比如先转移文件到其它目录，再删除原路径的文件，这时创建一个软链接，确保依赖于旧路径的程序继续正常工作</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">如果已有Downloads目录且有内容，先移动</span></span><br><span class="line">mv ~/Downloads/* /data/Downloads/ # 仅当Downloads有内容时</span><br><span class="line">rm -rf ~/Downloads # 删除原Downloads目录</span><br><span class="line">ln -s /data/Downloads ~/Downloads # 创建软链接</span><br></pre></td></tr></table></figure>
+
+</li>
+<li><p>网络相关</p>
+<ul>
+<li>查看网络的配置和状态</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">ifconfig</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查看 socket、网络协议栈、网口以及路由表的信息</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-n表示以数字方式显示ip和端口</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-l表示只显示listen状态的socket</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-p表示显示进程信息</span></span><br><span class="line">netstat -nlp</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash"><span class="comment">#######################################</span></span></span><br><span class="line">ss -ntlp</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-n表示以数字方式显示ip和端口</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-t表示只显示tcp连接</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-l表示只显示listen状态的socket</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-p表示显示进程信息</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查看协议栈的统计信息</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">netstat -s</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash"><span class="comment">##或者</span></span></span><br><span class="line">ss -s</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>查看网络吞吐率和pps</p>
+<blockquote>
+<p><strong>网络吞吐率</strong>：单位事件内成功传输的数据量</p>
+<p><strong>pps</strong>：packet per second</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">sar -n DEV  #显示网口的统计数据</span><br><span class="line">sar -n EDEV	#显示关于网络错误的统计数据</span><br><span class="line">sar -n TCP	#显示 TCP 的统计数据</span><br><span class="line">ethtool eth0 | grep Speed	#查看eth0网卡带宽，单位为Mb/s</span><br></pre></td></tr></table></figure></blockquote>
+</li>
+</ul>
+</li>
+</ul>
+<p>​	</p>
+]]></content>
+      <categories>
+        <category>linux</category>
+        <category>bash命令</category>
+      </categories>
+  </entry>
+  <entry>
     <title>linux之多进程编程</title>
     <url>/2025/04/21/linux_LearningNote01_IPC/</url>
     <content><![CDATA[<h2 id="僵尸进程"><a href="#僵尸进程" class="headerlink" title="僵尸进程"></a>僵尸进程</h2><h3 id="什么是僵尸进程"><a href="#什么是僵尸进程" class="headerlink" title="什么是僵尸进程"></a>什么是僵尸进程</h3><p>对于多进程程序，父进程需要跟踪子进程的退出状态。当子进程结束运行时，内核不会立即释放该进程的进程表项，以便父进程可以查询子进程的退出信息。<strong>在子进程结束后但父进程尚未读取其退出状态前，这个子进程被称为”僵尸态”。</strong></p>
@@ -939,7 +1502,7 @@
 </ol>
 </blockquote>
 <h2 id="进程间通信"><a href="#进程间通信" class="headerlink" title="进程间通信"></a>进程间通信</h2><p>由于进程的内存空间都是独立的，一般而言是不能互相访问的，<strong>但内核空间是每个进程都共享的</strong>，所以进程间通信必须要内核</p>
-<style>.iyjfzgidqsrj{zoom:50%;}</style><img src="/2025/04/21/linux_LearningNote01_IPC/image-20250422183736258.png" class="iyjfzgidqsrj" alt="image-20250422183736258">
+<style>.sbqpppkutxux{zoom:50%;}</style><img src="/2025/04/21/linux_LearningNote01_IPC/image-20250422183736258.png" class="sbqpppkutxux" alt="image-20250422183736258">
 
 <h3 id="管道"><a href="#管道" class="headerlink" title="管道"></a>管道</h3><h4 id="匿名管道"><a href="#匿名管道" class="headerlink" title="匿名管道"></a>匿名管道</h4><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ps auxf | grep mysql</span><br></pre></td></tr></table></figure>
 
@@ -975,7 +1538,7 @@
 <li><p>另外，<strong>管道传输的数据是无格式的流且大小受限</strong>。</p>
 </li>
 <li><p>在 shell 里面执行 <code>A | B</code>命令的时候，A 进程和 B 进程都是 shell 创建出来的子进程，A 和 B 之间不存在父子关系，它俩的父进程都是 shell。</p>
-<style>.lpsaxxixknew{zoom: 25%;}</style><img src="/2025/04/21/linux_LearningNote01_IPC/image-20250422213247731.png" class="lpsaxxixknew" alt="image-20250422213247731"></li>
+<style>.hutlruyplepy{zoom: 25%;}</style><img src="/2025/04/21/linux_LearningNote01_IPC/image-20250422213247731.png" class="hutlruyplepy" alt="image-20250422213247731"></li>
 </ul>
 <p>​		因此，在bash终端输入的<code>|</code>匿名管道将多个命令连		接在一起，实际上也创建了多个子进程。所以为了		减少创建子进程的开销，尽量不要用多个<code>|</code>来连接		多个命令</p>
 <ul>
@@ -1026,7 +1589,7 @@
 </blockquote>
 <h3 id="共享内存"><a href="#共享内存" class="headerlink" title="共享内存"></a>共享内存</h3><p>在内存管理中，每个进程都有自己的虚拟内存空间，即使虚拟内存地址相同也不影响，因为他们可以对应不同的物理内存地址。</p>
 <p>而共享内存就是将进程的虚拟内存拿出一块并映射到相同的物理内存空间。当一个进程将数据传入时，另外一个进程也能“知道”，<strong>避免了相互拷贝带来的开销，大大提高进程间通信的速度</strong></p>
-<style>.ahsgkkkksiyq{zoom:33%;}</style><img src="/2025/04/21/linux_LearningNote01_IPC/image-20250422215548453.png" class="ahsgkkkksiyq" alt="image-20250422215548453">
+<style>.rckvbebgfuew{zoom:33%;}</style><img src="/2025/04/21/linux_LearningNote01_IPC/image-20250422215548453.png" class="rckvbebgfuew" alt="image-20250422215548453">
 
 <blockquote>
 <p><strong>需要用到的一个重要系统函数<code>mmap</code>介绍</strong></p>
@@ -1126,181 +1689,6 @@
       </categories>
   </entry>
   <entry>
-    <title>linux常用命令总结</title>
-    <url>/2025/02/23/linux_bashCmd01/</url>
-    <content><![CDATA[<p>总结了一些linux中常用的基本命令和项目中常用的命令</p>
-<h2 id="基础概念"><a href="#基础概念" class="headerlink" title="基础概念"></a>基础概念</h2><ul>
-<li>shell ：即命令解释器，是用户和linux内核交互的桥梁，通过在shell终端输入命令让linux内核相应部分识别用户命令并处理。</li>
-</ul>
-<span id="more"></span>
-
-<img src="linux_BasicShellCmd/image-20250422133735308.png" alt="image-20250422133735308" style="zoom:50%;" />
-
-<blockquote>
-<p><strong>bash与shell的关系</strong></p>
-<p><strong>Shell就是终端程序的统称</strong>，它充当了人与内核（硬件）之间的翻译官，用户把一些命令“告诉”终端程序，它就会调用相应的程序服务去完成某些工作。许多主流Linux系统默认使用的<strong>终端是Bash（Bourne-Again SHell）解释器。</strong></p>
-<p><strong>Shell与Bash是包含与被包含的关系</strong>。举例来说，在社会中有翻译官这个职业，它是由许多从业者共同组成的职业名称，而Bash则是其中一个出色的成员，是Shell终端程序中的一份子。</p>
-</blockquote>
-<p>shell命令的基本格式为</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">命令 [option] 参数 </span><br></pre></td></tr></table></figure>
-<p>​	其中加”[]”符号表示可以不输入这个选项</p>
-<p><strong>tips</strong>: </p>
-<ul>
-<li><p>对于不熟悉的命令可以使用<code>man 1 命令</code>或者<code>命令 --help</code>来查看说明</p>
-<img src="/2025/02/23/linux_bashCmd01/image-20250422135042892.png" class="" title="image-20250422135042892">
-</li>
-<li><p>注意如果想要在windows复制并粘贴到linux虚拟机中，就要安装open-vm-tools，而vm-tools是老版的，重复安装这两个就会冲突，所以只安装open-vm-tools即可。对应命令为：</p>
-</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">apt-get install open-vm-tools-desktop</span><br></pre></td></tr></table></figure>
-
-<p>​	以下给出几个vm-tools的区别</p>
-<blockquote>
-<p><strong>open-vm-tools</strong>：开源工具集，主要用于 Linux 虚拟机。</p>
-<p><strong>vm-tools</strong>：VMware 提供的专有工具集，通常用于 VMware 产品。</p>
-<p><strong>open-vm-tools-desktop</strong>：<code>open-vm-tools</code> 的桌面扩展版，专为桌面环境（有图形界面的 Linux）优化，提供更多图形相关的功能。</p>
-</blockquote>
-<p>linux磁盘相关文件系统，扩容等：<a href="https://blog.csdn.net/zhanhjxxx/article/details/123232402">Linux磁盘分区详解（新建分区，现有分区扩容，分区减容）_linux分区-CSDN博客</a></p>
-<h2 id="基本常用命令"><a href="#基本常用命令" class="headerlink" title="基本常用命令"></a>基本常用命令</h2><ol>
-<li>切换用户权限组</li>
-</ol>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">sudo su //切换为管理员</span><br><span class="line">exit //推出管理员权限</span><br></pre></td></tr></table></figure>
-
-<p>在命令前加<code>sudo</code>也可以使用管理员权限</p>
-<ol start="2">
-<li>创建目录</li>
-</ol>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">mkdir -m 目录名</span><br><span class="line">mkdir -r /home/hh # -r 可以递归的创建目录</span><br></pre></td></tr></table></figure>
-
-<p>3.删除目录或者文件</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">rm -i 文件名</span><br><span class="line">rm -r 目录名 #主要用来删除目录</span><br><span class="line">rm -f 文件名 #强制删除</span><br></pre></td></tr></table></figure>
-
-<p>4.切换路径</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cd /  #切换到根目录</span><br><span class="line">cd ~  #切换到家目录</span><br><span class="line">cd /home/xxx  </span><br></pre></td></tr></table></figure>
-
-<p>5.gedit 记事本</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">gedit main.c</span><br></pre></td></tr></table></figure>
-
-<p>6.查看文件</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cat main.c #查看文件内容并输出到shell终端</span><br><span class="line">cat -A 文件名  #隐藏的字符也可以查看</span><br></pre></td></tr></table></figure>
-
-<p>7.复制</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cp -r 源文件 目标文件 #可以复制目录的所有文件</span><br></pre></td></tr></table></figure>
-
-<p>8.移动或重命名</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">mv [选项] 源文件 目标文件</span><br><span class="line">mv old.txt new.txt #重命名单个文件</span><br><span class="line">mv old_folder new_folder #重命名目录</span><br><span class="line">mv file.txt /home/user/documents/newfile.txt #移动文件到其他目录并重命名</span><br></pre></td></tr></table></figure>
-
-<p>9.查看当前路径</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">pwd</span><br></pre></td></tr></table></figure>
-
-<p>10.查看当前目录文件</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">ls [option]</span><br><span class="line">ls -a #查看所有文件，包括隐藏的</span><br></pre></td></tr></table></figure>
-
-<ol start="11">
-<li>显示磁盘空间使用情况</li>
-</ol>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">df -h</span><br></pre></td></tr></table></figure>
-
-<hr>
-<h2 id="项目常用命令"><a href="#项目常用命令" class="headerlink" title="项目常用命令"></a>项目常用命令</h2><ul>
-<li>解压缩</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">tar -zxvf xx.tar.gz # 解压缩tar.gz文件，x为提取，v为详细信息，f即file</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>查看进程</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">ps au #查看所有进程</span><br><span class="line">ps aux|grep xx*</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>查找文件</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">基本语法：find 搜索路径 选项 表达式</span></span><br><span class="line">find /path/to/search -name &quot;filename&quot;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">在当前目录及子目录查找名为<span class="string">&quot;example.txt&quot;</span>的文件</span></span><br><span class="line">find . -name &quot;example.txt&quot;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">使用通配符查找所有.<span class="built_in">log</span>文件</span></span><br><span class="line">find /var/log -name &quot;*.log&quot;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">查找指定用户拥有的文件</span></span><br><span class="line">find /home -user username</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">查找过去7天内修改的文件</span></span><br><span class="line">find /home/user -mtime -7</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">使用 find 命令查找最近修改的文件</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">如果你刚刚安装了软件，可以查找系统中最近被修改的文件：</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">查找过去30分钟内修改的文件</span></span><br><span class="line">sudo find / -type f -mmin -30 2&gt;/dev/null</span><br></pre></td></tr></table></figure>
-
-<p>查找文件还可以使用</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">whereis xx</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>安装软件</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">sudo dpkg -i 文件名.deb #安装的默认路径为：/opt</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">查看 dpkg 日志找出最近安装的包</span></span><br><span class="line">grep &quot;install &quot; /var/log/dpkg.log | tail</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>挂载共享文件夹</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">sudo mount -t fuse.vmhgfs-fuse .host:/ /mnt/hgfs -o allow_other</span><br></pre></td></tr></table></figure>
-
-<p>开机自动挂载共享文件夹参考下图：</p>
-<p><img src="/linux_BasicShellCmd/image-20250302110137834.png" alt="image-20250302110137834"></p>
-<ul>
-<li>安装和卸载</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">apt-get install </span><br><span class="line">apt-get autoremove </span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>编译和链接</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">编译c源码,以创建线程为例</span></span><br><span class="line">gcc thread1.c -o trl -lphread</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p><code>gcc</code>: GNU编译器集合(GNU Compiler Collection)，这是一个常用的C&#x2F;C++编译器</p>
-<p><code>thread1.c</code>: 源代码文件名，这是要被编译的C语言源文件</p>
-<p><code>-o tr1</code>: 输出选项，指定编译后生成的可执行文件名为”tr1”</p>
-<p><code>-lpthread</code>: 链接选项，告诉编译器链接POSIX线程库(pthread库)</p>
-<p><strong>为什么要链接</strong>：</p>
-<ul>
-<li>当编译器看到你的代码引用了 pthread 库中的函数时，它需要知道这些函数的实现在哪里</li>
-<li><code>-lpthread</code> 告诉链接器去寻找并链接 pthread 库</li>
-<li>如果不链接这个库，链接器会报”未定义的引用”(undefined reference)错误</li>
-</ul>
-<p><strong>具体作用</strong></p>
-<ul>
-<li><code>-l</code> 是链接库的标志</li>
-<li><code>pthread</code> 是库的名称（省略了前缀”lib”和后缀”.so”或”.a”）</li>
-<li>实际上链接器会寻找 <code>libpthread.so</code>（共享库）或 <code>libpthread.a</code>（静态库）文件</li>
-</ul>
-</blockquote>
-<ul>
-<li><p>软链接</p>
-<p>作用1：允许从不同位置访问同一个文件或目录，而不需要复制数据，相当于创建快捷方式</p>
-<p>作用2：，比如先转移文件到其它目录，再删除原路径的文件，这时创建一个软链接，确保依赖于旧路径的程序继续正常工作</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">如果已有Downloads目录且有内容，先移动</span></span><br><span class="line">mv ~/Downloads/* /data/Downloads/ # 仅当Downloads有内容时</span><br><span class="line">rm -rf ~/Downloads # 删除原Downloads目录</span><br><span class="line">ln -s /data/Downloads ~/Downloads # 创建软链接</span><br></pre></td></tr></table></figure>
-
-</li>
-<li><p>网络相关</p>
-<ul>
-<li>查看网络的配置和状态</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">ifconfig</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>查看 socket、网络协议栈、网口以及路由表的信息</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-n表示以数字方式显示ip和端口</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-l表示只显示listen状态的socket</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-p表示显示进程信息</span></span><br><span class="line">netstat -nlp</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash"><span class="comment">#######################################</span></span></span><br><span class="line">ss -ntlp</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-n表示以数字方式显示ip和端口</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-t表示只显示tcp连接</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-l表示只显示listen状态的socket</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">-p表示显示进程信息</span></span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>查看协议栈的统计信息</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">netstat -s</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash"><span class="comment">##或者</span></span></span><br><span class="line">ss -s</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><p>查看网络吞吐率和pps</p>
-<blockquote>
-<p><strong>网络吞吐率</strong>：单位事件内成功传输的数据量</p>
-<p><strong>pps</strong>：packet per second</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">sar -n DEV  #显示网口的统计数据</span><br><span class="line">sar -n EDEV	#显示关于网络错误的统计数据</span><br><span class="line">sar -n TCP	#显示 TCP 的统计数据</span><br><span class="line">ethtool eth0 | grep Speed	#查看eth0网卡带宽，单位为Mb/s</span><br></pre></td></tr></table></figure></blockquote>
-</li>
-</ul>
-</li>
-</ul>
-<p>​	</p>
-]]></content>
-      <categories>
-        <category>linux</category>
-        <category>bash命令</category>
-      </categories>
-  </entry>
-  <entry>
     <title>linux命令02</title>
     <url>/2025/04/22/linux_bashCmd02/</url>
     <content><![CDATA[<p>摘抄自《linux就该这么学》，仅做个人学习用</p>
@@ -1344,7 +1732,7 @@
 
 <h3 id="3．wget命令"><a href="#3．wget命令" class="headerlink" title="3．wget命令"></a><strong>3．wget命令</strong></h3><p>wget命令用于在终端命令行中下载网络文件，英文全称为“web get”，语法格式为“wget [参数] 网址”。</p>
 <p>借助于wget命令，可以无须打开浏览器，直接在命令行界面中就能下载文件。表2-6所示为wget命令中的参数以及参数的作用。</p>
-<style>.rdhdlijlekeb{zoom:50%;}</style><img src="/2025/04/22/linux_bashCmd02/image-20250422140610109.png" class="rdhdlijlekeb" alt="image-20250422140610109">
+<style>.oesfyxqbgubd{zoom:50%;}</style><img src="/2025/04/22/linux_bashCmd02/image-20250422140610109.png" class="oesfyxqbgubd" alt="image-20250422140610109">
 
 <blockquote>
 <p>由于本命令需要从外部网络下载文件，但虚拟机默认是无法连接外网的，在操作后会提示响应超时的报错</p>
@@ -1377,7 +1765,7 @@
 
 <h3 id="6．top命令"><a href="#6．top命令" class="headerlink" title="6．top命令"></a><strong>6．top命令</strong></h3><p>top命令用于<strong>动态地监视进程活动及系统负载等信息，输入该命令后按回车键执行即可</strong>。</p>
 <p>前面介绍的命令都是静态地查看系统状态，不能实时滚动最新数据，而top命令能够动态地查看系统状态，因此完全可以将它看作是<strong>Linux中“强化版的Windows任务管理器”</strong>。top是相当好用的性能分析工具，该命令的运行界面如图2-6所示。</p>
-<style>.nxajidpqlgbo{zoom:50%;}</style><img src="/2025/04/22/linux_bashCmd02/image-20250422141220828.png" class="nxajidpqlgbo" alt="image-20250422141220828">
+<style>.vrooxzckcxoc{zoom:50%;}</style><img src="/2025/04/22/linux_bashCmd02/image-20250422141220828.png" class="vrooxzckcxoc" alt="image-20250422141220828">
 
 <p>在图2-6中，top命令执行结果的前5行为系统整体的统计信息，其所代表的含义如下。</p>
 <blockquote>
