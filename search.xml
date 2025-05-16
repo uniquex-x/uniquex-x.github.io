@@ -605,6 +605,13 @@
 
 <span id="more"></span>
 
+<blockquote>
+<p><strong>什么是few-shot 学习？</strong></p>
+<p>Few-shot 学习（Few-shot Learning, FSL）是一种 <strong>机器学习方法</strong>，其目标是在只使用 <strong>极少量的训练样本（通常是每类几个样本）</strong> 的情况下，完成对新任务的学习。</p>
+<p>通过给模型提供少量示例（prompt），实现 few-shot 学习。</p>
+<p>例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">例子1: 英文: cat -&gt; 中文: 猫</span><br><span class="line">例子2: 英文: dog -&gt; 中文: 狗</span><br><span class="line">测试: 英文: bird -&gt; 中文: ?</span><br></pre></td></tr></table></figure>
+</blockquote>
 <p>其它概念不多涉及，下面主要讲讲MCP和个人使用过的一些大模型特点</p>
 <h2 id="MCP"><a href="#MCP" class="headerlink" title="MCP"></a>MCP</h2><h3 id="什么是MCP"><a href="#什么是MCP" class="headerlink" title="什么是MCP"></a>什么是MCP</h3><p>Model Context Protocol (MCP) 是一个由 Anthropic 开发的开源协议，旨在标准化大型语言模型（LLM）与外部工具、数据源和服务的交互方式。 它可以被看作是 AI 应用的“USB-C 端口”，为 AI 模型提供统一的接口，以便访问和操作外部资源，从而克服 LLM 仅依赖训练数据的局限性</p>
 <p><strong>核心功能</strong>： </p>
